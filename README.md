@@ -27,12 +27,13 @@
   * [Disclaimer](#disclaimer)
 <!-- TOC -->
 
-`verax` is a flexible and intuitive Go module for validating data structures, 
-including primitive types, structs, slices, arrays, and maps. It offers a 
-simple API to define validation rules and produce clear, human-readable error 
-messages as well as JSON serializable error for easy API integration. Whether 
-validating user input, configuration data, or complex nested structures, `verax`
-simplifies enforcing constraints and ensuring data integrity.
+`verax` from Latin truthful, is a flexible and intuitive Go module for
+validating data structures, including primitive types, structs, slices, arrays,
+and maps. It offers a simple API to define validation rules and produce clear,
+human-readable error messages as well as JSON serializable error for easy API
+integration. Whether validating user input, configuration data, or complex
+nested structures, `verax` simplifies enforcing constraints and ensuring data
+integrity.
 
 ## Features
 
