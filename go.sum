@@ -1,0 +1,12 @@
+github.com/ctx42/mirror v0.1.0 h1:LYMRB9C9a8ZdLApLa1P114JrjfBpVXiYlOo7YjIC+8E=
+github.com/ctx42/mirror v0.1.0/go.mod h1:yGrH1Y7GFecyG0HVsmoa8Dqvjb2TXL55iw417u+iNng=
+github.com/ctx42/mirror v0.2.0 h1:sak+1rtXFwgISOLI3kXO3S9moLzEc/AdNzgloSPorYM=
+github.com/ctx42/mirror v0.2.0/go.mod h1:yGrH1Y7GFecyG0HVsmoa8Dqvjb2TXL55iw417u+iNng=
+github.com/ctx42/testing v0.40.0 h1:l+NFvXky0l48NqcjApiQ7JRq2W0hwUcDcg8FxvrMgTo=
+github.com/ctx42/testing v0.40.0/go.mod h1:VHcxY4uhZQ8Lewevgmc9WHjJQc9CopJm9IAOTK5XbaM=
+github.com/ctx42/testing v0.41.0 h1:8hV63IuGnz3L6a2cUv3gwGUCUfTiKsPP/VFZz+qpaFw=
+github.com/ctx42/testing v0.41.0/go.mod h1:VHcxY4uhZQ8Lewevgmc9WHjJQc9CopJm9IAOTK5XbaM=
+github.com/ctx42/xrr v0.5.0 h1:7bVrgRYaiKL/VnYzl/2azG778EnfrD0FaKhFZuQsJ04=
+github.com/ctx42/xrr v0.5.0/go.mod h1:zEywec2EY5zJHu1eYK12OnJ3hdlvrGOuiwYDrtSvqa8=
+golang.org/x/text v0.29.0 h1:1neNs90w9YzJ9BocxfsQNHKuAT4pkghyXc4nhZ6sJvk=
+golang.org/x/text v0.29.0/go.mod h1:7MhJOA9CD2qZyOKYazxdYMF85OwPdEr9jTtBpO7ydH4=
