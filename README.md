@@ -2,10 +2,10 @@
 [![GoDoc](https://img.shields.io/badge/api-Godoc-blue.svg)](https://pkg.go.dev/github.com/ctx42/verax)
 ![Tests](https://github.com/ctx42/verax/actions/workflows/go.yml/badge.svg?branch=master)
 
-# Verax: Validation for Go
+# verax: Validation for Go
 
 <!-- TOC -->
-* [Verax: Validation for Go](#verax-validation-for-go)
+* [verax: Validation for Go](#verax-validation-for-go)
   * [Features](#features)
   * [Installation](#installation)
   * [Usage](#usage)
