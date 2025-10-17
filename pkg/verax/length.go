@@ -75,6 +75,8 @@ type LengthRule struct {
 }
 
 // Validate checks if the given value is valid or not.
+//
+// nolint: cyclop
 func (r LengthRule) Validate(v any) error {
 	if !r.condition {
 		return nil

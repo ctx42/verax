@@ -5,7 +5,7 @@ import (
 
 	"github.com/ctx42/xrr/pkg/xrr"
 
-	. "github.com/ctx42/verax/pkg/verax"
+	"github.com/ctx42/verax/pkg/verax"
 )
 
 // Regexp rules.
@@ -36,4 +36,4 @@ func IsBase64(str string) bool {
 }
 
 // Base64 validates if a string is a valid base64.
-var Base64 = String(IsBase64).Error(ErrBase64)
+var Base64 = verax.String(IsBase64).Error(ErrBase64)

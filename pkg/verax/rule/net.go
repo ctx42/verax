@@ -8,7 +8,7 @@ import (
 
 	"github.com/ctx42/xrr/pkg/xrr"
 
-	. "github.com/ctx42/verax/pkg/verax"
+	"github.com/ctx42/verax/pkg/verax"
 )
 
 // Regexp rules.
@@ -62,7 +62,7 @@ var (
 func IsIP(str string) bool { return net.ParseIP(str) != nil }
 
 // IP validates if a string is a valid IPv4 or IPv6 address.
-var IP = String(IsIP).Error(ErrIP)
+var IP = verax.String(IsIP).Error(ErrIP)
 
 // IsIPv4 checks if the string is IP version 4.
 func IsIPv4(str string) bool {
@@ -71,7 +71,7 @@ func IsIPv4(str string) bool {
 }
 
 // IPv4 validates if a string is a valid IPv4 address.
-var IPv4 = String(IsIPv4).Error(ErrIPv4)
+var IPv4 = verax.String(IsIPv4).Error(ErrIPv4)
 
 // IsIPv6 checks if the string is IP version 6.
 func IsIPv6(str string) bool {
@@ -80,7 +80,7 @@ func IsIPv6(str string) bool {
 }
 
 // IPv6 validates if a string is a valid IPv6 address.
-var IPv6 = String(IsIPv6).Error(ErrIPv6)
+var IPv6 = verax.String(IsIPv6).Error(ErrIPv6)
 
 // IsPort checks if a string represents a valid network port.
 func IsPort(str string) bool {
@@ -91,7 +91,7 @@ func IsPort(str string) bool {
 }
 
 // Port validates if a string is a valid network port number.
-var Port = String(IsPort).Error(ErrPort)
+var Port = verax.String(IsPort).Error(ErrPort)
 
 // IsDNSName checks if a string represents a valid DNS name.
 func IsDNSName(str string) bool {
@@ -102,7 +102,7 @@ func IsDNSName(str string) bool {
 }
 
 // DNSName validates if a string is a valid DNS name.
-var DNSName = String(IsDNSName).Error(ErrDNSName)
+var DNSName = verax.String(IsDNSName).Error(ErrDNSName)
 
 // IsDomain checks if a string represents a valid domain name.
 func IsDomain(str string) bool {
@@ -113,10 +113,10 @@ func IsDomain(str string) bool {
 }
 
 // Domain validates if a string is a valid domain name.
-var Domain = String(IsDomain).Error(ErrDomain)
+var Domain = verax.String(IsDomain).Error(ErrDomain)
 
 // IsHost checks if the string is a valid IPv4, IPv6 or valid DNS name.
 func IsHost(str string) bool { return IsIP(str) || IsDNSName(str) }
 
 // Host validates if a string is a valid network hostname.
-var Host = String(IsHost).Error(ErrHost)
+var Host = verax.String(IsHost).Error(ErrHost)

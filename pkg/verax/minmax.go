@@ -126,10 +126,11 @@ const (
 //	ruleMin := Min(10).Exclusive()  // Value must be > 10
 //	ruleMax := Max(100).Exclusive() // Value must be < 100
 func (r ThresholdRule) Exclusive() ThresholdRule {
-	if r.operator == greaterEqualThan {
+	switch r.operator {
+	case greaterEqualThan:
 		r.operator = greaterThan
 		r.errTpl = tplMinGreaterThan
-	} else if r.operator == lessEqualThan {
+	case lessEqualThan:
 		r.operator = lessThan
 		r.errTpl = tplMaxLessThan
 	}
@@ -150,8 +151,8 @@ func (r ThresholdRule) Exclusive() ThresholdRule {
 //
 //	cmpMyType := func(a, b MyType) int { ... }
 //	rule := Min(myTypeValue).With(cmpMyType)
-func (r ThresholdRule) With(cmp CompareFunc) ThresholdRule {
-	r.with = cmp
+func (r ThresholdRule) With(fn CompareFunc) ThresholdRule {
+	r.with = fn
 	return r
 }
 

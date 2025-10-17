@@ -5,7 +5,7 @@ import (
 
 	"github.com/ctx42/xrr/pkg/xrr"
 
-	. "github.com/ctx42/verax/pkg/verax"
+	"github.com/ctx42/verax/pkg/verax"
 )
 
 // semVerRx represents valid semantic version regular expression.
@@ -27,4 +27,4 @@ func IsSemver(str string) bool {
 }
 
 // SemVer validates if a string is a valid semantic version.
-var SemVer = String(IsSemver).Error(ErrSemVer)
+var SemVer = verax.String(IsSemver).Error(ErrSemVer)

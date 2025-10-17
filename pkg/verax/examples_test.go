@@ -222,7 +222,7 @@ func ExampleMap() {
 		verax.Key("time", verax.Min(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC))),
 	)
 
-	err := verax.Validate(data, MyRule)
+	err := verax.Validate(data, MyRule) // nolint: ineffassign
 	// or
 	err = MyRule.Validate(data)
 
@@ -263,7 +263,7 @@ func ExampleSet() {
 		verax.Length(4, 5),
 	}
 
-	err := NameRule.Validate("abc")
+	err := NameRule.Validate("abc") // nolint: ineffassign
 	// or
 	err = verax.Validate("abc", NameRule)
 
@@ -295,7 +295,7 @@ func ExampleBy() {
 
 	AbcRule := verax.By(fn)
 
-	err := AbcRule.Validate("xyz")
+	err := AbcRule.Validate("xyz") // nolint: ineffassign
 	// or
 	err = verax.Validate("xyz", AbcRule)
 

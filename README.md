@@ -665,6 +665,7 @@ The error triggers only if `Range.Start` and `Range.End` are both zero.
 - `Match`: Ensures a value matches a regular expression.
 - `Min`: Ensures a value is at least a specified value.
 - `Max`: Ensures a value is at most a specified value.
+- `Type`: Ensures a value is of a specified type.
 - `Noop`: A rule that always passes.
 - `Skip`: Skips subsequent rules if a condition is met.
 - `When`: Applies rules conditionally, with optional `Else`.
