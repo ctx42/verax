@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac
 // SPDX-License-Identifier: MIT
 
 package spec
@@ -9,7 +9,7 @@ import (
 	"github.com/ctx42/xrr/pkg/xrr"
 )
 
-// Unexported zero-size marker type used as domain type parameter.
+// Unexported zero-size marker type used as the domain type parameter.
 type edSpec struct{}
 
 // Compile checks.
