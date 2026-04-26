@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
@@ -11,22 +11,553 @@ import (
 	"github.com/ctx42/xrr/pkg/xrr/xrrtest"
 )
 
-func Test_ErrFieldNotFound(t *testing.T) {
-	// --- Given ---
-	err := ErrFieldNotFound(123)
+func Test_Field(t *testing.T) {
+	t.Run("without rules", func(t *testing.T) {
+		// --- Given ---
+		var s1 TStruct
 
-	// --- Then ---
-	assert.ErrorEqual(t, "the field #123 cannot be found in the struct", err)
-	xrrtest.AssertCode(t, ECInternal, err)
+		// --- When ---
+		have := Field(&s1.FStr)
+
+		// --- Then ---
+		assert.Same(t, &s1.FStr, have.fieldPtr)
+		assert.Equal(t, "", have.tag)
+		assert.Nil(t, have.rules)
+	})
+
+	t.Run("with rules", func(t *testing.T) {
+		// --- Given ---
+		var s1 TStruct
+
+		// --- When ---
+		have := Field(&s1.FStr, Equal("FStr"))
+
+		// --- Then ---
+		assert.Same(t, &s1.FStr, have.fieldPtr)
+		assert.Equal(t, "", have.tag)
+		assert.Equal(t, []Rule{Equal("FStr")}, have.rules)
+	})
 }
 
-func Test_ErrFieldPointer(t *testing.T) {
-	// --- Given ---
-	err := ErrFieldPointer(123)
+func Test_Field_Tag(t *testing.T) {
+	t.Run("field tag set", func(t *testing.T) {
+		// --- Given ---
+		var s1 TStruct
+		fld := Field(s1.FStr)
 
-	// --- Then ---
-	assert.ErrorEqual(t, "field #123 must be specified as a pointer", err)
-	xrrtest.AssertCode(t, ECInternal, err)
+		// --- When ---
+		have := fld.Tag("custom")
+
+		// --- Then ---
+		assert.Equal(t, "custom", have.tag)
+		assert.Equal(t, "", fld.tag)
+	})
+}
+
+func Test_ValidateStruct(t *testing.T) {
+	t.Run("nil struct", func(t *testing.T) {
+		// --- Given ---
+		var s *TStruct
+
+		// --- When ---
+		err := ValidateStruct(s)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("valid when no rules", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+
+		// --- When ---
+		err := ValidateStruct(&mf)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("valid when no field rules", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		fr := []FieldRule{
+			Field(&mf.FStr),
+			Field(&mf.FpStr),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, fr...)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("valid field", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		fr := []FieldRule{
+			Field(&mf.FStr, Equal("FStr")),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, fr...)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("valid not exported field", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		fr := []FieldRule{
+			Field(&mf.FStr, Equal("FStr")),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, fr...)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("valid field pointer", func(t *testing.T) {
+		// --- Given ---
+		str := "TStruct.FpStr"
+		mf := NewTStruct()
+		fr := []FieldRule{
+			Field(&mf.FpStr, Equal(&str)),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, fr...)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("valid slice field each rule", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		fr := []FieldRule{
+			Field(&mf.FsStr, Each(Length(1, 1))),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, fr...)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("valid array field each rule", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		rs := []FieldRule{
+			Field(&mf.FaStr, Each(Length(1, 1))),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, rs...)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("valid map field rule", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		rs := []FieldRule{
+			Field(&mf.FmStr, Each(Length(2, 2))),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, rs...)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("valid sub structs", func(t *testing.T) {
+		// --- Given ---
+		s := Model{
+			ModelVal: ModelVal{"abc"},
+			SvSM1:    ModelVal{"abc"},
+			SpSM1:    &ModelVal{"abc"},
+			SpSM2:    &ModelPtr{"abc"},
+		}
+
+		rs := []FieldRule{
+			Field(&s.ModelVal),
+			Field(&s.SvSM1),
+			Field(&s.SpSM1),
+			Field(&s.SpSM2),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&s, rs...)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("invalid field with JSON tag", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+
+		fr := []FieldRule{
+			Field(&mf.FStr, Equal("other")),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, fr...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		wMsg := "f_json: must be equal to 'other' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
+	})
+
+	t.Run("invalid field without JSON tag", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+
+		fr := []FieldRule{
+			Field(&mf.fStr, Equal("other")),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, fr...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		wMsg := "fStr: must be equal to 'other' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
+	})
+
+	t.Run("invalid field with ignored JSON tag", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+
+		fr := []FieldRule{
+			Field(&mf.FpStr, Equal("other")),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, fr...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		wMsg := "FpStr: must be equal to 'other' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
+	})
+
+	t.Run("invalid field from embedded", func(t *testing.T) {
+		// --- Given ---
+		s := Model{
+			ModelVal: ModelVal{"abc"},
+			SvSM1:    ModelVal{"abc"},
+			SpSM1:    &ModelVal{"abc"},
+			SpSM2:    &ModelPtr{"abc"},
+		}
+
+		fr := []FieldRule{
+			Field(&s.FStr, Equal("other")),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&s, fr...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		wMsg := "FStr: must be equal to 'other' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
+	})
+
+	t.Run("invalid field with value struct", func(t *testing.T) {
+		// --- Given ---
+		s := Model{
+			SvSM1: ModelVal{"abc"},
+			SpSM1: &ModelVal{"abc"},
+			SpSM2: &ModelPtr{"abc"},
+		}
+
+		fr := []FieldRule{
+			Field(&s.ModelVal),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&s, fr...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		xrrtest.AssertEqual(t, "FStr: cannot be blank (ECRequired)", err)
+	})
+
+	t.Run("invalid field with value struct", func(t *testing.T) {
+		// --- Given ---
+		s := Model{
+			ModelVal: ModelVal{"abc"},
+			SvSM1:    ModelVal{"abc"},
+			SpSM1:    &ModelVal{"abc"},
+			SpSM2:    &ModelPtr{"abc"},
+		}
+
+		fr := []FieldRule{
+			Field(&s.FStr, Fail("test msg", "ECTst")),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&s, fr...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		xrrtest.AssertEqual(t, "FStr: test msg (ECTst)", err)
+	})
+
+	t.Run("error uses JSON field name", func(t *testing.T) {
+		// --- Given ---
+		s := TStruct{
+			FStr: "abc",
+		}
+
+		fr := []FieldRule{
+			Field(&s.FStr, Fail("test msg", "ECTst")),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&s, fr...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		xrrtest.AssertEqual(t, "f_json: test msg (ECTst)", err)
+	})
+
+	t.Run("invalid field from value struct", func(t *testing.T) {
+		// --- Given ---
+		s := Model{
+			ModelVal: ModelVal{"abc"},
+			SvSM1:    ModelVal{"invalid"},
+			SpSM1:    &ModelVal{"abc"},
+			SpSM2:    &ModelPtr{"abc"},
+		}
+
+		fr := []FieldRule{
+			Field(&s.SvSM1),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&s, fr...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		wMsg := "SvSM1.FStr: must be equal to 'abc' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
+	})
+
+	t.Run("invalid field from pointer struct value receiver", func(t *testing.T) {
+		// --- Given ---
+		s := Model{
+			ModelVal: ModelVal{"abc"},
+			SvSM1:    ModelVal{"abc"},
+			SpSM1:    &ModelVal{"invalid"},
+			SpSM2:    &ModelPtr{"abc"},
+		}
+
+		fr := []FieldRule{
+			Field(&s.SpSM1),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&s, fr...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		wMsg := "SpSM1.FStr: must be equal to 'abc' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
+	})
+
+	t.Run("invalid field from pointer struct pointer receiver", func(t *testing.T) {
+		// --- Given ---
+		s := Model{
+			ModelVal: ModelVal{"abc"},
+			SvSM1:    ModelVal{"abc"},
+			SpSM1:    &ModelVal{"abc"},
+			SpSM2:    &ModelPtr{"invalid"},
+		}
+
+		fr := []FieldRule{
+			Field(&s.SpSM2),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&s, fr...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		wMsg := "SpSM2.FStr: must be equal to 'abc' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
+	})
+
+	t.Run("invalid multiple errors in a slice", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		rs := []FieldRule{
+			Field(&mf.FaStr, Each(Length(2, 2))),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, rs...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		want := "" +
+			"FaStr.0: the length must be exactly 2 (ECInvLength); " +
+			"FaStr.1: the length must be exactly 2 (ECInvLength); " +
+			"FaStr.2: the length must be exactly 2 (ECInvLength); " +
+			"FaStr.3: the length must be exactly 2 (ECInvLength)"
+		xrrtest.AssertEqual(t, want, err)
+	})
+
+	t.Run("invalid multiple field errors", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		rs := []FieldRule{
+			Field(&mf.FpStr, Length(2, 2)),
+			Field(&mf.FaStr, Length(2, 2)),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, rs...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		want := "" +
+			"FaStr: the length must be exactly 2 (ECInvLength); " +
+			"FpStr: the length must be exactly 2 (ECInvLength)"
+		xrrtest.AssertEqual(t, want, err)
+	})
+
+	t.Run("non-struct pointer", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+
+		// --- When ---
+		err := ValidateStruct(mf)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		assert.ErrorIs(t, ErrNotStructPtr, err)
+	})
+
+	t.Run("field not found", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		rs := []FieldRule{
+			Field(&mf),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, rs...)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, "the field #0 cannot be found in the struct", err)
+		xrrtest.AssertCode(t, ECInternal, err)
+	})
+
+	t.Run("field not pointer", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		rs := []FieldRule{
+			Field(mf.FStr),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, rs...)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, "field #0 must be specified as a pointer", err)
+		xrrtest.AssertCode(t, ECInternal, err)
+	})
+
+	t.Run("field must not be nil", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		mf.FpStr = nil
+
+		rs := []FieldRule{
+			Field(&mf.FpStr, Required),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, rs...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		xrrtest.AssertEqual(t, "FpStr: cannot be blank (ECRequired)", err)
+	})
+
+	t.Run("field must not be empty", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		mf.FStr = ""
+
+		rs := []FieldRule{
+			Field(&mf.FStr, Required),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, rs...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		xrrtest.AssertEqual(t, "f_json: cannot be blank (ECRequired)", err)
+	})
+
+	t.Run("valid inline", func(t *testing.T) {
+		// --- Given ---
+		obj := struct {
+			Name  string
+			Value string
+		}{
+			"name",
+			"demo",
+		}
+
+		// --- When ---
+		err := ValidateStruct(
+			&obj,
+			Field(&obj.Name, Required),
+			Field(&obj.Value, Required, Length(4, 10)),
+		)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("invalid inline", func(t *testing.T) {
+		// --- Given ---
+		obj := struct {
+			Name  string
+			Value string
+		}{
+			"name",
+			"demo",
+		}
+
+		// --- When ---
+		err := ValidateStruct(
+			&obj,
+			Field(&obj.Name, Required),
+			Field(&obj.Value, Required, Length(5, 10)),
+		)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		wMsg := "Value: the length must be between 5 and 10 (ECInvLength)"
+		xrrtest.AssertEqual(t, wMsg, err)
+	})
 }
 
 func Test_findStructField_found_tabular(t *testing.T) {
@@ -96,488 +627,6 @@ func Test_findStructField_not_found_tabular(t *testing.T) {
 			assert.Nil(t, have)
 		})
 	}
-}
-
-func Test_ValidateStruct(t *testing.T) {
-	t.Run("nil struct", func(t *testing.T) {
-		// --- Given ---
-		var s *TStruct
-
-		// --- When ---
-		err := ValidateStruct(s)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid no rules", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-
-		// --- When ---
-		err := ValidateStruct(&mf)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid no field rules", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		fr := []*FieldRules{
-			Field(&mf.FStr),
-			Field(&mf.FpStr),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, fr...)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid field", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		fr := []*FieldRules{
-			Field(&mf.FStr, StrRule("FStr")),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, fr...)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid not exported field", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		fr := []*FieldRules{
-			Field(&mf.FStr, StrRule("FStr")),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, fr...)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid field pointer", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		fr := []*FieldRules{
-			Field(&mf.FpStr, StrRule("TStruct.FpStr")),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, fr...)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid slice field each rule", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		fr := []*FieldRules{
-			Field(&mf.FsStr, Each(Length(1, 1))),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, fr...)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid array field each rule", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		rs := []*FieldRules{
-			Field(&mf.FaStr, Each(Length(1, 1))),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, rs...)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid map field rule", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		rs := []*FieldRules{
-			Field(&mf.FmStr, Each(Length(2, 2))),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, rs...)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid sub structs", func(t *testing.T) {
-		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"abc"},
-			SpSM1:    &ModelVal{"abc"},
-			SpSM2:    &ModelPtr{"abc"},
-		}
-
-		rs := []*FieldRules{
-			Field(&s.ModelVal),
-			Field(&s.SvSM1),
-			Field(&s.SpSM1),
-			Field(&s.SpSM2),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&s, rs...)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("invalid field with JSON tag", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-
-		fr := []*FieldRules{
-			Field(&mf.FStr, StrRule("other")),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, fr...)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "f_json: must be 'other' (ECMustOther)", err)
-	})
-
-	t.Run("invalid field without JSON tag", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-
-		fr := []*FieldRules{
-			Field(&mf.fStr, StrRule("other")),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, fr...)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "fStr: must be 'other' (ECMustOther)", err)
-	})
-
-	t.Run("invalid field with ignored JSON tag", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-
-		fr := []*FieldRules{
-			Field(&mf.FpStr, StrRule("other")),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, fr...)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "FpStr: must be 'other' (ECMustOther)", err)
-	})
-
-	t.Run("invalid field from embedded", func(t *testing.T) {
-		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"abc"},
-			SpSM1:    &ModelVal{"abc"},
-			SpSM2:    &ModelPtr{"abc"},
-		}
-
-		fr := []*FieldRules{
-			Field(&s.FStr, StrRule("other")),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&s, fr...)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "FStr: must be 'other' (ECMustOther)", err)
-	})
-
-	t.Run("invalid field with value struct", func(t *testing.T) {
-		// --- Given ---
-		s := Model{
-			SvSM1: ModelVal{"abc"},
-			SpSM1: &ModelVal{"abc"},
-			SpSM2: &ModelPtr{"abc"},
-		}
-
-		fr := []*FieldRules{
-			Field(&s.ModelVal),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&s, fr...)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "FStr: cannot be blank (ECRequired)", err)
-	})
-
-	t.Run("invalid field with value struct", func(t *testing.T) {
-		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"abc"},
-			SpSM1:    &ModelVal{"abc"},
-			SpSM2:    &ModelPtr{"abc"},
-		}
-
-		fr := []*FieldRules{
-			Field(&s.FStr, InternalErrRule),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&s, fr...)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "FStr: internal error (ECInternal)", err)
-	})
-
-	t.Run("internal error uses json field name", func(t *testing.T) {
-		// --- Given ---
-		s := TStruct{
-			FStr: "",
-		}
-
-		fr := []*FieldRules{
-			Field(&s.FStr, InternalErrRule),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&s, fr...)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "f_json: internal error (ECInternal)", err)
-	})
-
-	t.Run("invalid field from value struct", func(t *testing.T) {
-		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"invalid"},
-			SpSM1:    &ModelVal{"abc"},
-			SpSM2:    &ModelPtr{"abc"},
-		}
-
-		fr := []*FieldRules{
-			Field(&s.SvSM1),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&s, fr...)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "SvSM1.FStr: must be 'abc' (ECMustAbc)", err)
-	})
-
-	t.Run("invalid field from pointer struct value receiver", func(t *testing.T) {
-		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"abc"},
-			SpSM1:    &ModelVal{"invalid"},
-			SpSM2:    &ModelPtr{"abc"},
-		}
-
-		fr := []*FieldRules{
-			Field(&s.SpSM1),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&s, fr...)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "SpSM1.FStr: must be 'abc' (ECMustAbc)", err)
-	})
-
-	t.Run("invalid field from pointer struct pointer receiver", func(t *testing.T) {
-		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"abc"},
-			SpSM1:    &ModelVal{"abc"},
-			SpSM2:    &ModelPtr{"invalid"},
-		}
-
-		fr := []*FieldRules{
-			Field(&s.SpSM2),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&s, fr...)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "SpSM2.FStr: must be 'abc' (ECMustAbc)", err)
-	})
-
-	t.Run("invalid multiple errors in slice", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		rs := []*FieldRules{
-			Field(&mf.FaStr, Each(Length(2, 2))),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, rs...)
-
-		// --- Then ---
-		exp := "" +
-			"FaStr.0: the length must be exactly 2 (ECInvLength); " +
-			"FaStr.1: the length must be exactly 2 (ECInvLength); " +
-			"FaStr.2: the length must be exactly 2 (ECInvLength); " +
-			"FaStr.3: the length must be exactly 2 (ECInvLength)"
-		xrrtest.AssertFieldsEqual(t, exp, err)
-	})
-
-	t.Run("invalid multiple field errors", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		rs := []*FieldRules{
-			Field(&mf.FpStr, Length(2, 2)),
-			Field(&mf.FaStr, Length(2, 2)),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, rs...)
-
-		// --- Then ---
-		exp := "" +
-			"FaStr: the length must be exactly 2 (ECInvLength); " +
-			"FpStr: the length must be exactly 2 (ECInvLength)"
-		xrrtest.AssertFieldsEqual(t, exp, err)
-	})
-
-	t.Run("non-struct pointer", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-
-		// --- When ---
-		err := ValidateStruct(mf, nil)
-
-		// --- Then ---
-		assert.ErrorIs(t, ErrNotStructPtr, err)
-	})
-
-	t.Run("field not found", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		rs := []*FieldRules{
-			Field(&mf),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, rs...)
-
-		// --- Then ---
-		var e ErrFieldNotFound
-		assert.ErrorAs(t, &e, err)
-		xrrtest.AssertCode(t, ECInternal, err)
-	})
-
-	t.Run("field not pointer", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		rs := []*FieldRules{
-			Field(mf.FStr),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, rs...)
-
-		// --- Then ---
-		var e ErrFieldPointer
-		assert.ErrorAs(t, &e, err)
-		xrrtest.AssertCode(t, ECInternal, err)
-	})
-
-	t.Run("field must not be nil", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		mf.FpStr = nil
-
-		rs := []*FieldRules{
-			Field(&mf.FpStr, Required),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, rs...)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "FpStr: cannot be blank (ECRequired)", err)
-	})
-
-	t.Run("field must not be empty", func(t *testing.T) {
-		// --- Given ---
-		mf := NewTStruct()
-		mf.FStr = ""
-
-		rs := []*FieldRules{
-			Field(&mf.FStr, Required),
-		}
-
-		// --- When ---
-		err := ValidateStruct(&mf, rs...)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "f_json: cannot be blank (ECRequired)", err)
-	})
-
-	t.Run("valid inline", func(t *testing.T) {
-		// --- Given ---
-		obj := struct {
-			Name  string
-			Value string
-		}{
-			"name",
-			"demo",
-		}
-
-		// --- When ---
-		err := ValidateStruct(
-			&obj,
-			Field(&obj.Name, Required),
-			Field(&obj.Value, Required, Length(4, 10)),
-		)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("invalid inline", func(t *testing.T) {
-		// --- Given ---
-		obj := struct {
-			Name  string
-			Value string
-		}{
-			"name",
-			"demo",
-		}
-
-		// --- When ---
-		err := ValidateStruct(
-			&obj,
-			Field(&obj.Name, Required),
-			Field(&obj.Value, Required, Length(5, 10)),
-		)
-
-		// --- Then ---
-		wMsg := "Value: the length must be between 5 and 10 (ECInvLength)"
-		xrrtest.AssertEqual(t, wMsg, err)
-	})
 }
 
 func Test_getErrorFieldName_tabular(t *testing.T) {
@@ -650,10 +699,10 @@ func Test_getErrorFieldName_tabular(t *testing.T) {
 			sf := findStructField(elem, reflect.ValueOf(tc.field))
 
 			// --- When ---
-			name := getErrorFieldName(tc.tag, sf)
+			have := getErrorFieldName(tc.tag, sf)
 
 			// --- Then ---
-			assert.Equal(t, tc.name, name)
+			assert.Equal(t, tc.name, have)
 		})
 	}
 }
@@ -692,39 +741,15 @@ func Test_getErrorFieldName_json_tabular(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- Given ---
-			a := reflect.TypeOf(A{})
+			a := reflect.TypeFor[A]()
 
 			// --- When ---
-			field, _ := a.FieldByName(tc.field)
+			have, _ := a.FieldByName(tc.field)
 
 			// --- Then ---
-			assert.Equal(t, tc.name, getErrorFieldName(tc.tagName, &field))
+			assert.Equal(t, tc.name, getErrorFieldName(tc.tagName, &have))
 		})
 	}
-}
-
-func Test_Field_Tag(t *testing.T) {
-	t.Run("tag not set", func(t *testing.T) {
-		// --- Given ---
-		var s1 TStruct
-
-		// --- When ---
-		fr := Field(s1.FStr)
-
-		// --- Then ---
-		assert.Equal(t, "", fr.tag)
-	})
-
-	t.Run("tag set", func(t *testing.T) {
-		// --- Given ---
-		var s1 TStruct
-
-		// --- When ---
-		fr := Field(s1.FStr).Tag("custom")
-
-		// --- Then ---
-		assert.Equal(t, "custom", fr.tag)
-	})
 }
 
 func BenchmarkValidateStruct(b *testing.B) {

@@ -1,10 +1,11 @@
 module github.com/ctx42/verax
 
-go 1.24.0
+go 1.25
 
 require (
-	github.com/ctx42/mirror v0.2.0
-	github.com/ctx42/testing v0.42.4
-	github.com/ctx42/xrr v0.5.0
-	golang.org/x/text v0.30.0
+	github.com/ctx42/convert v0.8.2
+	github.com/ctx42/jsontype v0.6.2
+	github.com/ctx42/mirror v0.3.2
+	github.com/ctx42/testing v0.46.0
+	github.com/ctx42/xrr v0.11.1
 )

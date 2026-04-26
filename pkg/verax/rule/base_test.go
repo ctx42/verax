@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
+// SPDX-License-Identifier: MIT
+
 package rule
 
 import (
@@ -7,6 +10,7 @@ import (
 
 	"github.com/ctx42/testing/pkg/assert"
 	"github.com/ctx42/testing/pkg/must"
+	"github.com/ctx42/xrr/pkg/xrr/xrrtest"
 
 	"github.com/ctx42/verax/pkg/verax"
 )
@@ -99,7 +103,7 @@ func Test_Base64(t *testing.T) {
 		val := base64.StdEncoding.EncodeToString([]byte("test"))
 
 		// --- When ---
-		err := verax.Validate(val, Base64)
+		err := Base64.Validate(val)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -107,17 +111,29 @@ func Test_Base64(t *testing.T) {
 
 	t.Run("success when empty", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("", Base64)
+		err := Base64.Validate("")
 
 		// --- Then ---
 		assert.NoError(t, err)
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("error - validation", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("abc", Base64)
+		err := Base64.Validate("abc")
 
 		// --- Then ---
-		assert.ErrorIs(t, ErrBase64, err)
+		assert.ErrorEqual(t, msgBase64, err)
+		xrrtest.AssertCode(t, ECBase64, err)
+	})
+
+	t.Run("error - invalid type", func(t *testing.T) {
+		// --- When ---
+		err := Base64.Validate(42)
+
+		// --- Then ---
+		assert.True(t, verax.IsInternalError(err))
+		wMsg := "must be a valid base64: expected string, got int"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }

@@ -1,10 +1,9 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
 
 import (
-	"errors"
 	"reflect"
 	"testing"
 
@@ -13,31 +12,21 @@ import (
 )
 
 func Test_Type(t *testing.T) {
-	t.Run("type", func(t *testing.T) {
-		// --- Given ---
-		typ := reflect.TypeOf(42)
+	// --- Given ---
+	typ := reflect.TypeFor[int]()
 
-		// --- When ---
-		have := Type(typ)
+	// --- When ---
+	have := Type(typ)
 
-		// --- Then ---
-		assert.Equal(t, typ, have.typ)
-		assert.True(t, have.condition)
-		assert.Same(t, ErrExpType, have.err)
-	})
-
-	t.Run("nil", func(t *testing.T) {
-		// --- Given ---
-		typ := reflect.TypeOf(nil)
-
-		// --- When ---
-		have := Type(typ)
-
-		// --- Then ---
-		assert.Equal(t, typ, have.typ)
-		assert.True(t, have.condition)
-		assert.Same(t, ErrExpType, have.err)
-	})
+	// --- Then ---
+	want := TypeRule{
+		typ:       typ,
+		condition: true,
+		msg:       msgInvType,
+		code:      ECInvType,
+		flags:     0,
+	}
+	assert.Equal(t, want, have)
 }
 
 func Test_TypeOf(t *testing.T) {
@@ -46,9 +35,14 @@ func Test_TypeOf(t *testing.T) {
 		have := TypeOf(42)
 
 		// --- Then ---
-		assert.Equal(t, reflect.TypeOf(42), have.typ)
-		assert.True(t, have.condition)
-		assert.Same(t, ErrExpType, have.err)
+		want := TypeRule{
+			typ:       reflect.TypeFor[int](),
+			condition: true,
+			msg:       msgInvType,
+			code:      ECInvType,
+			flags:     0,
+		}
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("nil", func(t *testing.T) {
@@ -56,16 +50,32 @@ func Test_TypeOf(t *testing.T) {
 		have := TypeOf(nil)
 
 		// --- Then ---
-		assert.Equal(t, reflect.TypeOf(nil), have.typ)
-		assert.True(t, have.condition)
-		assert.Same(t, ErrExpType, have.err)
+		want := TypeRule{
+			typ:       reflect.Type(nil),
+			condition: true,
+			msg:       msgInvType,
+			code:      ECInvType,
+			flags:     0,
+		}
+		assert.Equal(t, want, have)
 	})
 }
 
 func Test_TypeRule_Validate(t *testing.T) {
-	t.Run("nil is ok", func(t *testing.T) {
+	t.Run("skip validation when the condition is false", func(t *testing.T) {
 		// --- Given ---
-		r := TypeOf(42)
+		r := TypeRule{typ: reflect.TypeFor[int](), condition: false}
+
+		// --- When ---
+		err := r.Validate("abc")
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("nil ok", func(t *testing.T) {
+		// --- Given ---
+		r := TypeRule{typ: reflect.TypeFor[int](), condition: true}
 
 		// --- When ---
 		err := r.Validate(nil)
@@ -76,7 +86,7 @@ func Test_TypeRule_Validate(t *testing.T) {
 
 	t.Run("same types", func(t *testing.T) {
 		// --- Given ---
-		r := TypeOf(42)
+		r := TypeRule{typ: reflect.TypeFor[int](), condition: true}
 
 		// --- When ---
 		err := r.Validate(44)
@@ -85,9 +95,9 @@ func Test_TypeRule_Validate(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("type and value nil", func(t *testing.T) {
+	t.Run("type and value are nil", func(t *testing.T) {
 		// --- Given ---
-		r := TypeOf(nil)
+		r := TypeRule{typ: nil, condition: true}
 
 		// --- When ---
 		err := r.Validate(nil)
@@ -98,25 +108,20 @@ func Test_TypeRule_Validate(t *testing.T) {
 
 	t.Run("want untyped nil", func(t *testing.T) {
 		// --- Given ---
-		r := TypeOf(nil)
+		r := TypeRule{
+			typ:       reflect.Type(nil),
+			condition: true,
+			msg:       "test err",
+			code:      "ECTst",
+		}
 
 		// --- When ---
 		err := r.Validate(42)
 
 		// --- Then ---
-		assert.Error(t, ErrExpType, err)
-		xrrtest.AssertCode(t, ECInvType, err)
-	})
-
-	t.Run("returns nil when the condition is false", func(t *testing.T) {
-		// --- Given ---
-		r := TypeOf(4.2).When(false)
-
-		// --- When ---
-		err := r.Validate(42)
-
-		// --- Then ---
-		assert.NoError(t, err)
+		assert.SameType(t, &Error{}, err)
+		assert.ErrorEqual(t, "test err", err)
+		xrrtest.AssertCode(t, "ECTst", err)
 	})
 
 	t.Run("error - no the same types", func(t *testing.T) {
@@ -127,82 +132,71 @@ func Test_TypeRule_Validate(t *testing.T) {
 		err := r.Validate(42)
 
 		// --- Then ---
-		assert.Error(t, ErrExpType, err)
+		assert.SameType(t, &Error{}, err)
+		assert.ErrorEqual(t, msgInvType, err)
 		xrrtest.AssertCode(t, ECInvType, err)
 	})
 }
 
 func Test_TypeRule_When(t *testing.T) {
-	t.Run("false", func(t *testing.T) {
+	// --- Given ---
+	r := TypeRule{}
+
+	// --- When ---
+	have := r.When(true)
+
+	// --- Then ---
+	assert.True(t, have.condition)
+}
+
+func Test_TypeRule_Message(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		// --- Given ---
+		r := TypeRule{}
+
 		// --- When ---
-		r := TypeOf(42).When(false)
+		have := r.Message("test err")
 
 		// --- Then ---
-		err := Validate(44, r)
-		assert.Nil(t, err)
+		assert.Equal(t, "test err", have.msg)
+		assert.Equal(t, flgCustomMsg, have.flags)
 	})
 
-	t.Run("true", func(t *testing.T) {
+	t.Run("an empty string is a noop", func(t *testing.T) {
+		// --- Given ---
+		r := TypeRule{msg: "test err"}
+
 		// --- When ---
-		r := TypeOf(42).When(true)
+		have := r.Message("")
 
 		// --- Then ---
-		err := Validate(4.4, r)
-		assert.Error(t, ErrExpType, err)
+		assert.Equal(t, "test err", have.msg)
+		assert.Zero(t, have.flags)
 	})
 }
 
 func Test_TypeRule_Code(t *testing.T) {
-	t.Run("set custom error code", func(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
 		// --- Given ---
-		r := TypeOf(42)
+		r := TypeRule{}
 
 		// --- When ---
-		have := r.Code("MyCode")
+		have := r.Code("ECTst")
 
 		// --- Then ---
-		err := have.Validate(4.4)
-		assert.Error(t, err)
-		xrrtest.AssertCode(t, "MyCode", err)
+		assert.Equal(t, "ECTst", have.code)
+		assert.Equal(t, flgCustomCode, have.flags)
 	})
 
-	t.Run("custom error code for custom error", func(t *testing.T) {
+	t.Run("an empty string is noop", func(t *testing.T) {
 		// --- Given ---
-		r := TypeOf(42).Error(ErrTst)
+		r := TypeRule{code: "ECTst"}
 
 		// --- When ---
-		have := r.Code("MyCode")
+		have := r.Code("")
 
 		// --- Then ---
-		err := have.Validate(4.4)
-		assert.Same(t, ErrTst, errors.Unwrap(err))
-		xrrtest.AssertCode(t, "MyCode", err)
-	})
-}
-
-func Test_TypeRule_Error(t *testing.T) {
-	t.Run("set custom error", func(t *testing.T) {
-		// --- Given ---
-		r := TypeOf(42)
-
-		// --- When ---
-		have := r.Error(ErrTst)
-
-		// --- Then ---
-		err := have.Validate(4.4)
-		assert.Same(t, ErrTst, err)
-	})
-
-	t.Run("clears custom error code", func(t *testing.T) {
-		// --- Given ---
-		r := TypeOf(42).Code("MyCode")
-
-		// --- When ---
-		have := r.Error(ErrTst)
-
-		// --- Then ---
-		err := have.Validate(4.4)
-		assert.Same(t, ErrTst, err)
-		xrrtest.AssertCode(t, "ETstCode", err)
+		assert.Equal(t, "ECTst", have.code)
+		assert.Zero(t, have.flags)
 	})
 }

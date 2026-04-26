@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
@@ -14,41 +14,31 @@ import (
 
 // Struct validation errors.
 var (
-	// ErrNotStructPtr is the error that a struct being validated is not
-	// specified as a pointer.
-	ErrNotStructPtr = xrr.New(
-		"only a pointer to a struct can be validated",
-		ECInternal,
-	)
+	// ErrNotStructPtr is an error returned from [ValidateStruct] when a
+	// non-pointer struct is used.
+	ErrNotStructPtr = NewInternalError("requires a struct pointer", ECInternal)
 )
 
-// ErrFieldNotFound is the error that a field cannot be found in the struct.
-type ErrFieldNotFound int
-
-// Error returns the error string of ErrFieldNotFound.
-func (e ErrFieldNotFound) Error() string {
-	return fmt.Sprintf("the field #%v cannot be found in the struct", int(e))
+// Field specifies a struct field and the corresponding validation rules.
+// The struct field must be specified as a pointer to it.
+func Field(fieldPtr any, rules ...Rule) FieldRule {
+	return FieldRule{
+		fieldPtr: fieldPtr,
+		rules:    rules,
+	}
 }
 
-// ErrorCode always returns ECInternal error code.
-func (e ErrFieldNotFound) ErrorCode() string { return ECInternal }
-
-// ErrFieldPointer is the error that a field is not specified as a pointer.
-type ErrFieldPointer int
-
-// Error returns the error string of ErrFieldPointer.
-func (e ErrFieldPointer) Error() string {
-	return fmt.Sprintf("field #%v must be specified as a pointer", int(e))
-}
-
-// ErrorCode always returns ECInternal error code.
-func (e ErrFieldPointer) ErrorCode() string { return ECInternal }
-
-// FieldRules represents a rule set associated with a struct field.
-type FieldRules struct {
+// FieldRule represents a rule set associated with a struct field.
+type FieldRule struct {
 	fieldPtr any
 	tag      string
 	rules    []Rule
+}
+
+// Tag sets a tag to use for the error field name.
+func (fr FieldRule) Tag(tag string) FieldRule {
+	fr.tag = tag
+	return fr
 }
 
 // ValidateStruct validates a struct by checking the specified struct fields
@@ -66,21 +56,20 @@ type FieldRules struct {
 //	    Value string
 //	}{"name", "demo"}
 //	err := validation.ValidateStruct(&value,
-//	    vrule.Field(&a.Name, vrule.Required),
-//	    vrule.Field(&a.Value, vrule.Required, vrule.Length(5, 10)),
+//	    verax.Field(&a.Name, verax.Required),
+//	    verax.Field(&a.Value, verax.Required, verax.Length(5, 10)),
 //	)
 //	fmt.Println(err)
 //	// Value: the length must be between 5 and 10.
 //
-// Returns error with ECInternal code on unexpected errors, otherwise it
-// returns xrr.Fields error.
+// Returns [InternalError] on unexpected errors, otherwise it returns
+// [FieldsError] error.
 //
 // nolint: cyclop
-func ValidateStruct(v any, fields ...*FieldRules) error {
+func ValidateStruct(v any, fields ...FieldRule) error {
 	val := reflect.ValueOf(v)
-	if val.Kind() != reflect.Ptr || !val.IsNil() &&
+	if val.Kind() != reflect.Pointer || !val.IsNil() &&
 		val.Elem().Kind() != reflect.Struct {
-
 		return ErrNotStructPtr // Must be a pointer to a struct.
 	}
 	if val.IsNil() {
@@ -88,55 +77,45 @@ func ValidateStruct(v any, fields ...*FieldRules) error {
 	}
 	val = val.Elem()
 
-	var ers xrr.Fields
+	var ers *FieldsError
 	for i, fr := range fields {
 		fv := reflect.ValueOf(fr.fieldPtr)
-		if fv.Kind() != reflect.Ptr {
-			return ErrFieldPointer(i)
+		if fv.Kind() != reflect.Pointer {
+			format := "field #%v must be specified as a pointer"
+			msg := fmt.Sprintf(format, i)
+			return NewInternalError(msg, ECInternal)
 		}
 
 		sf := findStructField(val, fv)
 		if sf == nil {
-			return ErrFieldNotFound(i)
+			format := "the field #%v cannot be found in the struct"
+			msg := fmt.Sprintf(format, i)
+			return NewInternalError(msg, ECInternal)
 		}
 
 		v = fv.Elem().Interface()
 		if err := Validate(v, fr.rules...); err != nil {
 			if xrr.GetCode(err) == ECInternal {
 				msg := fmt.Sprintf("%s: %s", getErrorFieldName(fr.tag, sf), err)
-				return xrr.New(msg, ECInternal)
+				return NewInternalError(msg, ECInternal)
 			}
 			if ers == nil {
-				ers = xrr.Fields{}
+				ers = &FieldsError{}
 			}
 			if sf.Anonymous {
 				// Merge errors from the anonymous struct field.
 				if es, ok := err.(xrr.Fielder); ok { // nolint: errorlint
-					for name, value := range es.ErrorFields() {
-						ers[name] = value
-					}
+					ers.Merge(es.ErrorFields())
 					continue
 				}
 			}
-			ers[getErrorFieldName(fr.tag, sf)] = err
+			ers.Set(getErrorFieldName(fr.tag, sf), err)
 		}
 	}
-	return ers.Filter()
-}
-
-// Field specifies a struct field and the corresponding validation rules.
-// The struct field must be specified as a pointer to it.
-func Field(fieldPtr any, rules ...Rule) *FieldRules {
-	return &FieldRules{
-		fieldPtr: fieldPtr,
-		rules:    rules,
+	if ers != nil {
+		return ers.Filter()
 	}
-}
-
-// Tag sets a tag to use for the error field name.
-func (fr *FieldRules) Tag(tag string) *FieldRules {
-	fr.tag = tag
-	return fr
+	return nil
 }
 
 // findStructField looks for a field in the given struct.
@@ -158,7 +137,7 @@ func findStructField(s, f reflect.Value) *reflect.StructField {
 		if sf.IsAnonymous() {
 			// Dive into the anonymous struct to look for the field.
 			fi := s.Field(i)
-			if sf.Kind() == reflect.Ptr {
+			if sf.Kind() == reflect.Pointer {
 				fi = fi.Elem()
 			}
 			if fi.Kind() == reflect.Struct {

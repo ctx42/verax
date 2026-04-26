@@ -1,9 +1,10 @@
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
+// SPDX-License-Identifier: MIT
+
 package rule
 
 import (
 	"regexp"
-
-	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/verax"
 )
@@ -18,13 +19,20 @@ const semVerRx string = `` +
 // semVerRxc represents semantic version compiled regular expression.
 var semVerRxc = regexp.MustCompile(semVerRx)
 
-// ErrSemVer is the error that returns in case of an invalid semver.
-var ErrSemVer = xrr.New("must be a valid semantic version", "ECSemVer")
+// ECSemVer is an error code for an invalid semantic version.
+const ECSemVer = "ECSemVer"
+
+// msgSemVer is the error message for an invalid semantic version.
+var msgSemVer = "must be a valid semantic version"
 
 // IsSemver checks if string is valid semantic version.
 func IsSemver(str string) bool {
 	return semVerRxc.MatchString(str)
 }
 
+// CheckSemVer is [verax.RuleFunc] that checks a string is a valid semantic
+// version.
+var CheckSemVer = verax.Check(IsSemver, msgSemVer, ECSemVer)
+
 // SemVer validates if a string is a valid semantic version.
-var SemVer = verax.String(IsSemver).Error(ErrSemVer)
+var SemVer = verax.By(CheckSemVer)

@@ -1,9 +1,13 @@
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
+// SPDX-License-Identifier: MIT
+
 package rule
 
 import (
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
+	"github.com/ctx42/xrr/pkg/xrr/xrrtest"
 
 	"github.com/ctx42/verax/pkg/verax"
 )
@@ -40,7 +44,7 @@ func Test_IsIP_tabular(t *testing.T) {
 func Test_IP(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("1.2.3.4", IP)
+		err := IP.Validate("1.2.3.4")
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -48,18 +52,30 @@ func Test_IP(t *testing.T) {
 
 	t.Run("success when empty", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("", IP)
+		err := IP.Validate("")
 
 		// --- Then ---
 		assert.NoError(t, err)
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("error validation", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("256.0.0.0", IP)
+		err := IP.Validate("256.0.0.0")
 
 		// --- Then ---
-		assert.ErrorIs(t, ErrIP, err)
+		assert.ErrorEqual(t, msgIP, err)
+		xrrtest.AssertCode(t, ECIP, err)
+	})
+
+	t.Run("error - invalid type", func(t *testing.T) {
+		// --- When ---
+		err := IP.Validate(42)
+
+		// --- Then ---
+		assert.True(t, verax.IsInternalError(err))
+		wMsg := "must be a valid IP address: expected string, got int"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
 
@@ -95,7 +111,7 @@ func Test_IsIPv4_tabular(t *testing.T) {
 func Test_IPv4(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("1.2.3.4", IPv4)
+		err := IPv4.Validate("1.2.3.4")
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -103,18 +119,30 @@ func Test_IPv4(t *testing.T) {
 
 	t.Run("success when empty", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("", IPv4)
+		err := IPv4.Validate("")
 
 		// --- Then ---
 		assert.NoError(t, err)
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("error - validation", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("256.0.0.0", IPv4)
+		err := IPv4.Validate("256.0.0.0")
 
 		// --- Then ---
-		assert.ErrorIs(t, ErrIPv4, err)
+		assert.ErrorEqual(t, msgIPv4, err)
+		xrrtest.AssertCode(t, ECIPv4, err)
+	})
+
+	t.Run("error - invalid type", func(t *testing.T) {
+		// --- When ---
+		err := IPv4.Validate(42)
+
+		// --- Then ---
+		assert.True(t, verax.IsInternalError(err))
+		wMsg := "must be a valid IPv4 address: expected string, got int"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
 
@@ -150,7 +178,7 @@ func Test_IsIPv6_tabular(t *testing.T) {
 func Test_IPv6(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("1ce:c01d:bee2:15:a5:900d:a5:11fe", IPv6)
+		err := IPv6.Validate("1ce:c01d:bee2:15:a5:900d:a5:11fe")
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -158,18 +186,30 @@ func Test_IPv6(t *testing.T) {
 
 	t.Run("success when empty", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("", IPv6)
+		err := IPv6.Validate("")
 
 		// --- Then ---
 		assert.NoError(t, err)
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("error - validation", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("256.0.0.0", IPv6)
+		err := IPv6.Validate("256.0.0.0")
 
 		// --- Then ---
-		assert.ErrorIs(t, ErrIPv6, err)
+		assert.ErrorEqual(t, msgIPv6, err)
+		xrrtest.AssertCode(t, ECIPv6, err)
+	})
+
+	t.Run("error - invalid type", func(t *testing.T) {
+		// --- When ---
+		err := IPv6.Validate(42)
+
+		// --- Then ---
+		assert.True(t, verax.IsInternalError(err))
+		wMsg := "must be a valid IPv6 address: expected string, got int"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
 
@@ -203,7 +243,7 @@ func Test_IsPort_tabular(t *testing.T) {
 func Test_Port(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("42", Port)
+		err := Port.Validate("42")
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -211,18 +251,30 @@ func Test_Port(t *testing.T) {
 
 	t.Run("success when empty", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("", Port)
+		err := Port.Validate("")
 
 		// --- Then ---
 		assert.NoError(t, err)
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("error - validation", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("abc", Port)
+		err := Port.Validate("abc")
 
 		// --- Then ---
-		assert.ErrorIs(t, ErrPort, err)
+		assert.ErrorEqual(t, msgPort, err)
+		xrrtest.AssertCode(t, ECPort, err)
+	})
+
+	t.Run("error - invalid type", func(t *testing.T) {
+		// --- When ---
+		err := Port.Validate(42)
+
+		// --- Then ---
+		assert.True(t, verax.IsInternalError(err))
+		wMsg := "must be a valid network port: expected string, got int"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
 
@@ -284,7 +336,7 @@ func Test_IsDNSName_tabular(t *testing.T) {
 func Test_DNSName(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("localhost", DNSName)
+		err := DNSName.Validate("localhost")
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -292,18 +344,30 @@ func Test_DNSName(t *testing.T) {
 
 	t.Run("success when empty", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("", DNSName)
+		err := DNSName.Validate("")
 
 		// --- Then ---
 		assert.NoError(t, err)
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("error - validation", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("localhost/", DNSName)
+		err := DNSName.Validate("localhost/")
 
 		// --- Then ---
-		assert.ErrorIs(t, ErrDNSName, err)
+		assert.ErrorEqual(t, msgDNSName, err)
+		xrrtest.AssertCode(t, ECDNSName, err)
+	})
+
+	t.Run("error - invalid type", func(t *testing.T) {
+		// --- When ---
+		err := DNSName.Validate(42)
+
+		// --- Then ---
+		assert.True(t, verax.IsInternalError(err))
+		wMsg := "must be a valid DNS name: expected string, got int"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
 
@@ -365,7 +429,7 @@ func Test_IsDomain_tabular(t *testing.T) {
 func Test_Domain(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("example.com", Domain)
+		err := Domain.Validate("example.com")
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -373,18 +437,30 @@ func Test_Domain(t *testing.T) {
 
 	t.Run("success when empty", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("", Domain)
+		err := Domain.Validate("")
 
 		// --- Then ---
 		assert.NoError(t, err)
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("error - validate", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("a.b..", Domain)
+		err := Domain.Validate("a.b..")
 
 		// --- Then ---
-		assert.ErrorIs(t, ErrDomain, err)
+		assert.ErrorEqual(t, msgDomain, err)
+		xrrtest.AssertCode(t, ECDomain, err)
+	})
+
+	t.Run("error - invalid type", func(t *testing.T) {
+		// --- When ---
+		err := Domain.Validate(42)
+
+		// --- Then ---
+		assert.True(t, verax.IsInternalError(err))
+		wMsg := "must be a valid domain: expected string, got int"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
 
@@ -421,7 +497,7 @@ func Test_IsHost_tabular(t *testing.T) {
 func Test_Host(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("localhost", Host)
+		err := Host.Validate("localhost")
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -429,17 +505,29 @@ func Test_Host(t *testing.T) {
 
 	t.Run("success when empty", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("", Host)
+		err := Host.Validate("")
 
 		// --- Then ---
 		assert.NoError(t, err)
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("error - validate", func(t *testing.T) {
 		// --- When ---
-		err := verax.Validate("localhost/", Host)
+		err := Host.Validate("localhost/")
 
 		// --- Then ---
-		assert.ErrorIs(t, ErrHost, err)
+		assert.ErrorEqual(t, msgHost, err)
+		xrrtest.AssertCode(t, ECHost, err)
+	})
+
+	t.Run("error - invalid type", func(t *testing.T) {
+		// --- When ---
+		err := Host.Validate(42)
+
+		// --- Then ---
+		assert.True(t, verax.IsInternalError(err))
+		wMsg := "must be a valid network hostname: expected string, got int"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }

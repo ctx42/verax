@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
+// SPDX-License-Identifier: MIT
+
 package rule
 
 import (
@@ -14,7 +17,7 @@ func Test_IsSemver_tabular(t *testing.T) {
 		testN string
 
 		param string
-		exp   bool
+		want  bool
 	}{
 		{"1", "v1.0.0", true},
 		{"2", "1.0.0", true},
@@ -45,7 +48,7 @@ func Test_IsSemver_tabular(t *testing.T) {
 			have := IsSemver(tc.param)
 
 			// --- Then ---
-			assert.Equal(t, tc.exp, have)
+			assert.Equal(t, tc.want, have)
 		})
 	}
 }
@@ -56,13 +59,14 @@ func Test_SemVer_tabular(t *testing.T) {
 
 		semVer string
 	}{
-		{"1", "v1.0.0"},
+		{"simple", "v1.0.0"},
+		{"empty", ""},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
-			err := verax.Validate(tc.semVer, SemVer)
+			err := SemVer.Validate(tc.semVer)
 
 			// --- Then ---
 			assert.NoError(t, err)
@@ -78,17 +82,30 @@ func Test_SemVer_errors_tabular(t *testing.T) {
 		err    string
 		code   string
 	}{
-		{"1", "1.0.0-+beta", "must be a valid semantic version", "ECSemVer"},
+		{"1", "1.0.0-+beta", "must be a valid semantic version", ECSemVer},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
-			err := verax.Validate(tc.semVer, SemVer)
+			err := SemVer.Validate(tc.semVer)
 
 			// --- Then ---
 			assert.ErrorEqual(t, tc.err, err)
 			xrrtest.AssertCode(t, tc.code, err)
 		})
 	}
+}
+
+func Test_SemVer(t *testing.T) {
+	t.Run("error - invalid type", func(t *testing.T) {
+		// --- When ---
+		err := SemVer.Validate(42)
+
+		// --- Then ---
+		assert.True(t, verax.IsInternalError(err))
+		wMsg := "must be a valid semantic version: expected string, got int"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, verax.ECInvType, err)
+	})
 }

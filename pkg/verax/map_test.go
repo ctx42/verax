@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
@@ -7,10 +7,101 @@ import (
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
+	"github.com/ctx42/testing/pkg/must"
 	"github.com/ctx42/xrr/pkg/xrr/xrrtest"
+
+	"github.com/ctx42/verax/pkg/spec"
 )
 
-func Test_MapRule_valid(t *testing.T) {
+func Test_Map(t *testing.T) {
+	// --- Given ---
+	mks := []MapKey{
+		Key("A", Max(1)),
+		Key("B", Max(2)),
+	}
+
+	// --- When ---
+	have := Map(mks...)
+
+	// --- Then ---
+	want := MapRule{
+		condition:    true,
+		allowUnknown: false,
+		keys: []MapKey{
+			Key("A", Max(1)),
+			Key("B", Max(2)),
+		},
+	}
+	assert.Equal(t, want, have)
+}
+
+func Test_MapRule_AllowUnknown(t *testing.T) {
+	// --- Given ---
+	r := MapRule{}
+
+	// --- When ---
+	have := r.AllowUnknown()
+
+	// --- Then ---
+	assert.True(t, have.allowUnknown)
+}
+
+func Test_MapRule_IsOptional(t *testing.T) {
+	t.Run("existing keys", func(t *testing.T) {
+		// --- Given ---
+		mks := []MapKey{
+			Key("A", Min(42)).Optional(),
+			Key("C", Max(42)),
+		}
+		r := Map(mks...)
+
+		// --- Then ---
+		assert.True(t, r.IsOptional("A"))
+		assert.False(t, r.IsOptional("C"))
+	})
+
+	t.Run("not existing key", func(t *testing.T) {
+		// --- Given ---
+		r := MapRule{}
+
+		// --- When ---
+		have := r.IsOptional(42)
+
+		// --- Then ---
+		assert.True(t, have)
+	})
+}
+
+func Test_MapRule_IsDefined(t *testing.T) {
+	t.Run("defined", func(t *testing.T) {
+		// --- Given ---
+		r := Map(Key(1, Min(42)))
+
+		// --- Then ---
+		assert.True(t, r.IsDefined(1))
+	})
+
+	t.Run("not defined", func(t *testing.T) {
+		// --- Given ---
+		r := Map(Key(1, Min(42)))
+
+		// --- Then ---
+		assert.False(t, r.IsDefined(3))
+	})
+}
+
+func Test_MapRule_validate_valid(t *testing.T) {
+	t.Run("skip validation when the condition is false", func(t *testing.T) {
+		// --- Given ---
+		rs := Map(Key("abc", Max(42))).When(false)
+
+		// --- When ---
+		err := rs.Validate(map[string]any{"abc": 44})
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
 	t.Run("nil map", func(t *testing.T) {
 		// --- When ---
 		err := Map().Validate(dMap)
@@ -19,14 +110,23 @@ func Test_MapRule_valid(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("nil key", func(t *testing.T) {
+	t.Run("pointer to map", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KpStrNil"),
-		}
+		m := map[string]int{"A": 1}
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map().AllowUnknown().Validate(&m)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("nil key", func(t *testing.T) {
+		// --- Given ---
+		kr := Key("KpStrNil")
+
+		// --- When ---
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -34,10 +134,10 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("empty rules", func(t *testing.T) {
 		// --- Given ---
-		rs := make([]*KeyRules, 0)
+		mks := make([]MapKey, 0)
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(mks...).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -45,12 +145,10 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("empty key rules", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KStrAbc"),
-		}
+		kr := Key("KStrAbc")
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -58,12 +156,10 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("empty string rule", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KStrEmpty", Length(1, 5)),
-		}
+		kr := Key("KStrEmpty", Length(1, 5))
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -71,12 +167,10 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("nil pointer rule", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KpStrNil", Length(1, 5)),
-		}
+		kr := Key("KpStrNil", Length(1, 5))
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -84,13 +178,11 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("multi key rules", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KStrAbc", StrRule("abc")),
-			Key("KStrXyz", StrRule("xyz")),
-		}
+		kr0 := Key("KStrAbc", Equal("abc"))
+		kr1 := Key("KStrXyz", Equal("xyz"))
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr0, kr1).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -98,12 +190,10 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("map key with slice", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KsString", Each(StrRule("abc"))),
-		}
+		kr := Key("KsString", Each(Equal("abc")))
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -111,12 +201,10 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("map of map", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KmStringString", Map(Key("foo", StrRule("abc")))),
-		}
+		kr := Key("KmStringString", Map(Key("foo", Equal("abc"))))
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -124,12 +212,10 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("optional key", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("X").Optional(),
-		}
+		kr := Key("X").Optional()
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -137,12 +223,10 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("skip key value validators", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KStructInvalid", Skip),
-		}
+		kr := Key("KStructInvalid", Skip)
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -150,12 +234,10 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("skip true key value validators", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KStructInvalid", Skip.When(true)),
-		}
+		kr := Key("KStructInvalid", Skip.When(true))
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -163,12 +245,10 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("skip required", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KpStrNil", Skip, Required),
-		}
+		kr := Key("KpStrNil", Skip, Required)
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -176,12 +256,10 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("skip nil", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KpStructNil", Skip, NotNil),
-		}
+		kr := Key("KpStructNil", Skip, NotNil)
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -189,20 +267,18 @@ func Test_MapRule_valid(t *testing.T) {
 
 	t.Run("int keys", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key(1, StrRule("abc")),
-			Key(3, StrRule("xyz")),
-		}
+		kr0 := Key(1, Equal("abc"))
+		kr1 := Key(3, Equal("xyz"))
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMapInt)
+		err := Map(kr0, kr1).AllowUnknown().Validate(TMapInt)
 
 		// --- Then ---
 		assert.NoError(t, err)
 	})
 }
 
-func Test_MapRule_invalid(t *testing.T) {
+func Test_MapRule_Validate_invalid(t *testing.T) {
 	t.Run("not map", func(t *testing.T) {
 		// --- When ---
 		err := Map().Validate(123)
@@ -213,220 +289,599 @@ func Test_MapRule_invalid(t *testing.T) {
 
 	t.Run("two rules", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KStrAbc", StrRule("xyz")),
-			Key("KpStr", StrRule("abc")),
-		}
+		kr0 := Key("KStrAbc", Equal("xyz"))
+		kr1 := Key("KpStr", Equal("abc"))
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr0, kr1).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		exp := "" +
-			"KStrAbc: must be 'xyz' (ECMustXyz); " +
-			"KpStr: must be 'abc' (ECMustAbc)"
-		xrrtest.AssertFieldsEqual(t, exp, err)
+		assert.SameType(t, &FieldsError{}, err)
+		want := "" +
+			"KStrAbc: must be equal to 'xyz' (ECNotEqual); " +
+			"KpStr: must be equal to 'abc' (ECNotEqual)"
+		xrrtest.AssertEqual(t, want, err)
 	})
 
 	t.Run("not matching key type", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key(123),
-		}
+		kr := Key(123)
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		wMsg := "123: key not the correct type (ECInternal)"
+		assert.SameType(t, &FieldsError{}, err)
+		wMsg := "123: the key type does not match the map (ECInternal)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
 	t.Run("missing required key", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("X"),
-		}
+		kr := Key("X")
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		wMsg := "X: required key is missing (ECMapKeyMissing)"
+		assert.SameType(t, &FieldsError{}, err)
+		wMsg := "X: missing key (ECMapKeyMissing)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
 	t.Run("run key value validators", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KStructInvalid"),
-		}
+		kr := Key("KStructInvalid")
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		wMsg := "KStructInvalid.FStr: must be 'abc' (ECMustAbc)"
+		assert.SameType(t, &FieldsError{}, err)
+		wMsg := "KStructInvalid.FStr: must be equal to 'abc' (ECNotEqual)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
 	t.Run("skip false key value validators", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KStructInvalid", Skip.When(false)),
-		}
+		kr := Key("KStructInvalid", Skip.When(false))
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		wMsg := "KStructInvalid.FStr: must be 'abc' (ECMustAbc)"
+		assert.SameType(t, &FieldsError{}, err)
+		wMsg := "KStructInvalid.FStr: must be equal to 'abc' (ECNotEqual)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
 	t.Run("required key", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KStrEmpty", Required),
-		}
+		kr := Key("KStrEmpty", Required)
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
 		xrrtest.AssertEqual(t, "KStrEmpty: cannot be blank (ECRequired)", err)
 	})
 
 	t.Run("not nil key", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key("KpStrNil", NotNil),
-		}
+		kr := Key("KpStrNil", NotNil)
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
 		xrrtest.AssertEqual(t, "KpStrNil: is required (ECReqNotNil)", err)
 	})
 
 	t.Run("int keys", func(t *testing.T) {
 		// --- Given ---
-		rs := []*KeyRules{
-			Key(1, StrRule("xyz")),
-			Key(3, StrRule("abc")),
-		}
+		kr0 := Key(1, Equal("xyz"))
+		kr1 := Key(3, Equal("abc"))
 
 		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMapInt)
+		err := Map(kr0, kr1).AllowUnknown().Validate(TMapInt)
 
 		// --- Then ---
-		exp := "" +
-			"1: must be 'xyz' (ECMustXyz); " +
-			"3: must be 'abc' (ECMustAbc)"
-		xrrtest.AssertFieldsEqual(t, exp, err)
-	})
-
-	t.Run("internal error", func(t *testing.T) {
-		// --- Given ---
-		rs := []*KeyRules{
-			Key("KStrAbc", InternalErrRule),
-		}
-
-		// --- When ---
-		err := Map(rs...).AllowUnknown().Validate(TMap)
-
-		// --- Then ---
-		xrrtest.AssertEqual(t, "KStrAbc: internal error (ECInternal)", err)
-	})
-
-	t.Run("dont allow unknown keys", func(t *testing.T) {
-		// --- Given ---
-		rs := []*KeyRules{
-			Key("KStrAbc", StrRule("abc")),
-		}
-
-		// --- When ---
-		err := Map(rs...).Validate(TMap)
-
-		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
 		want := "" +
-			"KStrEmpty: key not expected (ECMapKeyUnexpected); " +
-			"KStrXyz: key not expected (ECMapKeyUnexpected); " +
-			"KStructInvalid: key not expected (ECMapKeyUnexpected); " +
-			"KStructValid: key not expected (ECMapKeyUnexpected); " +
-			"KmStringString: key not expected (ECMapKeyUnexpected); " +
-			"KpStr: key not expected (ECMapKeyUnexpected); " +
-			"KpStrNil: key not expected (ECMapKeyUnexpected); " +
-			"KpStructNil: key not expected (ECMapKeyUnexpected); " +
-			"KsString: key not expected (ECMapKeyUnexpected)"
-		xrrtest.AssertFieldsEqual(t, want, err)
+			"1: must be equal to 'xyz' (ECNotEqual); " +
+			"3: must be equal to 'abc' (ECNotEqual)"
+		xrrtest.AssertEqual(t, want, err)
+	})
+
+	t.Run("error", func(t *testing.T) {
+		// --- Given ---
+		kr := Key("KStrAbc", Fail("test err", "ECTst"))
+
+		// --- When ---
+		err := Map(kr).AllowUnknown().Validate(TMap)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		xrrtest.AssertEqual(t, "KStrAbc: test err (ECTst)", err)
+	})
+
+	t.Run("do not allow unknown keys", func(t *testing.T) {
+		// --- Given ---
+		kr := Key("KStrAbc", Equal("abc"))
+
+		// --- When ---
+		err := Map(kr).Validate(TMap)
+
+		// --- Then ---
+		assert.SameType(t, &FieldsError{}, err)
+		want := "" +
+			"KStrEmpty: unexpected key (ECMapKeyUnexpected); " +
+			"KStrXyz: unexpected key (ECMapKeyUnexpected); " +
+			"KStructInvalid: unexpected key (ECMapKeyUnexpected); " +
+			"KStructValid: unexpected key (ECMapKeyUnexpected); " +
+			"KmStringString: unexpected key (ECMapKeyUnexpected); " +
+			"KpStr: unexpected key (ECMapKeyUnexpected); " +
+			"KpStrNil: unexpected key (ECMapKeyUnexpected); " +
+			"KpStructNil: unexpected key (ECMapKeyUnexpected); " +
+			"KsString: unexpected key (ECMapKeyUnexpected)"
+		xrrtest.AssertEqual(t, want, err)
 	})
 }
 
-func Test_MapRule_IsOptional(t *testing.T) {
+func Test_MapRule_When(t *testing.T) {
 	// --- Given ---
-	rs := []*KeyRules{
-		Key(1, StrRule("xyz")).Optional(),
-		Key(3, StrRule("abc")),
-	}
-	mr := Map(rs...)
+	r := MapRule{}
+
+	// --- When ---
+	have := r.When(true)
 
 	// --- Then ---
-	assert.True(t, mr.IsOptional(1))
-	assert.True(t, mr.IsOptional(2))
-	assert.False(t, mr.IsOptional(3))
-	assert.True(t, mr.IsOptional("abc"))
-	assert.True(t, mr.IsOptional(nil))
+	assert.True(t, have.condition)
 }
 
-func Test_MapRule_IsDefined(t *testing.T) {
-	// --- Given ---
-	rs := []*KeyRules{
-		Key(1, StrRule("xyz")).Optional(),
-		Key(3, StrRule("abc")),
-	}
-	mr := Map(rs...)
+func Test_MapRule_Spec(t *testing.T) {
+	t.Run("without rules nor allowUnknown", func(t *testing.T) {
+		// --- Given ---
+		r := Map()
 
-	// --- Then ---
-	assert.True(t, mr.IsDefined(1))
-	assert.False(t, mr.IsDefined(2))
-	assert.False(t, mr.IsDefined("abc"))
-	assert.False(t, mr.IsDefined(nil))
-}
-
-func Test_KeyRules(t *testing.T) {
-	t.Run("simple", func(t *testing.T) {
 		// --- When ---
-		kr := Key(1, Noop)
+		have, err := r.Spec()
 
 		// --- Then ---
-		assert.Equal(t, 1, kr.key)
-		assert.False(t, kr.optional)
-		assert.Len(t, 1, kr.rules)
+		assert.NoError(t, err)
+		assert.Equal(t, MapRuleName, have.Name)
+		assert.Nil(t, have.Args)
+	})
+
+	t.Run("with rules", func(t *testing.T) {
+		// --- Given ---
+		r := Map(
+			Key(1, Min(42)),
+			Key(3, Max(44)),
+		)
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, MapRuleName, have.Name)
+		assert.Len(t, 1, have.Args)
+		wRules := []*spec.Spec{
+			must.Value(Key(1, Min(42)).Spec()),
+			must.Value(Key(3, Max(44)).Spec()),
+		}
+		hRules, _ := assert.HasKey(t, spec.ArgSpecs, have.Args)
+		assert.Equal(t, wRules, hRules)
+	})
+
+	t.Run("without rules", func(t *testing.T) {
+		// --- Given ---
+		r := Map().AllowUnknown()
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, MapRuleName, have.Name)
+		assert.Len(t, 1, have.Args)
+		assert.HasKeyValue(t, ArgAllowUnk, true, have.Args)
+	})
+}
+
+func Test_MapRuleFromSpec(t *testing.T) {
+	t.Run("error - not map rule spec", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec("bad-name")
+
+		// --- When ---
+		have, err := MapRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, `map-rule: invalid spec name: "bad-name"`, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("rule without keys", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(MapRuleName)
+
+		// --- When ---
+		have, err := MapRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.SameType(t, MapRule{}, have)
+		wRule := Map()
+		assert.Equal(t, have, wRule)
+	})
+
+	t.Run("error - specs argument not spec instances", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(MapRuleName).SetArg(spec.ArgSpecs, "bad-type")
+
+		// --- When ---
+		have, err := MapRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := `map-rule: spec argument "specs" must be []*spec.Spec, got string`
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("error - key spec error", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(MapRuleName).
+			SetArg(spec.ArgSpecs, []*spec.Spec{spec.NewSpec("bad-key-spec")})
+
+		// --- When ---
+		have, err := MapRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := `map-rule: key-spec[0]: map-key: invalid spec name: "bad-key-spec"`
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("rule with keys", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(MapRuleName).
+			SetArg(
+				spec.ArgSpecs,
+				[]*spec.Spec{
+					spec.NewSpec(MapKeyName).
+						SetArg(spec.ArgValue, 1).
+						SetArg(spec.ArgTypes, []Rule{Min(1), Max(11)}),
+					spec.NewSpec(MapKeyName).
+						SetArg(spec.ArgValue, 3).
+						SetArg(spec.ArgTypes, []Rule{Min(3), Max(33)}),
+				},
+			)
+
+		// --- When ---
+		have, err := MapRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.SameType(t, MapRule{}, have)
+		wRule := Map(
+			Key(1, Min(1), Max(11)),
+			Key(3, Min(3), Max(33)),
+		)
+		assert.Equal(t, have, wRule)
+	})
+
+	t.Run("error - the argument allowing unknown not bool", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(MapRuleName).
+			SetArg(ArgAllowUnk, "bad-value")
+
+		// --- When ---
+		have, err := MapRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := `map-rule: spec argument "allow_unknown" must be bool, got string`
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("rule with argument allow unknown", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(MapRuleName).SetArg(ArgAllowUnk, true)
+
+		// --- When ---
+		have, err := MapRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.SameType(t, MapRule{}, have)
+		wRule := Map().AllowUnknown()
+		assert.Equal(t, have, wRule)
+	})
+}
+
+func Test_Key(t *testing.T) {
+	t.Run("with rules", func(t *testing.T) {
+		// --- When ---
+		have := Key(1, Noop)
+
+		// --- Then ---
+		want := MapKey{
+			key:      1,
+			optional: false,
+			rules:    []Rule{Noop},
+		}
+		assert.Equal(t, want, have)
+	})
+
+	t.Run("without rules", func(t *testing.T) {
+		// --- When ---
+		have := Key(1)
+
+		// --- Then ---
+		want := MapKey{
+			key:      1,
+			optional: false,
+			rules:    nil,
+		}
+		assert.Equal(t, want, have)
+	})
+}
+
+func Test_MapKey_Optional(t *testing.T) {
+	// --- Given ---
+	r := MapKey{}
+
+	// --- When ---
+	have := r.Optional()
+
+	// --- Then ---
+	assert.True(t, have.optional)
+}
+
+func Test_MapKey_When(t *testing.T) {
+	t.Run("true", func(t *testing.T) {
+		// --- Given ---
+		r := MapKey{}
+
+		// --- When ---
+		have := r.When(true)
+
+		// --- Then ---
+		assert.False(t, have.optional)
+	})
+
+	t.Run("false", func(t *testing.T) {
+		// --- Given ---
+		r := MapKey{}
+
+		// --- When ---
+		have := r.When(false)
+
+		// --- Then ---
+		assert.True(t, have.optional)
+	})
+}
+
+func Test_MapKey_KeyString(t *testing.T) {
+	t.Run("nil", func(t *testing.T) {
+		// --- Given ---
+		r := Key(nil)
+
+		// --- When ---
+		have := r.KeyString()
+
+		// --- Then ---
+		assert.Equal(t, "<nil>", have)
+	})
+
+	t.Run("string", func(t *testing.T) {
+		// --- Given ---
+		r := Key("abc")
+
+		// --- When ---
+		have := r.KeyString()
+
+		// --- Then ---
+		assert.Equal(t, "abc", have)
+	})
+
+	t.Run("int", func(t *testing.T) {
+		// --- Given ---
+		r := Key(42)
+
+		// --- When ---
+		have := r.KeyString()
+
+		// --- Then ---
+		assert.Equal(t, "42", have)
+	})
+}
+
+func Test_MapKey_Spec(t *testing.T) {
+	t.Run("with rules", func(t *testing.T) {
+		// --- Given ---
+		r := Key(1, Min(42), Noop, Min(44))
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, MapKeyName, have.Name)
+		assert.Len(t, 2, have.Args)
+		assert.HasKeyValue(t, spec.ArgValue, 1, have.Args)
+		wSpecs := []Rule{Min(42), Noop, Min(44)}
+		hSpecs, _ := assert.HasKey(t, spec.ArgTypes, have.Args)
+		assert.Equal(t, wSpecs, hSpecs)
+	})
+
+	t.Run("without rules", func(t *testing.T) {
+		// --- Given ---
+		r := Key(1)
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, MapKeyName, have.Name)
+		assert.Len(t, 1, have.Args)
+		assert.HasKeyValue(t, spec.ArgValue, 1, have.Args)
 	})
 
 	t.Run("optional", func(t *testing.T) {
+		// --- Given ---
+		r := Key(1).Optional()
+
 		// --- When ---
-		kr := Key(1, Noop).Optional()
+		have, err := r.Spec()
 
 		// --- Then ---
-		assert.True(t, kr.optional)
+		assert.NoError(t, err)
+		assert.Equal(t, MapKeyName, have.Name)
+		assert.Len(t, 2, have.Args)
+		assert.HasKeyValue(t, spec.ArgValue, 1, have.Args)
+		assert.HasKeyValue(t, ArgOptional, true, have.Args)
 	})
+}
 
-	t.Run("required when true", func(t *testing.T) {
+func Test_MapKeyFromSpec(t *testing.T) {
+	t.Run("error - not key rule spec", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec("bad-name")
+
 		// --- When ---
-		kr := Key(1, Noop).RequiredWhen(true)
+		have, err := MapKeyFromSpec(spc)
 
 		// --- Then ---
-		assert.False(t, kr.optional)
+		assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, `map-key: invalid spec name: "bad-name"`, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
 	})
 
-	t.Run("required when false", func(t *testing.T) {
+	t.Run("error - want argument is required", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(MapKeyName)
+
 		// --- When ---
-		kr := Key(1, Noop).RequiredWhen(false)
+		have, err := MapKeyFromSpec(spc)
 
 		// --- Then ---
-		assert.True(t, kr.optional)
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := "map-key: spec missing required argument: value"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
 	})
+
+	t.Run("error - types argument is required", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(MapKeyName).SetArg(spec.ArgValue, 1)
+
+		// --- When ---
+		have, err := MapKeyFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := "map-key: spec missing required argument: types"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("success - int key", func(t *testing.T) {
+		// --- Given ---
+		rules := []Rule{Min(42), Max(44)}
+		spc := spec.NewSpec(MapKeyName).
+			SetArg(spec.ArgValue, 1).
+			SetArg(spec.ArgTypes, rules)
+
+		// --- When ---
+		have, err := MapKeyFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		rule := Key(1, Min(42), Max(44))
+		assert.Equal(t, rule, have)
+	})
+
+	t.Run("success - uint32 key", func(t *testing.T) {
+		// --- Given ---
+		rules := []Rule{Min(uint8(42)), Max(uint8(44))}
+		spc := spec.NewSpec(MapKeyName).
+			SetArg(spec.ArgValue, uint32(1)).
+			SetArg(spec.ArgTypes, rules)
+
+		// --- When ---
+		have, err := MapKeyFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		rule := Key(uint32(1), Min(uint8(42)), Max(uint8(44)))
+		assert.Equal(t, rule, have)
+	})
+
+	t.Run("success - optional", func(t *testing.T) {
+		// --- Given ---
+		rules := []Rule{Min(42), Max(44)}
+		spc := spec.NewSpec(MapKeyName).
+			SetArg(spec.ArgValue, 1).
+			SetArg(spec.ArgTypes, rules).
+			SetArg(ArgOptional, true)
+
+		// --- When ---
+		have, err := MapKeyFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		rule := Key(1, Min(42), Max(44)).Optional()
+		assert.Equal(t, rule, have)
+	})
+
+	t.Run("error - argument optional is not bool", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(MapKeyName).
+			SetArg(spec.ArgValue, 1).
+			SetArg(spec.ArgTypes, []Rule{Min(42), Max(44)}).
+			SetArg(ArgOptional, "true")
+
+		// --- When ---
+		have, err := MapKeyFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := `map-key: spec argument "optional" must be bool, got string`
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+}
+
+func Test_MapRule_Spec_MapRuleFromSpec_round_trip(t *testing.T) {
+	// --- Given ---
+	fn := RuleFunc(func(v any) error { return nil })
+	want := Map(
+		Key("A", Min(42), Required, By(fn)),
+	)
+	spc := must.Value(want.Spec())
+
+	// --- When ---
+	have, err := MapRuleFromSpec(spc)
+
+	// --- Then ---
+	assert.NoError(t, err)
+	assert.Equal(t, want, have)
 }

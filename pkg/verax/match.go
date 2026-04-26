@@ -1,89 +1,155 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
 
 import (
+	"fmt"
 	"regexp"
 
-	"github.com/ctx42/xrr/pkg/xrr"
+	"github.com/ctx42/verax/pkg/spec"
 )
+
+// MatchRuleName represents [MatchRule] name.
+const MatchRuleName = "match-rule"
 
 // ECInvMatch represents error code for an invalid regexp match.
 const ECInvMatch = "ECInvMatch"
 
-// ErrInvMatch is the error that returns in case of invalid format.
-var ErrInvMatch = xrr.New("must be in a valid format", ECInvMatch)
+// [MatchRule] rule error messages.
+var (
+	// msgInvMatch is the error message when a value does not match the regexp.
+	msgInvMatch = "must be in a valid format value"
+)
 
-// Match returns a validation rule that checks if a value matches the specified
+// Match returns a validation rule that conditions if a value matches the specified
 // regular expression. This rule should only be used for validating strings and
 // byte slices, or a validation error will be reported. An empty value is
 // considered valid. Use the Required rule to make sure a value is not empty.
-func Match(re *regexp.Regexp) MatchRule {
-	return MatchRule{
-		rx:        re,
+func Match(want *regexp.Regexp) MatchRule {
+	r := MatchRule{
+		want:      want,
 		condition: true,
-		err:       ErrInvMatch,
+		msg:       msgInvMatch,
+		code:      ECInvMatch,
 	}
+	if r.want == nil {
+		msg := fmt.Sprintf("%s: nil regexp", MatchRuleName)
+		r.sticky = NewInternalError(msg, ECInternal)
+	}
+	return r
 }
 
-// Compile time checks.
+// Compile time conditions.
 var (
-	_ Customizer[MatchRule]  = MatchRule{}
-	_ Conditioner[MatchRule] = MatchRule{}
+	_ customizer[MatchRule]  = MatchRule{}
+	_ conditioner[MatchRule] = MatchRule{}
+	_ Rule                   = MatchRule{}
 )
 
-// MatchRule is a validation rule that checks if a value matches the specified
+// MatchRule is a validation rule that conditions if a value matches the specified
 // regular expression.
 type MatchRule struct {
-	rx        *regexp.Regexp
-	condition bool
-	err       error
+	want      *regexp.Regexp // Regexp a value must match.
+	condition bool           // Run validation only when true.
+	msg       string         // Validation error message rendered from template.
+	code      string         // Validation error code.
+	sticky    error          // Sticky error.
+	flags     uint8          // Customizations.
 }
 
-// Validate checks if the given value is valid or not.
-func (r MatchRule) Validate(v any) error {
+func (r MatchRule) Validate(have any) error {
+	if r.sticky != nil {
+		return r.sticky
+	}
 	if !r.condition {
 		return nil
 	}
-	if isNil, _ := IsNil(v); isNil {
+	if IsEmpty(have) {
 		return nil
 	}
 
-	if IsEmpty(v) {
-		return nil
-	}
-
-	if r.rx == nil {
-		return ErrInvSetup
-	}
-
-	val := Indirect(v)
+	val := Indirect(have)
 	isString, str, isBytes, bs := StringOrBytes(val)
-	if isString && (str == "" || r.rx.MatchString(str)) {
+	if isString && (str == "" || r.want.MatchString(str)) {
 		return nil
-	} else if isBytes && (len(bs) == 0 || r.rx.Match(bs)) {
+	} else if isBytes && (len(bs) == 0 || r.want.Match(bs)) {
 		return nil
 	}
-	return r.err
+	return NewError(r.msg, r.code)
 }
 
-// When specifies a condition that determines whether validation should be
-// performed. If the condition is false, validation is skipped, and no errors
-// are reported.
 func (r MatchRule) When(condition bool) MatchRule {
 	r.condition = condition
 	return r
 }
 
-// Code sets the error code for the rule.
-func (r MatchRule) Code(code string) MatchRule {
-	r.err = setCode(r.err, code)
+func (r MatchRule) Message(msg string) MatchRule {
+	if msg != "" {
+		r.msg = msg
+		r.flags |= flgCustomMsg
+	}
 	return r
 }
 
-// Error sets custom error for the rule.
-func (r MatchRule) Error(err error) MatchRule {
-	r.err = err
+func (r MatchRule) Code(code string) MatchRule {
+	if code != "" {
+		r.code = code
+		r.flags |= flgCustomCode
+	}
 	return r
+}
+
+func (r MatchRule) Spec() (*spec.Spec, error) {
+	if r.sticky != nil {
+		return nil, r.sticky
+	}
+	spc := spec.NewSpec(MatchRuleName).SetArg(spec.ArgValue, r.want.String())
+	if r.flags&flgCustomMsg != 0 {
+		spc.SetArg(ArgErrMsg, r.msg)
+	}
+	if r.flags&flgCustomCode != 0 {
+		spc.SetArg(ArgErrCode, r.code)
+	}
+	return spc, nil
+}
+
+// MatchRuleFromSpec creates a new instance of [MatchRule] from the [spec.Spec].
+func MatchRuleFromSpec(spc *spec.Spec) (MatchRule, error) {
+	if spc.Name != MatchRuleName {
+		msg := fmt.Sprintf("%s: invalid spec name: %q", MatchRuleName, spc.Name)
+		return MatchRule{}, NewInternalError(msg, spec.ECInvSpec)
+	}
+	rxs, err := getArg[string](spc.Args, spec.ArgValue, MatchRuleName)
+	if err != nil {
+		return MatchRule{}, err
+	}
+	rx, err := regexp.Compile(rxs)
+	if err != nil {
+		msg := fmt.Sprintf("%s: invalid regexp: %#q", MatchRuleName, rxs)
+		return MatchRule{}, NewInternalError(msg, spec.ECInvSpec)
+	}
+	rule := Match(rx)
+
+	if spc.ArgExist(ArgErrMsg) {
+		msg, err := getArg[string](spc.Args, ArgErrMsg, MatchRuleName)
+		if err != nil {
+			return MatchRule{}, err
+		}
+		if msg != "" {
+			rule = rule.Message(msg)
+		}
+	}
+
+	if spc.ArgExist(ArgErrCode) {
+		code, err := getArg[string](spc.Args, ArgErrCode, MatchRuleName)
+		if err != nil {
+			return MatchRule{}, err
+		}
+		if code != "" {
+			rule = rule.Code(code)
+		}
+	}
+
+	return rule, nil
 }

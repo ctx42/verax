@@ -1,17 +1,42 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
 
+import (
+	"fmt"
+
+	"github.com/ctx42/verax/pkg/spec"
+)
+
+// SkipRuleName represents [SkipRule] name.
+const SkipRuleName = "skip-rule"
+
 // Skip is a special validation rule that indicates all rules following it
 // should be skipped.
-var Skip = skipRule(true)
+var Skip = SkipRule(true)
 
-type skipRule bool
+// Compile time checks.
+var (
+	_ conditioner[SkipRule] = SkipRule(false)
+	_ Rule                  = SkipRule(false)
+)
 
-func (_ skipRule) Validate(_ any) error { return nil }
+// SkipRule represents a validation rule that skips later rules.
+type SkipRule bool
 
-// When specifies a condition that determines whether validation should be
-// performed. If the condition is false, validation is skipped, and no errors
-// are reported.
-func (_ skipRule) When(condition bool) skipRule { return skipRule(condition) }
+func (_ SkipRule) Validate(_ any) error         { return nil }
+func (_ SkipRule) When(condition bool) SkipRule { return SkipRule(condition) }
+
+func (_ SkipRule) Spec() (*spec.Spec, error) {
+	return spec.NewSpec(SkipRuleName), nil
+}
+
+// SkipRuleFromSpec creates a new instance of [SkipRule] from the [spec.Spec].
+func SkipRuleFromSpec(spc *spec.Spec) (SkipRule, error) {
+	if spc.Name != SkipRuleName {
+		msg := fmt.Sprintf("%s: invalid spec name: %q", SkipRuleName, spc.Name)
+		return false, NewInternalError(msg, spec.ECInvSpec)
+	}
+	return Skip, nil
+}

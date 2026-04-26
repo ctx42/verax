@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
@@ -6,7 +6,6 @@ package verax
 import (
 	"database/sql"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -19,8 +18,8 @@ func Test_EnsureString_ok_tabular(t *testing.T) {
 	tt := []struct {
 		testN string
 
-		val any
-		exp string
+		val  any
+		want string
 	}{
 		{"string", "abc", "abc"},
 		{"byte slice", []byte("abc"), "abc"},
@@ -29,11 +28,11 @@ func Test_EnsureString_ok_tabular(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
-			got, err := EnsureString(tc.val)
+			have, err := EnsureString(tc.val)
 
 			// --- Then ---
 			assert.NoError(t, err)
-			assert.Equal(t, tc.exp, got)
+			assert.Equal(t, tc.want, have)
 		})
 	}
 }
@@ -46,7 +45,7 @@ func Test_EnsureString_error_tabular(t *testing.T) {
 		testN string
 
 		val  any
-		exp  string
+		want string
 		err  string
 		code string
 	}{
@@ -70,12 +69,12 @@ func Test_EnsureString_error_tabular(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
-			got, err := EnsureString(tc.val)
+			have, err := EnsureString(tc.val)
 
 			// --- Then ---
 			assert.ErrorEqual(t, tc.err, err)
 			xrrtest.AssertCode(t, tc.code, err)
-			assert.Empty(t, got)
+			assert.Empty(t, have)
 		})
 	}
 }
@@ -145,11 +144,11 @@ func Test_LengthOfValue_ok_tabular(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
-			got, err := LengthOfValue(tc.val)
+			have, err := LengthOfValue(tc.val)
 
 			// --- Then ---
 			assert.NoError(t, err)
-			assert.Equal(t, tc.len, got)
+			assert.Equal(t, tc.len, have)
 		})
 	}
 }
@@ -171,198 +170,35 @@ func Test_LengthOfValue_error_tabular(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
-			got, err := LengthOfValue(tc.val)
+			have, err := LengthOfValue(tc.val)
 
 			// --- Then ---
 			assert.ErrorEqual(t, tc.err, err)
 			xrrtest.AssertCode(t, tc.code, err)
-			assert.Equal(t, 0, got)
+			assert.Equal(t, 0, have)
 		})
 	}
 }
 
-func Test_ToInt_ok_tabular(t *testing.T) {
-	tt := []struct {
-		testN string
-
-		val any
-		exp int64
-	}{
-		{"int", 1, 1},
-		{"int8", int8(1), 1},
-		{"int16", int16(1), 1},
-		{"int32", int32(1), 1},
-		{"int64", int64(1), 1},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
+func Test_IsEmpty_tabular_ZENValues(t *testing.T) {
+	for _, tc := range testcases.ZENValues() {
+		if tc.Desc == "false boolean" {
+			continue // In verax we treat false as not empty.
+		}
+		t.Run("IsEmpty "+tc.Desc, func(t *testing.T) {
 			// --- When ---
-			got, err := ToInt(tc.val)
+			have := IsEmpty(tc.Val)
 
 			// --- Then ---
-			assert.NoError(t, err)
-			assert.Equal(t, tc.exp, got)
+			assert.Equal(t, tc.IsEmpty, have)
 		})
-	}
-}
 
-func Test_ToInt_error_tabular(t *testing.T) {
-	var i32 int
-
-	tt := []struct {
-		testN string
-
-		val  any
-		err  string
-		code string
-	}{
-		{"pointer to int", &i32, "cannot convert *int to int64", ECInvType},
-		{"pointer to uint", uint(1), "cannot convert uint to int64", ECInvType},
-		{"float64", float64(1), "cannot convert float64 to int64", ECInvType},
-		{"string", "abc", "cannot convert string to int64", ECInvType},
-		{"slice", []int{1, 2}, "cannot convert []int to int64", ECInvType},
-		{
-			"map",
-			map[string]int{"A": 1},
-			"cannot convert map[string]int to int64",
-			ECInvType,
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
+		t.Run("checkNilAndEmpty IsEmpty "+tc.Desc, func(t *testing.T) {
 			// --- When ---
-			got, err := ToInt(tc.val)
+			_, have := checkNilAndEmpty(tc.Val)
 
 			// --- Then ---
-			assert.ErrorEqual(t, tc.err, err)
-			assert.Equal(t, int64(0), got)
-			xrrtest.AssertCode(t, tc.code, err)
-		})
-	}
-}
-
-func Test_ToUint_ok_tabular(t *testing.T) {
-	tt := []struct {
-		testN string
-
-		val any
-		exp uint64
-	}{
-		{"uint", uint(1), 1},
-		{"uint8", uint8(1), 1},
-		{"uint16", uint16(1), 1},
-		{"uint32", uint32(1), 1},
-		{"uint64", uint64(1), 1},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- When ---
-			got, err := ToUint(tc.val)
-
-			// --- Then ---
-			assert.NoError(t, err)
-			assert.Equal(t, tc.exp, got)
-		})
-	}
-}
-
-func Test_ToUint_error_tabular(t *testing.T) {
-	var i32 int
-	var u32 uint
-
-	tt := []struct {
-		testN string
-
-		val  any
-		err  string
-		code string
-	}{
-		{"int", 1, "cannot convert int to uint64", ECInvType},
-		{"pointer to int", &i32, "cannot convert *int to uint64", ECInvType},
-		{"pointer to uint", &u32, "cannot convert *uint to uint64", ECInvType},
-		{"float64", float64(1), "cannot convert float64 to uint64", ECInvType},
-		{"string", "abc", "cannot convert string to uint64", ECInvType},
-		{"slice", []int{1, 2}, "cannot convert []int to uint64", ECInvType},
-		{
-			"map",
-			map[string]int{"A": 1},
-			"cannot convert map[string]int to uint64", ECInvType,
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- When ---
-			got, err := ToUint(tc.val)
-
-			// --- Then ---
-			assert.ErrorEqual(t, tc.err, err)
-			assert.Equal(t, uint64(0), got)
-			xrrtest.AssertCode(t, tc.code, err)
-		})
-	}
-}
-
-func Test_ToFloat_ok_tabular(t *testing.T) {
-	tt := []struct {
-		testN string
-
-		val any
-		exp float64
-	}{
-		{"float32", float32(1), 1},
-		{"float64", float64(1), 1},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- When ---
-			got, err := ToFloat(tc.val)
-
-			// --- Then ---
-			assert.NoError(t, err)
-			assert.Equal(t, tc.exp, got)
-		})
-	}
-}
-
-func Test_ToFloat_error_tabular(t *testing.T) {
-	var i32 int
-	var u32 uint
-
-	tt := []struct {
-		testN string
-
-		val  any
-		err  string
-		code string
-	}{
-		{"int", 1, "cannot convert int to float64", ECInvType},
-		{"uint", uint(1), "cannot convert uint to float64", ECInvType},
-		{"pointer to int", &i32, "cannot convert *int to float64", ECInvType},
-		{"pointer to uint", &u32, "cannot convert *uint to float64", ECInvType},
-		{"string", "abc", "cannot convert string to float64", ECInvType},
-		{"slice", []int{1, 2}, "cannot convert []int to float64", ECInvType},
-		{
-			"map",
-			map[string]int{"A": 1},
-			"cannot convert map[string]int to float64",
-			ECInvType,
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- When ---
-			got, err := ToFloat(tc.val)
-
-			// --- Then ---
-			assert.ErrorEqual(t, tc.err, err)
-			xrrtest.AssertCode(t, tc.code, err)
-			assert.Equal(t, 0.0, got)
+			assert.Equal(t, tc.IsEmpty, have)
 		})
 	}
 }
@@ -374,6 +210,10 @@ func Test_IsEmpty_tabular(t *testing.T) {
 	var str1 = "a"
 	var str2 *string
 	var str3 = ""
+	var nilChan chan int
+	emptyChan := make(chan int)
+	nonEmptyChan := make(chan int, 1)
+	nonEmptyChan <- 1
 
 	s0 := struct{}{}
 	tim0 := time.Now()
@@ -404,7 +244,7 @@ func Test_IsEmpty_tabular(t *testing.T) {
 		{"map", map[string]int{"a": 1}, false},
 
 		// bool
-		{"bool false is empty", false, true},
+		{"bool false is not empty", false, false},
 		{"bool true is not empty", true, false},
 
 		// int
@@ -457,12 +297,25 @@ func Test_IsEmpty_tabular(t *testing.T) {
 		{"valuer invalid", sql.NullInt64{Int64: 0, Valid: false}, true},
 		{"valuer zero value", sql.NullInt64{Int64: 0, Valid: true}, true},
 		{"valuer value", sql.NullInt64{Int64: 1, Valid: true}, false},
+
+		// chan
+		{"chan empty", emptyChan, true},
+		{"chan not empty", nonEmptyChan, false},
+		{"chan nil", nilChan, true},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
 			have := IsEmpty(tc.val)
+
+			// --- Then ---
+			assert.Equal(t, tc.empty, have)
+		})
+
+		t.Run("checkNilAndEmpty "+tc.testN, func(t *testing.T) {
+			// --- When ---
+			_, have := checkNilAndEmpty(tc.val)
 
 			// --- Then ---
 			assert.Equal(t, tc.empty, have)
@@ -474,11 +327,18 @@ func Test_IsNil_tabular_ZENValues(t *testing.T) {
 	for _, tc := range testcases.ZENValues() {
 		t.Run("Nil "+tc.Desc, func(t *testing.T) {
 			// --- When ---
-			hNil, hWrapped := IsNil(tc.Val)
+			have := IsNil(tc.Val)
 
 			// --- Then ---
-			assert.Equal(t, tc.IsNil, hNil)
-			assert.Equal(t, tc.IsWrappedNil, hWrapped)
+			assert.Equal(t, tc.IsNil, have)
+		})
+
+		t.Run("checkNilAndEmpty Nil "+tc.Desc, func(t *testing.T) {
+			// --- When ---
+			have, _ := checkNilAndEmpty(tc.Val)
+
+			// --- Then ---
+			assert.Equal(t, tc.IsNil, have)
 		})
 	}
 }
@@ -550,8 +410,8 @@ func Test_mapErrKey_tabular(t *testing.T) {
 	tt := []struct {
 		testN string
 
-		val reflect.Value
-		exp string
+		val  reflect.Value
+		want string
 	}{
 		{"int", reflect.ValueOf(1), "1"},
 		{"uint", reflect.ValueOf(uint(2)), "2"},
@@ -582,29 +442,34 @@ func Test_mapErrKey_tabular(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
-			assert.Equal(t, tc.exp, mapErrKey(tc.val))
+			assert.Equal(t, tc.want, mapErrKey(tc.val))
 		})
 	}
 }
 
-func Test_emtpl(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		// --- Given ---
-		tplS := " {{.value}} "
+func Test_formatValue_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
 
-		// --- When ---
-		tpl := emtpl(tplS)
+		value any
+		want  any
+	}{
+		{"nil", nil, "nil"},
+		{"int", 42, 42},
+		{
+			"time",
+			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
+			"2000-01-02T03:04:05Z",
+		},
+	}
 
-		// --- Then ---
-		data := map[string]string{
-			"value": "abc",
-		}
-		w := &strings.Builder{}
-		assert.NoError(t, tpl.Execute(w, data))
-		assert.Equal(t, " abc ", w.String())
-	})
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			have := formatValue(tc.value)
 
-	t.Run("panics", func(t *testing.T) {
-		assert.Panic(t, func() { emtpl(" {{.value} ") })
-	})
+			// --- Then ---
+			assert.Equal(t, tc.want, have)
+		})
+	}
 }

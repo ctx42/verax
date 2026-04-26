@@ -1,77 +1,163 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
 
-import "github.com/ctx42/xrr/pkg/xrr"
+import (
+	"fmt"
 
-// Absence error codes.
+	"github.com/ctx42/verax/pkg/spec"
+)
+
+// AbsentRuleName represents [AbsentRule] name.
+const AbsentRuleName = "absent-rule"
+
+// [AbsentRule] error codes.
 const (
-	// ECReqNil represents error code for not nil value.
+	// ECReqNil represents error code when a value must be nil but is not.
 	ECReqNil = "ECReqNil"
 
-	// ECReqEmpty represents error code for not empty value.
+	// ECReqEmpty represents error code when a value must be empty but is not.
 	ECReqEmpty = "ECReqEmpty"
 )
 
-// Absence errors.
+// [AbsentRule] rule error messages.
 var (
-	// ErrReqNil is the error returned when a value is not nil.
-	ErrReqNil = xrr.New("must be blank", ECReqNil)
+	// msgReqNil is the error message when a value is not nil.
+	msgReqNil = "must be blank"
 
-	// ErrReqEmpty is returned when a not nil value is not empty.
-	ErrReqEmpty = xrr.New("must be blank", ECReqEmpty)
+	// msgReqEmpty is the error message when a not nil value is not empty.
+	msgReqEmpty = "must be blank"
 )
 
-// Absence rules.
+// Rules based on [AbsentRule].
 var (
-	// Nil checks if a value is nil.
-	Nil = absentRule{condition: true, skipNil: false, err: ErrReqNil}
+	// Nil conditions if a value is nil.
+	Nil = AbsentRule{
+		condition: true,
+		mode:      "nil",
+		msg:       msgReqNil,
+		code:      ECReqNil,
+	}
 
-	// Empty checks if a not nil value is empty.
-	Empty = absentRule{condition: true, skipNil: true, err: ErrReqEmpty}
+	// Empty conditions if a not nil value is empty.
+	Empty = AbsentRule{
+		condition: true,
+		mode:      "empty",
+		msg:       msgReqEmpty,
+		code:      ECReqEmpty,
+	}
 )
 
-// Compile time checks.
+// Compile time conditions.
 var (
-	_ Customizer[absentRule]  = absentRule{}
-	_ Conditioner[absentRule] = absentRule{}
+	_ customizer[AbsentRule]  = AbsentRule{}
+	_ conditioner[AbsentRule] = AbsentRule{}
+	_ Rule                    = AbsentRule{}
 )
 
-type absentRule struct {
-	condition bool  // Run validation only when true.
-	skipNil   bool  // When true, the nil value is considered valid.
-	err       error // Validation error.
+// AbsentRule conditions if a value is absent.
+type AbsentRule struct {
+	mode      string // Mode of operation.
+	condition bool   // Run validation only when true.
+	msg       string // Validation error message.
+	code      string // Validation error code.
+	flags     uint8  // Customizations.
 }
 
-// Validate checks if the given value is valid or not.
-func (r absentRule) Validate(v any) error {
+func (r AbsentRule) Validate(have any) error {
 	if !r.condition {
 		return nil
 	}
-	isNil, _ := IsNil(v)
-	if !isNil && (!r.skipNil || !IsEmpty(v)) {
-		return r.err
+	isNil := IsNil(have)
+	if !isNil && (r.mode == "nil" || !isEmptyValue(have)) {
+		return NewError(r.msg, r.code)
 	}
 	return nil
 }
 
-// When specifies a condition that determines whether validation should be
-// performed. If the condition is false, validation is skipped, and no errors
-// are reported.
-func (r absentRule) When(condition bool) absentRule {
+func (r AbsentRule) When(condition bool) AbsentRule {
 	r.condition = condition
 	return r
 }
 
-// Code sets the error code for the rule.
-func (r absentRule) Code(code string) absentRule {
-	r.err = setCode(r.err, code)
+func (r AbsentRule) Message(msg string) AbsentRule {
+	if msg != "" {
+		r.msg = msg
+		r.flags |= flgCustomMsg
+	}
 	return r
 }
 
-// Error sets custom error for the rule.
-func (r absentRule) Error(err error) absentRule {
-	r.err = err
+func (r AbsentRule) Code(code string) AbsentRule {
+	if code != "" {
+		r.code = code
+		r.flags |= flgCustomCode
+	}
 	return r
+}
+
+func (r AbsentRule) Spec() (*spec.Spec, error) {
+	spc := spec.NewSpec(AbsentRuleName)
+	switch r.mode {
+	case "nil", "empty":
+		spc.SetArg(ArgMode, r.mode)
+	default:
+		msg := fmt.Sprintf("%s: invalid rule mode: %q", AbsentRuleName, r.mode)
+		return nil, NewInternalError(msg, ECInvRuleMode)
+	}
+
+	if r.flags&flgCustomMsg != 0 {
+		spc.SetArg(ArgErrMsg, r.msg)
+	}
+	if r.flags&flgCustomCode != 0 {
+		spc.SetArg(ArgErrCode, r.code)
+	}
+	return spc, nil
+}
+
+// AbsentRuleFromSpec creates an instance of [AbsentRule] from the [spec.Spec].
+func AbsentRuleFromSpec(spc *spec.Spec) (AbsentRule, error) {
+	if spc.Name != AbsentRuleName {
+		msg := fmt.Sprintf("%s: invalid spec name: %q", AbsentRuleName, spc.Name)
+		return AbsentRule{}, NewInternalError(msg, spec.ECInvSpec)
+	}
+	mode, err := getArg[string](spc.Args, ArgMode, AbsentRuleName)
+	if err != nil {
+		return AbsentRule{}, err
+	}
+
+	var rule AbsentRule
+	switch mode {
+	case "empty":
+		rule = Empty
+	case "nil":
+		rule = Nil
+	default:
+		format := "%s: invalid spec rule mode: %q"
+		msg := fmt.Sprintf(format, AbsentRuleName, mode)
+		return AbsentRule{}, NewInternalError(msg, spec.ECInvSpec)
+	}
+
+	if spc.ArgExist(ArgErrMsg) {
+		msg, err := getArg[string](spc.Args, ArgErrMsg, AbsentRuleName)
+		if err != nil {
+			return AbsentRule{}, err
+		}
+		if msg != "" {
+			rule = rule.Message(msg)
+		}
+	}
+
+	if spc.ArgExist(ArgErrCode) {
+		code, err := getArg[string](spc.Args, ArgErrCode, AbsentRuleName)
+		if err != nil {
+			return AbsentRule{}, err
+		}
+		if code != "" {
+			rule = rule.Code(code)
+		}
+	}
+
+	return rule, nil
 }

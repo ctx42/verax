@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
@@ -7,6 +7,10 @@ import (
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
+	"github.com/ctx42/testing/pkg/must"
+	"github.com/ctx42/xrr/pkg/xrr/xrrtest"
+
+	"github.com/ctx42/verax/pkg/spec"
 )
 
 func Test_Skip(t *testing.T) {
@@ -14,14 +18,15 @@ func Test_Skip(t *testing.T) {
 	r := Skip
 
 	// --- Then ---
+	//goland:noinspection ALL
 	assert.True(t, bool(r))
 }
 
-func Test_skipRule_Validate_tabular(t *testing.T) {
+func Test_SkipRule_Validate_tabular(t *testing.T) {
 	tt := []struct {
 		testN string
 
-		val any
+		have any
 	}{
 		{"nil", nil},
 		{"int", 100},
@@ -31,26 +36,82 @@ func Test_skipRule_Validate_tabular(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
-			assert.NoError(t, Skip.When(true).Validate(tc.val))
-			assert.NoError(t, Skip.When(false).Validate(tc.val))
+			// --- Given ---
+			rT := SkipRule(true)
+			rF := SkipRule(false)
+
+			// --- When ---
+			errT := rT.Validate(tc.have)
+			errF := rF.Validate(tc.have)
+
+			// --- Then ---
+			assert.NoError(t, errT)
+			assert.NoError(t, errF)
 		})
 	}
 }
 
-func Test_skipRule_When(t *testing.T) {
-	t.Run("true", func(t *testing.T) {
+func Test_SkipRule_When(t *testing.T) {
+	// --- Given ---
+	r := Skip
+
+	// --- When ---
+	have := r.When(true)
+
+	// --- Then ---
+	assert.True(t, bool(have))
+}
+
+func Test_SkipRule_Spec(t *testing.T) {
+	// --- Given ---
+	r := Skip
+
+	// --- When ---
+	have, err := r.Spec()
+
+	// --- Then ---
+	assert.NoError(t, err)
+	assert.Equal(t, SkipRuleName, have.Name)
+	assert.Nil(t, have.Args)
+}
+
+func Test_SkipRuleFromSpec(t *testing.T) {
+	t.Run("error - not skip rule spec", func(t *testing.T) {
 		// --- Given ---
-		r := Skip.When(true)
+		spc := spec.NewSpec("bad-name")
+
+		// --- When ---
+		have, err := SkipRuleFromSpec(spc)
 
 		// --- Then ---
-		assert.True(t, bool(r))
+		assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, `skip-rule: invalid spec name: "bad-name"`, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
 	})
 
-	t.Run("false", func(t *testing.T) {
+	t.Run("Skip", func(t *testing.T) {
 		// --- Given ---
-		r := Skip.When(false)
+		spc := spec.NewSpec(SkipRuleName)
+
+		// --- When ---
+		have, err := SkipRuleFromSpec(spc)
 
 		// --- Then ---
-		assert.False(t, bool(r))
+		assert.NoError(t, err)
+		assert.Equal(t, Skip, have)
 	})
+}
+
+func Test_SkipRule_Spec_SkipRuleFromSpec_round_trip(t *testing.T) {
+	// --- Given ---
+	want := Skip
+	spc := must.Value(want.Spec())
+
+	// --- When ---
+	have, err := SkipRuleFromSpec(spc)
+
+	// --- Then ---
+	assert.NoError(t, err)
+	assert.Equal(t, want, have)
 }

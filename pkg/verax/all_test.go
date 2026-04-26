@@ -1,20 +1,15 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
 
 import (
 	"fmt"
-	"strings"
 	"time"
-
-	"github.com/ctx42/xrr/pkg/xrr"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
-// ErrTst is an error used in tests.
-var ErrTst = xrr.New("tst msg", "ETstCode")
+// ErrTst is an error instance used in tests.
+var ErrTst = NewError("test msg", "ECTst")
 
 // Types used in tests.
 type tStructEmpty struct{}
@@ -61,76 +56,11 @@ var (
 	iStructEmpty   = tStructEmpty{}
 	iChan          = make(chan int)
 	iFunc          = func(v any) bool { return true }
-	iValidate      = ModelVal{}
 	iInterface     = any(123)
 	iInterfaceZero = any(0)
 )
 
-// TODO(rz): Why do we need such complicated functions: StrRule, StrContainRule, StrRuleFunc. checkString, ErrRule
-
-// StrRule returns rule validating values equal to want.
-var StrRule = func(want string) Rule { return By(StrRuleFunc(want)) }
-
-// StrContainRule returns rule validating substr is in a string.
-var StrContainRule = func(substr string) Rule {
-	fn := func(v any) error {
-		if isNil, _ := IsNil(v); isNil {
-			return nil
-		}
-		val := Indirect(v)
-		got, _ := val.(string)
-		if !strings.Contains(got, substr) {
-			msg := fmt.Sprintf("must be '%s'", substr)
-			en := cases.Title(language.English)
-			return xrr.New(msg, "ECMust"+en.String(substr))
-		}
-		return nil
-	}
-	return By(fn)
-}
-
-// StrRuleFunc returns rule function validating values equal to want.
-func StrRuleFunc(want string) RuleFunc {
-	return func(v any) error {
-		if isNil, _ := IsNil(v); isNil {
-			return nil
-		}
-		val := Indirect(v)
-		got, _ := val.(string)
-		if got != want {
-			msg := fmt.Sprintf("must be '%s'", want)
-			en := cases.Title(language.English)
-			return xrr.New(msg, "ECMust"+en.String(want))
-		}
-		return nil
-	}
-}
-
-// checkString returns function matching ValidStringFunc which will return true
-// for all stings equal to want.
-func checkString(want string) func(have string) bool {
-	return func(have string) bool { return want == have }
-}
-
-// ErrRule always returns error.
-var ErrRule = func(msg string, codes ...string) Rule {
-	return By(func(v any) error {
-		code := xrr.ECGeneric
-		if len(codes) > 0 {
-			code = codes[0]
-		}
-		return xrr.New(msg, code)
-	})
-}
-
-// InternalErrRule always returns an internal error.
-// TODO(rz): why do we need this?
-var InternalErrRule = By(func(v any) error {
-	return xrr.New("internal error", ECInternal)
-})
-
-// TwoStr is a struct with two string fields and not implementing [Validator]
-// interface.
+// TwoStr is a struct not implementing [Validator] with two string fields.
 type TwoStr struct {
 	FStr    string
 	FStrPtr *string
@@ -139,10 +69,7 @@ type TwoStr struct {
 // NewTwoStr returns new instance of TwoStr.
 func NewTwoStr() *TwoStr {
 	p := "FpStr"
-	return &TwoStr{
-		FStr:    "FStr",
-		FStrPtr: &p,
-	}
+	return &TwoStr{FStr: "FStr", FStrPtr: &p}
 }
 
 func (t *TwoStr) String() string { return t.FStr + " " + *t.FStrPtr }
@@ -240,7 +167,7 @@ func NewTStruct() TStruct {
 }
 
 // Model is a struct with few sub structs as fields, not implementing
-// Validator interface.
+// [Validator] interface.
 type Model struct {
 	ModelVal           // Embedded struct.
 	SvSM1    ModelVal  // Value struct.
@@ -248,29 +175,29 @@ type Model struct {
 	SpSM2    *ModelPtr // Pointer to struct (pointer receiver).
 }
 
-// ModelVal implements Validator interface with value receiver.
+// ModelVal implements [Validator] interface with value receiver.
 type ModelVal struct {
 	FStr string
 }
 
 func (m ModelVal) Validate() error {
-	return ValidateStruct(&m, Field(&m.FStr, Required, StrRule("abc")))
+	return ValidateStruct(&m, Field(&m.FStr, Required, Equal("abc")))
 }
 
 func (m ModelVal) String() string { return m.FStr }
 
-// ModelPtr implements Validator interface with pointer receiver.
+// ModelPtr implements [Validator] interface with a pointer receiver.
 type ModelPtr struct {
 	FStr string
 }
 
 func (m *ModelPtr) Validate() error {
-	return ValidateStruct(m, Field(&m.FStr, Required, StrRule("abc")))
+	return ValidateStruct(m, Field(&m.FStr, Required, Equal("abc")))
 }
 
 func (m *ModelPtr) String() string { return m.FStr }
 
-// ModelVW implements ValidateWith interface.
+// ModelVW implements [WithValidator] interface.
 type ModelVW struct {
 	value string
 }
@@ -280,4 +207,25 @@ func (m *ModelVW) ValidateWith(rule Rule) error {
 		return ErrTst
 	}
 	return rule.Validate(m.value)
+}
+
+// TstRule is a test structure implementing [Rule] interface.
+type TstRule struct{ want string }
+
+// Validate returns error unless v is 42 or "abc".
+func (t TstRule) Validate(have any) error {
+	switch val := have.(type) {
+	case int:
+		if val == 42 {
+			return nil
+		}
+		return fmt.Errorf("invalid value '%v'", val)
+
+	case string:
+		if val == "abc" {
+			return nil
+		}
+		return fmt.Errorf("invalid value '%v'", val)
+	}
+	return fmt.Errorf("invalid value type: %T", have)
 }

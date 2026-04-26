@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
@@ -9,141 +9,248 @@ import (
 	"time"
 
 	"github.com/ctx42/testing/pkg/assert"
+	"github.com/ctx42/testing/pkg/must"
 	"github.com/ctx42/xrr/pkg/xrr/xrrtest"
+
+	"github.com/ctx42/verax/pkg/spec"
 )
 
 func Test_Equal(t *testing.T) {
-	t.Run("error - not equal", func(t *testing.T) {
-		// --- Given ---
-		r := Equal(42)
-
+	t.Run("setup", func(t *testing.T) {
 		// --- When ---
-		err := r.Validate(44)
+		have := Equal(42)
 
 		// --- Then ---
-		assert.ErrorEqual(t, "must be equal to '42'", err)
-		xrrtest.AssertCode(t, ECNotEqual, err)
+		want := EqualRule{
+			mode:      "equal",
+			want:      42,
+			condition: true,
+			fn:        equal,
+			tpl:       msgEqual,
+			msg:       "must be equal to '42'",
+			code:      ECNotEqual,
+			sticky:    nil,
+			flags:     0,
+		}
+		assert.Equal(t, want, have)
 	})
 
-	t.Run("error - not equal time", func(t *testing.T) {
-		// --- Given ---
-		r := Equal(time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC))
-
+	t.Run("error - not supported value", func(t *testing.T) {
 		// --- When ---
-		err := r.Validate(time.Date(2001, 1, 2, 3, 4, 5, 0, time.UTC))
+		have := Equal(func() {})
 
 		// --- Then ---
-		assert.ErrorEqual(t, "must be equal to '2000-01-02T03:04:05Z'", err)
-		xrrtest.AssertCode(t, ECNotEqual, err)
+		assert.SameType(t, &InternalError{}, have.sticky)
+		wMsg := "equal-rule(equal): template render error"
+		assert.ErrorEqual(t, wMsg, have.sticky)
+		xrrtest.AssertCode(t, ECInternal, have.sticky)
 	})
 }
 
 func Test_NotEqual(t *testing.T) {
-	t.Run("error - not equal", func(t *testing.T) {
-		// --- Given ---
-		r := NotEqual(42)
-
+	t.Run("success", func(t *testing.T) {
 		// --- When ---
-		err := r.Validate(42)
+		have := NotEqual(42)
 
 		// --- Then ---
-		assert.ErrorEqual(t, "must not be equal to '42'", err)
-		xrrtest.AssertCode(t, ECEqual, err)
+		want := EqualRule{
+			mode:      "not-equal",
+			want:      42,
+			condition: true,
+			fn:        notEqual,
+			tpl:       msgNotEqual,
+			msg:       "must not be equal to '42'",
+			code:      ECEqual,
+			sticky:    nil,
+			flags:     0,
+		}
+		assert.Equal(t, want, have)
 	})
 
-	t.Run("error - equal time", func(t *testing.T) {
-		// --- Given ---
-		r := NotEqual(time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC))
-
+	t.Run("error - not supported value", func(t *testing.T) {
 		// --- When ---
-		err := r.Validate(time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC))
+		have := NotEqual(func() {})
 
 		// --- Then ---
-		assert.ErrorEqual(t, "must not be equal to '2000-01-02T03:04:05Z'", err)
-		xrrtest.AssertCode(t, ECEqual, err)
+		assert.SameType(t, &InternalError{}, have.sticky)
+		wMsg := "equal-rule(not-equal): template render error"
+		assert.ErrorEqual(t, wMsg, have.sticky)
+		xrrtest.AssertCode(t, ECInternal, have.sticky)
 	})
 }
 
 func Test_EqualField(t *testing.T) {
-	t.Run("custom error code", func(t *testing.T) {
-		// --- Given ---
-		r := EqualField(1, "field_name").Code("ECode")
+	// --- When ---
+	have := EqualField(42, "field")
 
-		// --- When ---
-		err := r.Validate(2)
-
-		// --- Then ---
-		assert.ErrorEqual(t, "must be equal to 'field_name'", err)
-		xrrtest.AssertCode(t, "ECode", err)
-	})
+	// --- Then ---
+	want := EqualRule{
+		mode:      "equal",
+		want:      42,
+		condition: true,
+		fn:        equal,
+		tpl:       "must be equal to 'field'",
+		msg:       "must be equal to 'field'",
+		code:      ECNotEqual,
+		sticky:    nil,
+		flags:     flgCustomMsg,
+	}
+	assert.Equal(t, want, have)
 }
 
 func Test_NotEqualField(t *testing.T) {
-	t.Run("custom code", func(t *testing.T) {
-		// --- Given ---
-		r := NotEqualField(1, "field_name").Code("ECode")
+	// --- When ---
+	have := NotEqualField(42, "field")
 
-		// --- When ---
-		err := r.Validate(1)
-
-		// --- Then ---
-		assert.ErrorEqual(t, "must not be equal to 'field_name'", err)
-		xrrtest.AssertCode(t, "ECode", err)
-	})
+	// --- Then ---
+	want := EqualRule{
+		mode:      "not-equal",
+		want:      42,
+		condition: true,
+		fn:        notEqual,
+		tpl:       "must not be equal to 'field'",
+		msg:       "must not be equal to 'field'",
+		code:      ECEqual,
+		sticky:    nil,
+		flags:     flgCustomMsg,
+	}
+	assert.Equal(t, want, have)
 }
 
-func Test_EqualBy(t *testing.T) {
-	t.Run("equal", func(t *testing.T) {
-		// --- Given ---
-		fn := func(want, have any) bool { return want.(int) == have.(int) }
-		r := EqualBy(42, fn)
+func Test_equal_valid_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
 
-		// --- When ---
-		err := r.Validate(42)
+		want any
+		have any
+	}{
+		{"nil", nil, nil},
+		{"int", 1, 1},
+		{"string", "abc", "abc"},
+		{"empty string", "", ""},
+		{"float", 1.42, 1.42},
+		{
+			"time",
+			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
+			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
+		},
+	}
 
-		// --- Then ---
-		assert.NoError(t, err)
-	})
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			err := equal(tc.want, tc.have)
 
-	t.Run("not equal", func(t *testing.T) {
-		// --- Given ---
-		fn := func(want, have any) bool { return want.(int) == have.(int) }
-		r := EqualBy(42, fn)
+			// --- Then ---
+			assert.NoError(t, err)
+		})
+	}
+}
 
-		// --- When ---
-		err := r.Validate(44)
+func Test_equal_invalid_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
 
-		// --- Then ---
-		assert.ErrorEqual(t, "must be equal to '42'", err)
-		xrrtest.AssertCode(t, ECEqual, err)
-	})
+		want any
+		have any
+	}{
+		{"int", 1, 2},
+		{"string", "abc", "xyz"},
+		{"float", 1.42, 1.44},
+		{
+			"time",
+			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
+			time.Date(2001, 1, 2, 3, 4, 5, 0, time.UTC),
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			err := equal(tc.want, tc.have)
+
+			// --- Then ---
+			assert.SameType(t, &Error{}, err)
+			assert.ErrorEqual(t, "equal error", err)
+			xrrtest.AssertCode(t, ECNotEqual, err)
+		})
+	}
+}
+
+func Test_notEqual_valid_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		want any
+		have any
+	}{
+		{"nil", nil, 1},
+		{"int", 1, 2},
+		{"string", "abc", "xyz"},
+		{"float", 1.42, 1.44},
+		{
+			"time",
+			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
+			time.Date(2001, 1, 2, 3, 4, 5, 0, time.UTC),
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			err := notEqual(tc.want, tc.have)
+
+			// --- Then ---
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func Test_notEqual_invalid_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		want any
+		have any
+	}{
+		{"nil", nil, nil},
+		{"int", 1, 1},
+		{"string", "abc", "abc"},
+		{"empty string", "", ""},
+		{"float", 1.42, 1.42},
+		{
+			"time",
+			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
+			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			err := notEqual(tc.want, tc.have)
+
+			// --- Then ---
+			assert.SameType(t, &Error{}, err)
+			assert.ErrorEqual(t, "not equal error", err)
+			xrrtest.AssertCode(t, ECEqual, err)
+		})
+	}
 }
 
 func Test_EqualRule_Validate(t *testing.T) {
-	t.Run("no error", func(t *testing.T) {
+	t.Run("error - sticky", func(t *testing.T) {
 		// --- Given ---
-		r := Equal(42)
-
-		// --- When ---
-		err := r.Validate(42)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("validation error", func(t *testing.T) {
-		// --- Given ---
-		r := Equal(42)
+		r := EqualRule{sticky: ErrTst}
 
 		// --- When ---
 		err := r.Validate(44)
 
 		// --- Then ---
-		assert.ErrorEqual(t, "must be equal to '42'", err)
-		xrrtest.AssertCode(t, ECNotEqual, err)
+		assert.Same(t, ErrTst, err)
 	})
 
-	t.Run("no error when condition false", func(t *testing.T) {
+	t.Run("skip validation when the condition is false", func(t *testing.T) {
 		// --- Given ---
 		r := Equal(42).When(false)
 
@@ -153,239 +260,167 @@ func Test_EqualRule_Validate(t *testing.T) {
 		// --- Then ---
 		assert.NoError(t, err)
 	})
-}
 
-func Test_Equal_Validate_valid_tabular(t *testing.T) {
-	tt := []struct {
-		testN string
+	t.Run("nil ok", func(t *testing.T) {
+		// --- Given ---
+		r := Equal(42)
 
-		exp any
-		got any
-	}{
-		{"nil", nil, nil},
-		{"int", 1, 1},
-		{"string", "abc", "abc"},
-		{"empty string", "", ""},
-		{"float", 1.23, 1.23},
-		{
-			"time",
-			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
-			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
-		},
-	}
+		// --- When ---
+		err := r.Validate(nil)
 
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- Given ---
-			r := Equal(tc.exp)
+		// --- Then ---
+		assert.NoError(t, err)
+	})
 
-			// --- When ---
-			err := r.Validate(tc.got)
+	t.Run("empty ok", func(t *testing.T) {
+		// --- Given ---
+		r := Equal(42)
 
-			// --- Then ---
-			assert.NoError(t, err)
-		})
-	}
-}
+		// --- When ---
+		err := r.Validate("")
 
-func Test_Equal_Validate_invalid_tabular(t *testing.T) {
-	tt := []struct {
-		testN string
+		// --- Then ---
+		assert.NoError(t, err)
+	})
 
-		exp     any
-		got     any
-		setCode string
-		err     string
-	}{
-		{"int", 1, 2, "ECode1", "must be equal to '1'"},
-		{"string", "abc", "abb", "ECode2", "must be equal to 'abc'"},
-		{"float", 1.23, 1.24, "ECode3", "must be equal to '1.23'"},
-		{
-			"time",
-			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
-			time.Date(2001, 1, 2, 3, 4, 5, 0, time.UTC),
-			"ECode4",
-			"must be equal to '2000-01-02T03:04:05Z'",
-		},
-	}
+	t.Run("error - with custom error message", func(t *testing.T) {
+		// --- Given ---
+		r := Equal(42).Message("custom msg")
 
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- Given ---
-			r := Equal(tc.exp).Code(tc.setCode)
+		// --- When ---
+		err := r.Validate(44)
 
-			// --- When ---
-			err := r.Validate(tc.got)
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		xrrtest.AssertEqual(t, "custom msg (ECNotEqual)", err)
+	})
 
-			// --- Then ---
-			assert.ErrorEqual(t, tc.err, err)
-			xrrtest.AssertCode(t, tc.setCode, err)
-		})
-	}
-}
+	t.Run("error - with custom error code", func(t *testing.T) {
+		// --- Given ---
+		r := Equal(42).Code("ECTst")
 
-func Test_EqualField_valid_tabular(t *testing.T) {
-	tt := []struct {
-		testN string
+		// --- When ---
+		err := r.Validate(44)
 
-		exp any
-		got any
-	}{
-		{
-			"time",
-			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
-			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
-		},
-		{"int", 1, 1},
-		{"bool both true", true, true},
-		{"bool both false", false, false},
-	}
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		xrrtest.AssertEqual(t, "must be equal to '42' (ECTst)", err)
+	})
 
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- Given ---
-			r := EqualField(tc.exp, "field_name")
+	t.Run("error - with custom error message and code", func(t *testing.T) {
+		// --- Given ---
+		r := Equal(42).Message("custom msg").Code("ECTst")
 
-			// --- When ---
-			err := r.Validate(tc.got)
+		// --- When ---
+		err := r.Validate(44)
 
-			// --- Then ---
-			assert.NoError(t, err)
-		})
-	}
-}
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		xrrtest.AssertEqual(t, "custom msg (ECTst)", err)
+	})
 
-func Test_EqualField_invalid_tabular(t *testing.T) {
-	tt := []struct {
-		testN string
+	t.Run("arguments passed to EqualFunc", func(t *testing.T) {
+		// --- Given ---
+		var want, have any
+		fn := func(w, h any) error { want = w; have = h; return nil }
+		r := Equal(42).With(fn)
 
-		exp  any
-		got  any
-		err  string
-		code string
-	}{
-		{
-			"time",
-			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
-			time.Date(2001, 1, 2, 3, 4, 5, 0, time.UTC),
-			"must be equal to 'field_name'",
-			ECNotEqual,
-		},
-		{
-			"int",
-			1,
-			2,
-			"must be equal to 'field_name'",
-			ECNotEqual,
-		},
-		{
-			"bool true",
-			true,
-			false,
-			"must be equal to 'field_name'",
-			ECNotEqual,
-		},
-		{
-			"bool false",
-			false,
-			true,
-			"must be equal to 'field_name'",
-			ECNotEqual,
-		},
-		{
-			"string",
-			"",
-			"a",
-			"must be equal to 'field_name'",
-			ECNotEqual,
-		},
-	}
+		// --- When ---
+		err := r.Validate(44)
 
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- Given ---
-			r := EqualField(tc.exp, "field_name")
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, 42, want)
+		assert.Equal(t, 44, have)
+	})
 
-			// --- When ---
-			err := r.Validate(tc.got)
+	t.Run("error - error from EqualFunc", func(t *testing.T) {
+		// --- Given ---
+		fn := func(x, y any) error { return ErrTst }
+		r := Equal(42).With(fn)
 
-			// --- Then ---
-			assert.ErrorEqual(t, tc.err, err)
-			xrrtest.AssertCode(t, tc.code, err)
-		})
-	}
-}
+		// --- When ---
+		err := r.Validate(44)
 
-func Test_NotEqualField_valid_tabular(t *testing.T) {
-	tt := []struct {
-		testN string
+		// --- Then ---
+		assert.Same(t, ErrTst, err)
+	})
 
-		not any
-		got any
-	}{
-		{
-			"time",
-			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
-			time.Date(2001, 1, 2, 3, 4, 5, 0, time.UTC),
-		},
-		{"int", 1, 2},
-		{"bool", true, false},
-	}
+	t.Run("error - custom error message with EqualFunc", func(t *testing.T) {
+		// --- Given ---
+		e := NewError("test msg", "ECTst")
+		fn := func(x, y any) error { return e }
+		r := Equal(42).With(fn).Message("custom msg")
 
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- Given ---
-			r := NotEqualField(tc.not, "field_name")
+		// --- When ---
+		err := r.Validate(44)
 
-			// --- When ---
-			err := r.Validate(tc.got)
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		assert.False(t, errors.Is(err, e))
+		assert.ErrorEqual(t, "custom msg", err)
+		xrrtest.AssertCode(t, "ECTst", err)
+	})
 
-			// --- Then ---
-			assert.NoError(t, err)
-		})
-	}
-}
+	t.Run("error - custom error code with EqualFunc", func(t *testing.T) {
+		// --- Given ---
+		e := NewError("test msg", "ECTst")
+		fn := func(x, y any) error { return e }
+		r := Equal(42).With(fn).Code("ECCustom")
 
-func Test_NotEqualField_invalid_tabular(t *testing.T) {
-	tt := []struct {
-		testN string
+		// --- When ---
+		err := r.Validate(44)
 
-		not  any
-		got  any
-		err  string
-		code string
-	}{
-		{
-			"time",
-			time.Date(2001, 1, 2, 3, 4, 5, 0, time.UTC),
-			time.Date(2001, 1, 2, 3, 4, 5, 0, time.UTC),
-			"must not be equal to 'field_name'",
-			ECEqual,
-		},
-		{"int", 1, 1, "must not be equal to 'field_name'", ECEqual},
-		{"bool", true, true, "must not be equal to 'field_name'", ECEqual},
-		{"empty string", "", "", "must not be equal to 'field_name'", ECEqual},
-		{"nil", nil, nil, "must not be equal to 'field_name'", ECEqual},
-	}
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		assert.ErrorIs(t, e, err)
+		assert.ErrorEqual(t, "test msg", err)
+		xrrtest.AssertCode(t, "ECCustom", err)
+	})
 
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- Given ---
-			r := NotEqualField(tc.not, "field_name")
+	t.Run("error - custom error message and code with EqualFunc", func(t *testing.T) {
+		// --- Given ---
+		e := NewError("test msg", "ECTst")
+		fn := func(x, y any) error { return e }
+		r := Equal(42).With(fn).Message("custom msg").Code("ECTst")
 
-			// --- When ---
-			err := r.Validate(tc.got)
+		// --- When ---
+		err := r.Validate(44)
 
-			// --- Then ---
-			assert.ErrorEqual(t, tc.err, err)
-			xrrtest.AssertCode(t, tc.code, err)
-		})
-	}
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		assert.False(t, errors.Is(err, e))
+		assert.ErrorEqual(t, "custom msg", err)
+		xrrtest.AssertCode(t, "ECTst", err)
+	})
+
+	t.Run("error - NotEqual", func(t *testing.T) {
+		// --- Given ---
+		r := NotEqual(42)
+
+		// --- When ---
+		err := r.Validate(42)
+
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		xrrtest.AssertEqual(t, "must not be equal to '42' (ECEqual)", err)
+	})
+
+	t.Run("successful validation", func(t *testing.T) {
+		// --- Given ---
+		r := Equal(42)
+
+		// --- When ---
+		err := r.Validate(42)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
 }
 
 func Test_EqualRule_When(t *testing.T) {
 	// --- Given ---
-	r := Equal(42)
+	r := EqualRule{}
 
 	// --- When ---
 	have := r.When(true)
@@ -394,58 +429,687 @@ func Test_EqualRule_When(t *testing.T) {
 	assert.True(t, have.condition)
 }
 
-func Test_EqualRule_Code(t *testing.T) {
-	t.Run("set custom error code", func(t *testing.T) {
+func Test_EqualRule_With(t *testing.T) {
+	t.Run("changes nothing when a sticky error is set", func(t *testing.T) {
 		// --- Given ---
+		fn := func(any, any) error { return nil }
+		r := EqualRule{sticky: ErrTst}
+
+		// --- When ---
+		have := r.With(fn)
+
+		// --- Then ---
+		assert.Same(t, ErrTst, have.sticky)
+		assert.Zero(t, have.flags)
+	})
+
+	t.Run("equal to equal-by", func(t *testing.T) {
+		// --- Given ---
+		fn := func(any, any) error { return nil }
 		r := Equal(42)
 
 		// --- When ---
-		have := r.Code("MyCode")
+		have := r.With(fn)
 
 		// --- Then ---
-		err := have.Validate(44)
-		assert.ErrorEqual(t, "must be equal to '42'", err)
-		xrrtest.AssertCode(t, "MyCode", err)
+		assert.Equal(t, "equal-by", have.mode)
+		assert.Same(t, fn, have.fn)
+		assert.Equal(t, flgCustomFn, have.flags)
 	})
 
-	t.Run("custom error code for custom error", func(t *testing.T) {
+	t.Run("equal-by to equal-by", func(t *testing.T) {
 		// --- Given ---
-		r := Equal(42).Error(ErrTst)
+		fn0 := func(any, any) error { return nil }
+		fn1 := func(any, any) error { return nil }
+		r := Equal(42).With(fn0)
 
 		// --- When ---
-		have := r.Code("MyCode")
+		have := r.With(fn1)
 
 		// --- Then ---
-		err := have.Validate(44)
-		assert.Same(t, ErrTst, errors.Unwrap(err))
-		xrrtest.AssertCode(t, "MyCode", err)
+		assert.Equal(t, "equal-by", have.mode)
+		assert.Same(t, fn1, have.fn)
+		assert.Equal(t, flgCustomFn, have.flags)
+	})
+
+	t.Run("not-equal to not-equal-by", func(t *testing.T) {
+		// --- Given ---
+		fn := func(any, any) error { return nil }
+		r := NotEqual(42)
+
+		// --- When ---
+		have := r.With(fn)
+
+		// --- Then ---
+		assert.Equal(t, "not-equal-by", have.mode)
+		assert.Same(t, fn, have.fn)
+		assert.Equal(t, flgCustomFn, have.flags)
+	})
+
+	t.Run("not-equal-by to not-equal-by", func(t *testing.T) {
+		// --- Given ---
+		fn0 := func(any, any) error { return nil }
+		fn1 := func(any, any) error { return nil }
+		r := NotEqual(42).With(fn0)
+
+		// --- When ---
+		have := r.With(fn1)
+
+		// --- Then ---
+		assert.Equal(t, "not-equal-by", have.mode)
+		assert.Same(t, fn1, have.fn)
+		assert.Equal(t, flgCustomFn, have.flags)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		// --- Given ---
+		fn := func(any, any) error { return nil }
+		r := EqualRule{mode: "equal"}
+
+		// --- When ---
+		have := r.With(fn)
+
+		// --- Then ---
+		assert.Same(t, EqualFunc(fn), have.fn)
+		assert.Equal(t, flgCustomFn, have.flags)
+	})
+
+	t.Run("error - unknown mode", func(t *testing.T) {
+		// --- Given ---
+		fn := func(any, any) error { return nil }
+		r := EqualRule{mode: "unknown"}
+
+		// --- When ---
+		have := r.With(fn)
+
+		// --- Then ---
+		assert.Equal(t, "unknown", have.mode)
+		assert.Nil(t, have.fn)
+		assert.Zero(t, have.flags)
+
+		assert.SameType(t, &InternalError{}, have.sticky)
+		wMsg := `equal-rule: invalid rule mode: "unknown"`
+		assert.ErrorEqual(t, wMsg, have.sticky)
+		xrrtest.AssertCode(t, ECInvRuleMode, have.sticky)
 	})
 }
 
-func Test_EqualRule_Error(t *testing.T) {
-	t.Run("set custom error", func(t *testing.T) {
+func Test_EqualRule_Message(t *testing.T) {
+	t.Run("an empty string is a noop", func(t *testing.T) {
 		// --- Given ---
 		r := Equal(42)
 
 		// --- When ---
-		have := r.Error(ErrTst)
+		have := r.Message("")
 
 		// --- Then ---
-		err := have.Validate(44)
-		assert.Same(t, ErrTst, err)
-		xrrtest.AssertCode(t, "ETstCode", err)
+		assert.Equal(t, msgEqual, have.tpl)
+		assert.Equal(t, "must be equal to '42'", have.msg)
+		assert.Zero(t, have.flags)
 	})
 
-	t.Run("clears custom error code", func(t *testing.T) {
+	t.Run("when the sticky error is not nil", func(t *testing.T) {
 		// --- Given ---
-		r := Equal(42).Code("ECCustom")
+		r := Equal(42)
+		r.sticky = ErrTst
 
 		// --- When ---
-		have := r.Error(ErrTst)
+		have := r.Message("custom tpl {{.value}}")
 
 		// --- Then ---
-		err := have.Validate(44)
+		assert.Equal(t, msgEqual, have.tpl)
+		assert.Equal(t, "must be equal to '42'", have.msg)
+		assert.Zero(t, have.flags)
+	})
+
+	t.Run("with value placeholder", func(t *testing.T) {
+		// --- Given ---
+		r := Equal(42)
+
+		// --- When ---
+		have := r.Message("custom tpl {{.value}}")
+
+		// --- Then ---
+		assert.Equal(t, "custom tpl {{.value}}", have.tpl)
+		assert.Equal(t, "custom tpl 42", have.msg)
+		assert.Equal(t, flgCustomMsg, have.flags)
+	})
+
+	t.Run("without a value placeholder", func(t *testing.T) {
+		// --- Given ---
+		r := EqualRule{}
+
+		// --- When ---
+		have := r.Message("custom tpl")
+
+		// --- Then ---
+		assert.Equal(t, "custom tpl", have.tpl)
+		assert.Equal(t, "custom tpl", have.msg)
+		assert.Equal(t, flgCustomMsg, have.flags)
+	})
+
+	t.Run("error - template parse error", func(t *testing.T) {
+		// --- Given ---
+		r := EqualRule{mode: "mode"}
+
+		// --- When ---
+		have := r.Message("custom {{.")
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, have.sticky)
+		wMsg := "equal-rule(mode): custom template parse error"
+		assert.ErrorEqual(t, wMsg, have.sticky)
+		xrrtest.AssertCode(t, ECInternal, have.sticky)
+		assert.Zero(t, have.flags)
+	})
+
+	t.Run("error - with not supported custom placeholder", func(t *testing.T) {
+		// --- Given ---
+		r := Equal(42)
+
+		// --- When ---
+		have := r.Message("custom tpl {{.custom}}")
+
+		// --- Then ---
+		assert.Equal(t, msgEqual, have.tpl)
+		assert.Equal(t, "must be equal to '42'", have.msg)
+		assert.Zero(t, have.flags)
+
+		assert.SameType(t, &InternalError{}, have.sticky)
+		wMsg := "equal-rule(equal): custom template render error"
+		assert.ErrorEqual(t, wMsg, have.sticky)
+		xrrtest.AssertCode(t, ECInternal, have.sticky)
+		assert.Zero(t, have.flags)
+	})
+}
+
+func Test_EqualRule_Code(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		// --- Given ---
+		r := EqualRule{}
+
+		// --- When ---
+		have := r.Code("ECTst")
+
+		// --- Then ---
+		assert.Equal(t, "ECTst", have.code)
+		assert.Equal(t, flgCustomCode, have.flags)
+	})
+
+	t.Run("an empty string is noop", func(t *testing.T) {
+		// --- Given ---
+		r := EqualRule{code: "ECTst"}
+
+		// --- When ---
+		have := r.Code("")
+
+		// --- Then ---
+		assert.Equal(t, "ECTst", have.code)
+		assert.Zero(t, have.flags)
+	})
+}
+
+func Test_EqualRule_Spec(t *testing.T) {
+	t.Run("error - sticky", func(t *testing.T) {
+		// --- Given ---
+		r := EqualRule{sticky: ErrTst}
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
 		assert.Same(t, ErrTst, err)
-		xrrtest.AssertCode(t, "ETstCode", err)
+		assert.Nil(t, have)
+	})
+
+	t.Run("mode equal", func(t *testing.T) {
+		// --- Given ---
+		r := Equal(42)
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, EqualRuleName, have.Name)
+		wArgs := map[string]any{ArgMode: "equal", spec.ArgValue: 42}
+		assert.Equal(t, wArgs, have.Args)
+	})
+
+	t.Run("mode not-equal", func(t *testing.T) {
+		// --- Given ---
+		r := NotEqual(42)
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, EqualRuleName, have.Name)
+		wArgs := map[string]any{ArgMode: "not-equal", spec.ArgValue: 42}
+		assert.Equal(t, wArgs, have.Args)
+	})
+
+	t.Run("mode equal with EqualFunc", func(t *testing.T) {
+		// --- Given ---
+		fn := func(any, any) error { return nil }
+		r := Equal(42).With(fn)
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, EqualRuleName, have.Name)
+		wArgs := map[string]any{
+			ArgMode:       "equal-by",
+			spec.ArgValue: 42,
+			spec.ArgSrc:   EqualFunc(fn),
+		}
+		assert.Equal(t, wArgs, have.Args)
+	})
+
+	t.Run("mode not-equal with EqualFunc", func(t *testing.T) {
+		// --- Given ---
+		fn := func(any, any) error { return nil }
+		r := NotEqual(42).With(fn)
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, EqualRuleName, have.Name)
+		wArgs := map[string]any{
+			ArgMode:       "not-equal-by",
+			spec.ArgValue: 42,
+			spec.ArgSrc:   EqualFunc(fn),
+		}
+		assert.Equal(t, wArgs, have.Args)
+	})
+
+	t.Run("custom error code", func(t *testing.T) {
+		// --- Given ---
+		r := NotEqual(42).Code("ECTst")
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, EqualRuleName, have.Name)
+		wArgs := map[string]any{
+			ArgMode:       "not-equal",
+			spec.ArgValue: 42,
+			ArgErrCode:    "ECTst",
+		}
+		assert.Equal(t, wArgs, have.Args)
+	})
+
+	t.Run("custom error message", func(t *testing.T) {
+		// --- Given ---
+		r := Equal(42).Message("test err")
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, EqualRuleName, have.Name)
+		wArgs := map[string]any{
+			ArgMode:       "equal",
+			spec.ArgValue: 42,
+			ArgErrMsg:     "test err",
+		}
+		assert.Equal(t, wArgs, have.Args)
+	})
+
+	t.Run("error - invalid mode", func(t *testing.T) {
+		// --- Given ---
+		r := EqualRule{mode: "unknown"}
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := `equal-rule: invalid rule mode: "unknown"`
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, ECInvRuleMode, err)
+		assert.Nil(t, have)
+	})
+}
+
+func Test_EqualRuleFromSpec(t *testing.T) {
+	t.Run("error - not equal rule spec", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec("bad-name")
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, `equal-rule: invalid spec name: "bad-name"`, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("error - mode argument is required", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName)
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := "equal-rule: spec missing required argument: mode"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("error - want argument is required", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName).SetArg(ArgMode, "equal")
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := "equal-rule: spec missing required argument: value"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("error - invalid mode", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "bad-mode").
+			SetArg(spec.ArgValue, 42)
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := `equal-rule: invalid spec rule mode: "bad-mode"`
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("mode equal", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "equal").
+			SetArg(spec.ArgValue, 42)
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		wRule := Equal(42)
+		assert.Equal(t, wRule, have)
+	})
+
+	t.Run("mode not-equal", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "not-equal").
+			SetArg(spec.ArgValue, 42)
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		wRule := NotEqual(42)
+		assert.Equal(t, wRule, have)
+	})
+
+	t.Run("error - mode equal-by invalid EqualFunc", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "equal-by").
+			SetArg(spec.ArgValue, 42).
+			SetArg(spec.ArgSrc, 42)
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := `equal-rule: spec argument "src_go" must be verax.EqualFunc, got int`
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("mode equal with EqualFunc", func(t *testing.T) {
+		// --- Given ---
+		fn := func(any, any) error { return nil }
+
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "equal-by").
+			SetArg(spec.ArgValue, 42).
+			SetArg(spec.ArgSrc, EqualFunc(fn))
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		wRule := Equal(42).With(fn)
+		assert.Equal(t, wRule, have)
+	})
+
+	t.Run("error - mode not-equal-by invalid EqualFunc", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "not-equal-by").
+			SetArg(spec.ArgValue, 42).
+			SetArg(spec.ArgSrc, 42)
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := `equal-rule: spec argument "src_go" must be verax.EqualFunc, got int`
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("mode not-equal with EqualFunc", func(t *testing.T) {
+		// --- Given ---
+		fn := func(any, any) error { return nil }
+
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "not-equal-by").
+			SetArg(spec.ArgValue, 42).
+			SetArg(spec.ArgSrc, EqualFunc(fn))
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		wRule := NotEqual(42).With(fn)
+		assert.Equal(t, wRule, have)
+	})
+
+	t.Run("custom error message", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "equal").
+			SetArg(spec.ArgValue, 42).
+			SetArg(ArgErrMsg, "test err")
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		wRule := Equal(42).Message("test err")
+		assert.Equal(t, wRule, have)
+	})
+
+	t.Run("error - custom error message not string", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "equal").
+			SetArg(spec.ArgValue, 42).
+			SetArg(ArgErrMsg, 42)
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := `equal-rule: spec argument "err_msg" must be string, got int`
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("an empty custom error message is ignored", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "equal").
+			SetArg(spec.ArgValue, 42).
+			SetArg(ArgErrMsg, "")
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		wRule := Equal(42)
+		assert.Equal(t, wRule, have)
+	})
+
+	t.Run("custom error code", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "equal").
+			SetArg(spec.ArgValue, 42).
+			SetArg(ArgErrCode, "ECTst")
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		wRule := Equal(42).Code("ECTst")
+		assert.Equal(t, wRule, have)
+	})
+
+	t.Run("error - error code not string", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "equal").
+			SetArg(spec.ArgValue, 42).
+			SetArg(ArgErrCode, 42)
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := `equal-rule: spec argument "err_code" must be string, got int`
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("an empty custom error code is ignored", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EqualRuleName).
+			SetArg(ArgMode, "equal").
+			SetArg(spec.ArgValue, 42).
+			SetArg(ArgErrCode, "")
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		wRule := Equal(42)
+		assert.Equal(t, wRule, have)
+	})
+}
+
+func Test_EqualRule_Spec_EqualRuleFromSpec_round_trip(t *testing.T) {
+	t.Run("Equal - with message and code", func(t *testing.T) {
+		// --- Given ---
+		want := Equal(42).Message("test msg").Code("ECTst")
+		spc := must.Value(want.Spec())
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
+	})
+
+	t.Run("NotEqual - with message and code", func(t *testing.T) {
+		// --- Given ---
+		want := NotEqual(42).Message("test msg").Code("ECTst")
+		spc := must.Value(want.Spec())
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
+	})
+
+	t.Run("EqualField - with message and code", func(t *testing.T) {
+		// --- Given ---
+		want := EqualField(42, "field").Message("test msg").Code("ECTst")
+		spc := must.Value(want.Spec())
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
+	})
+
+	t.Run("Equal with EqualFunc - with message and code", func(t *testing.T) {
+		// --- Given ---
+		fn := EqualFunc(func(any, any) error { return nil })
+		want := Equal(42).With(fn).Message("test msg").Code("ECTst")
+		spc := must.Value(want.Spec())
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
+	})
+
+	t.Run("NotEqual with EqualFunc - with message and code", func(t *testing.T) {
+		// --- Given ---
+		fn := EqualFunc(func(any, any) error { return nil })
+		want := NotEqual(42).With(fn).Message("test msg").Code("ECTst")
+		spc := must.Value(want.Spec())
+
+		// --- When ---
+		have, err := EqualRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
 	})
 }

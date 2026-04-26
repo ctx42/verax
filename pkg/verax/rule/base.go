@@ -1,9 +1,10 @@
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
+// SPDX-License-Identifier: MIT
+
 package rule
 
 import (
 	"regexp"
-
-	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/verax"
 )
@@ -20,11 +21,13 @@ var (
 	base64Rxc = regexp.MustCompile(base64Rx)
 )
 
-// Validation errors.
+// ECBase64 represents error code for not nil value.
+const ECBase64 = "ECBase64"
+
+// Validation error messages.
 var (
-	// ErrBase64 is the error that returns in the case of an invalid base64
-	// value.
-	ErrBase64 = xrr.New("must be a valid base64", "ECBase64")
+	// msgBase64 is the error message for an invalid base64 value.
+	msgBase64 = "must be a valid base64"
 )
 
 // IsBase64 checks if a string is valid base64.
@@ -35,5 +38,8 @@ func IsBase64(str string) bool {
 	return base64Rxc.MatchString(str)
 }
 
+// CheckBase64 is [verax.RuleFunc] that checks a string is valid base64.
+var CheckBase64 = verax.Check(IsBase64, msgBase64, ECBase64)
+
 // Base64 validates if a string is a valid base64.
-var Base64 = verax.String(IsBase64).Error(ErrBase64)
+var Base64 = verax.By(CheckBase64)

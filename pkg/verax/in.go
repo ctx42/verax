@@ -1,122 +1,209 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
 
 import (
-	"reflect"
+	"fmt"
 
-	"github.com/ctx42/xrr/pkg/xrr"
+	"github.com/ctx42/verax/pkg/spec"
 )
+
+// InRuleName represents [InRule] name.
+const InRuleName = "in-rule"
 
 // ECInvIn represents error code for invalid in rule.
 const ECInvIn = "ECInvIn"
 
-// ErrNotIn is the error that returns in case of an invalid value for "In" rule.
-var ErrNotIn = xrr.New("must be in the list", ECInvIn)
-
-// ErrIn is the error that returns in case of an invalid value for "NotIn" rule.
-var ErrIn = xrr.New("must not be in the list", ECInvIn)
-
-// In returns a validation rule that checks if a value can be found in the
-// given list of values. Note that the value being checked and the possible
-// range of values must be of the same type. The reflect.DeepEqual() will be
-// used to determine if two values are equal. For more details please refer to
-// https://golang.org/pkg/reflect/#DeepEqual. An empty value is considered
-// valid. Use the Required rule to make sure a value is not empty.
-func In(values ...any) InRule {
-	return InRule{elements: values, condition: true, in: true, err: ErrNotIn}
-}
-
-// NotIn returns a validation rule that checks if a value cannot be found in
-// the given list of values. Note that the value being checked and the possible
-// range of values must be of the same type. The reflect.DeepEqual() will be
-// used to determine if two values are equal. For more details please refer to
-// https://golang.org/pkg/reflect/#DeepEqual. An empty value is considered
-// valid. Use the Required rule to make sure a value is not empty.
-func NotIn(values ...any) InRule {
-	return InRule{elements: values, condition: true, in: false, err: ErrIn}
-}
-
-// Compile time checks.
+// [InRule] rule error messages.
 var (
-	_ Customizer[InRule]  = InRule{}
-	_ Conditioner[InRule] = InRule{}
+	// msgIn is the error message when a value is not on the list of valid
+	// values.
+	msgIn = "must be in the list"
+
+	// msgNotIn is the error message when a value is on the list of invalid
+	// values.
+	msgNotIn = "must not be in the list"
+)
+
+// In returns a validation rule that conditions if a value can be found in the
+// given list of values. Note that the value being conditioned and the possible
+// range of values must be of the same type. The reflect.DeepEqual() will be
+// used to determine if two values are equal. For more details please refer to
+// https://golang.org/pkg/reflect/#DeepEqual. An empty value is considered
+// valid. Use the [Required] rule to make sure a value is not empty.
+func In(values ...any) InRule {
+	var eqs []EqualRule
+	for _, v := range values {
+		eqs = append(eqs, Equal(v))
+	}
+	return InRule{
+		mode:      "in",
+		want:      eqs,
+		condition: true,
+		msg:       msgIn,
+		code:      ECInvIn,
+	}
+}
+
+// NotIn returns a validation rule that conditions if a value cannot be found in
+// the given list of values. Note that the value being conditioned and the possible
+// range of values must be of the same type. The reflect.DeepEqual() will be
+// used to determine if two values are equal. For more details please refer to
+// https://golang.org/pkg/reflect/#DeepEqual. An empty value is considered
+// valid. Use the [Required] rule to make sure a value is not empty.
+func NotIn(values ...any) InRule {
+	var eqs []EqualRule
+	for _, v := range values {
+		eqs = append(eqs, Equal(v))
+	}
+	return InRule{
+		mode:      "not-in",
+		want:      eqs,
+		condition: true,
+		msg:       msgNotIn,
+		code:      ECInvIn,
+	}
+}
+
+// Compile time conditions.
+var (
+	_ customizer[InRule]  = InRule{}
+	_ conditioner[InRule] = InRule{}
+	_ Rule                = InRule{}
 )
 
 // InRule is a validation rule that validates if a value can be found in the
 // given list of values.
 type InRule struct {
-	elements  []any // List of valid values.
-	condition bool  // Run validation only when true.
-	in        bool  // Value must (true) or must not (false) be on the list.
-	err       error // Validation error.
+	mode      string      // Mode of operation.
+	want      []EqualRule // List of valid values.
+	condition bool        // Run validation only when true.
+	msg       string      // Validation error message.
+	code      string      // Validation error code.
+	flags     uint8       // Customizations.
 }
 
-// Validate checks if the given value is valid or not.
-func (r InRule) Validate(v any) error {
+func (r InRule) Validate(have any) error {
 	if !r.condition {
 		return nil
 	}
-	if isNil, _ := IsNil(v); isNil {
+	if IsEmpty(have) {
 		return nil
 	}
-	if IsEmpty(v) {
-		return nil
-	}
-	val := Indirect(v)
-	if r.in {
-		return r.inRule(val)
-	}
-	return r.notInRule(val)
-}
 
-// inRule returns an error if v is not on the list of elements or its type
-// doesn't match.
-func (r InRule) inRule(v any) error {
-	vt := reflect.TypeOf(v)
-	for _, e := range r.elements {
-		if vt != reflect.TypeOf(e) {
-			return setCode(ErrInvType, xrr.GetCode(r.err))
-		}
-		if reflect.DeepEqual(e, v) {
+	v := Indirect(have)
+	for _, e := range r.want {
+		err := e.Validate(v)
+		if r.mode == "in" && err == nil {
+			// We've found a value in the set so we can return with success.
 			return nil
 		}
+		if r.mode == "not-in" && err == nil {
+			// We've found value that should not be valid.
+			return NewError(r.msg, r.code)
+		}
 	}
-	return r.err
-}
+	if r.mode == "in" {
+		// None of the conditioned values are on the list of valid values.
+		return NewError(r.msg, r.code)
+	}
 
-// notInRule returns an error if v is on the list of elements or its type
-// doesn't match.
-func (r InRule) notInRule(v any) error {
-	vt := reflect.TypeOf(v)
-	for _, e := range r.elements {
-		if vt != reflect.TypeOf(e) {
-			return setCode(ErrInvType, xrr.GetCode(r.err))
-		}
-		if reflect.DeepEqual(e, v) {
-			return r.err
-		}
-	}
+	// None of the values were on the list of invalid values.
 	return nil
 }
 
-// When specifies a condition that determines whether validation should be
-// performed. If the condition is false, validation is skipped, and no errors
-// are reported.
 func (r InRule) When(condition bool) InRule {
 	r.condition = condition
 	return r
 }
 
-// Code sets the error code for the rule.
-func (r InRule) Code(code string) InRule {
-	r.err = setCode(r.err, code)
+func (r InRule) Message(msg string) InRule {
+	if msg != "" {
+		r.msg = msg
+		r.flags |= flgCustomMsg
+	}
 	return r
 }
 
-// Error sets custom error for the rule.
-func (r InRule) Error(err error) InRule {
-	r.err = err
+func (r InRule) Code(code string) InRule {
+	if code != "" {
+		r.code = code
+		r.flags |= flgCustomCode
+	}
 	return r
+}
+
+func (r InRule) Spec() (*spec.Spec, error) {
+	spc := spec.NewSpec(InRuleName)
+	switch r.mode {
+	case "in", "not-in":
+		spc.SetArg(ArgMode, r.mode)
+	default:
+		msg := fmt.Sprintf("%s: invalid rule mode: %q", InRuleName, r.mode)
+		return nil, NewInternalError(msg, ECInvRuleMode)
+	}
+
+	var vls []any
+	for _, eq := range r.want {
+		vls = append(vls, eq.want)
+	}
+	spc.SetArg(spec.ArgValues, vls)
+	if r.flags&flgCustomMsg != 0 {
+		spc.SetArg(ArgErrMsg, r.msg)
+	}
+	if r.flags&flgCustomCode != 0 {
+		spc.SetArg(ArgErrCode, r.code)
+	}
+	return spc, nil
+}
+
+// InRuleFromSpec creates a new instance of [InRule] from the [spec.Spec].
+func InRuleFromSpec(spc *spec.Spec) (InRule, error) {
+	if spc.Name != InRuleName {
+		msg := fmt.Sprintf("%s: invalid spec name: %q", InRuleName, spc.Name)
+		return InRule{}, NewInternalError(msg, spec.ECInvSpec)
+	}
+	mode, err := getArg[string](spc.Args, ArgMode, InRuleName)
+	if err != nil {
+		return InRule{}, err
+	}
+	vls, err := getArg[[]any](spc.Args, spec.ArgValues, InRuleName)
+	if err != nil {
+		return InRule{}, err
+	}
+
+	var rule InRule
+	switch mode {
+	case "in":
+		rule = In(vls...)
+	case "not-in":
+		rule = NotIn(vls...)
+	default:
+		format := "%s: invalid spec rule mode: %q"
+		msg := fmt.Sprintf(format, InRuleName, mode)
+		return InRule{}, NewInternalError(msg, spec.ECInvSpec)
+	}
+
+	if spc.ArgExist(ArgErrMsg) {
+		msg, err := getArg[string](spc.Args, ArgErrMsg, InRuleName)
+		if err != nil {
+			return InRule{}, err
+		}
+		if msg != "" {
+			rule = rule.Message(msg)
+		}
+	}
+
+	if spc.ArgExist(ArgErrCode) {
+		code, err := getArg[string](spc.Args, ArgErrCode, InRuleName)
+		if err != nil {
+			return InRule{}, err
+		}
+		if code != "" {
+			rule = rule.Code(code)
+		}
+	}
+
+	return rule, nil
 }

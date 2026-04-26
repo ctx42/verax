@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
@@ -7,33 +7,81 @@ import (
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
+	"github.com/ctx42/testing/pkg/must"
+	"github.com/ctx42/xrr/pkg/xrr/xrrtest"
+
+	"github.com/ctx42/verax/pkg/spec"
 )
 
-func Test_Noop_tabular(t *testing.T) {
-	tt := []struct {
-		testN string
+func Test_Noop(t *testing.T) {
+	// --- Given ---
+	r := Noop.When(true).Code("ECTst").Message("test err")
 
-		val any
-	}{
-		{"nil", nil},
-		{"empty string", ""},
-		{"zero value int", 0},
-		{"pointer to string", pString},
-		{"pointer to zero value string", pStringEmpty},
-		{"pointer to int", pInt},
-		{"pointer to zero value int", pIntZero},
-		{"pointer to time", pTime},
-		{"pointer to zero value time", pTimeZero},
-		{"pointer to empty struct", pStructEmpty},
-	}
+	// --- Then ---
+	assert.NoError(t, r.Validate("abc"))
+}
 
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- When ---
-			err := Noop.Validate(tc.val)
+func Test_NoopRule_Validate(t *testing.T) {
+	// --- Given ---
+	r := NoopRule{}
 
-			// --- Then ---
-			assert.NoError(t, err)
-		})
-	}
+	// --- When ---
+	err := r.Validate("abc")
+
+	// --- Then ---
+	assert.NoError(t, err)
+}
+
+func Test_Noop_Spec(t *testing.T) {
+	// --- Given ---
+	r := NoopRule{}
+
+	// --- When ---
+	have, err := r.Spec()
+
+	// --- Then ---
+	assert.NoError(t, err)
+	assert.Equal(t, NoopRuleName, have.Name)
+	assert.Nil(t, have.Args)
+}
+
+func Test_NoopRuleFromSpec(t *testing.T) {
+	t.Run("error - not noop rule spec", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec("bad-name")
+
+		// --- When ---
+		have, err := NoopRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, `noop-rule: invalid spec name: "bad-name"`, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("Noop", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(NoopRuleName)
+
+		// --- When ---
+		have, err := NoopRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Noop, have)
+	})
+}
+
+func Test_NoopRule_Spec_NoopRuleFromSpec_round_trip(t *testing.T) {
+	// --- Given ---
+	want := Noop
+	spc := must.Value(want.Spec())
+
+	// --- When ---
+	have, err := NoopRuleFromSpec(spc)
+
+	// --- Then ---
+	assert.NoError(t, err)
+	assert.Equal(t, want, have)
 }

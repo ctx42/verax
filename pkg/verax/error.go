@@ -1,43 +1,95 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
 
-// Error returns the rule which fails with a given error when the condition is
-// true. By default, the condition is always true.
-func Error(err error) ErrorRule {
-	return ErrorRule{
-		condition: true,
-		err:       err,
-	}
+import (
+	"encoding/json"
+
+	"github.com/ctx42/xrr/pkg/xrr"
+)
+
+// Unexported zero-size marker types used as domain type parameters.
+type (
+	edError    struct{}
+	edInternal struct{}
+	edFields   struct{}
+)
+
+// Compile checks.
+var (
+	_ error            = (*Error)(nil)
+	_ xrr.Coder        = (*Error)(nil)
+	_ json.Marshaler   = (*Error)(nil)
+	_ json.Unmarshaler = (*Error)(nil)
+
+	_ error            = (*FieldsError)(nil)
+	_ xrr.Fielder      = (*FieldsError)(nil)
+	_ json.Marshaler   = (*FieldsError)(nil)
+	_ json.Unmarshaler = (*FieldsError)(nil)
+
+	_ error            = (*InternalError)(nil)
+	_ xrr.Coder        = (*InternalError)(nil)
+	_ json.Marshaler   = (*InternalError)(nil)
+	_ json.Unmarshaler = (*InternalError)(nil)
+)
+
+// Error constructor functions for the verax package domains.
+var (
+	newError    = xrr.ErrorFactory[edError]()
+	newInternal = xrr.ErrorFactory[edInternal]()
+	fieldError  = xrr.FieldsFactory[edFields]()
+)
+
+// Error represents an error in the verax package error domain.
+type Error = xrr.GenericError[edError]
+
+// InternalError represents an internal error (library misuse) in the verax
+// package error domain.
+type InternalError = xrr.GenericError[edInternal]
+
+// FieldsError represents a field error in the verax error domain.
+type FieldsError = xrr.GenericFields[edFields]
+
+// NewError returns a new error in the verax package error domain.
+func NewError(msg, code string, opts ...xrr.Option) error {
+	return newError(msg, code, opts...)
 }
 
-var _ Conditioner[ErrorRule] = ErrorRule{} // Compile time check.
-
-// ErrorRule is a rule that returns an error if the condition is true.
-// By default, the condition is always true.
-type ErrorRule struct {
-	condition bool  // Run validation only when true.
-	err       error // Validation error.
+// NewInternalError returns a new internal error in the verax package domain.
+func NewInternalError(msg, code string, opts ...xrr.Option) error {
+	return newInternal(msg, code, opts...)
 }
 
-func (r ErrorRule) Validate(_ any) error {
-	if !r.condition {
-		return nil
-	}
-	return r.err
+// NewFieldsErrors returns a new empty [FieldsError].
+func NewFieldsErrors() *FieldsError {
+	return &FieldsError{}
 }
 
-// When specifies a condition that determines whether validation should be
-// performed. If the condition is false, validation is skipped, and no errors
-// are reported.
-func (r ErrorRule) When(condition bool) ErrorRule {
-	r.condition = condition
-	return r
+// FieldError returns a new field error in the verax package error domain.
+func FieldError(field string, err error) error {
+	return fieldError(field, err)
 }
 
-// Code sets the error code for the rule.
-func (r ErrorRule) Code(code string) ErrorRule {
-	r.err = setCode(r.err, code)
-	return r
+// FieldsErrors creates a new [FieldsError] from the given map. The map is
+// stored directly without copying.
+func FieldsErrors(fields map[string]error) error {
+	return xrr.NewDomainFields[edFields](fields)
 }
+
+// IsError reports whether err belongs to the verax error domain, i.e. it is
+// one of [Error], [InternalError], or [FieldsError].
+func IsError(err error) bool {
+	return IsValidationError(err) || IsInternalError(err)
+}
+
+// IsValidationError reports whether an err is a user-facing validation error
+// i.e. [Error] or [FieldsError].
+func IsValidationError(err error) bool {
+	//goland:noinspection GoTypeAssertionOnErrors
+	_, isFields := err.(*FieldsError)
+	return isFields || xrr.IsDomain[edError](err)
+}
+
+// IsInternalError reports whether an err is an [InternalError].
+func IsInternalError(err error) bool { return xrr.IsDomain[edInternal](err) }

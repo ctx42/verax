@@ -1,56 +1,129 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
 
-// By wraps a [RuleFunc].
-func By(fn RuleFunc) ByRule { return ByRule{fn: fn, condition: true} }
+import (
+	"fmt"
 
-// Compile time checks.
-var (
-	_ Customizer[ByRule]  = ByRule{}
-	_ Conditioner[ByRule] = ByRule{}
+	"github.com/ctx42/xrr/pkg/xrr"
+
+	"github.com/ctx42/verax/pkg/spec"
 )
 
-// ByRule is a validation rule that checks if a value passed to a validation
-// function.
+// ByRuleName represents [ByRule] name.
+const ByRuleName = "by-rule"
+
+// By validates a value using [RuleFunc].
+func By(fn RuleFunc) ByRule { return ByRule{fn: fn, condition: true} }
+
+// Compile time conditions.
+var (
+	_ customizer[ByRule]  = ByRule{}
+	_ conditioner[ByRule] = ByRule{}
+	_ Rule                = ByRule{}
+)
+
+// ByRule conditions if a value passed to a [RuleFunc] function is valid.
 type ByRule struct {
 	fn        RuleFunc // Validation function.
 	condition bool     // Run validation only when true.
-	err       error    // Custom rule error.
-	code      string   // Custom error code.
+	msg       string   // Validation error message.
+	code      string   // Validation error code.
+	flags     uint8    // Customizations.
 }
 
-// Validate checks if the given value is valid or not.
-func (r ByRule) Validate(v any) error {
+func (r ByRule) Validate(have any) error {
 	if !r.condition {
 		return nil
 	}
-	if err := r.fn(v); err != nil {
-		if r.err != nil {
-			err = r.err
+	if IsEmpty(have) {
+		return nil
+	}
+	if err := r.fn(have); err != nil {
+		customMsg := r.flags&flgCustomMsg != 0
+		customCode := r.flags&flgCustomCode != 0
+
+		// Both custom message and code are set.
+		if customMsg && customCode {
+			return NewError(r.msg, r.code)
 		}
-		return setCode(err, r.code)
+
+		if customMsg {
+			return NewError(r.msg, xrr.GetCode(err))
+		}
+		if customCode {
+			return xrr.SetCode[edError](err, r.code)
+		}
+		return err
 	}
 	return nil
 }
 
-// When specifies a condition that determines whether validation should be
-// performed. If the condition is false, validation is skipped, and no errors
-// are reported.
 func (r ByRule) When(condition bool) ByRule {
 	r.condition = condition
 	return r
 }
 
-// Code sets the error code for the rule.
-func (r ByRule) Code(code string) ByRule {
-	r.code = code
+func (r ByRule) Message(msg string) ByRule {
+	if msg != "" {
+		r.msg = msg
+		r.flags |= flgCustomMsg
+	}
 	return r
 }
 
-// Error sets custom error for the rule.
-func (r ByRule) Error(err error) ByRule {
-	r.err = err
+func (r ByRule) Code(code string) ByRule {
+	if code != "" {
+		r.code = code
+		r.flags |= flgCustomCode
+	}
 	return r
+}
+
+func (r ByRule) Spec() (*spec.Spec, error) {
+	spc := spec.NewSpec(ByRuleName).SetArg(spec.ArgSrc, r.fn)
+
+	if r.flags&flgCustomMsg != 0 {
+		spc.SetArg(ArgErrMsg, r.msg)
+	}
+	if r.flags&flgCustomCode != 0 {
+		spc.SetArg(ArgErrCode, r.code)
+	}
+	return spc, nil
+}
+
+// ByRuleFromSpec creates a new instance of [ByRule] from the [spec.Spec].
+func ByRuleFromSpec(spc *spec.Spec) (ByRule, error) {
+	if spc.Name != ByRuleName {
+		msg := fmt.Sprintf("%s: invalid spec name: %q", ByRuleName, spc.Name)
+		return ByRule{}, NewInternalError(msg, spec.ECInvSpec)
+	}
+	fn, err := getArg[RuleFunc](spc.Args, spec.ArgSrc, ByRuleName)
+	if err != nil {
+		return ByRule{}, err
+	}
+
+	rule := By(fn)
+	if spc.ArgExist(ArgErrMsg) {
+		msg, err := getArg[string](spc.Args, ArgErrMsg, ByRuleName)
+		if err != nil {
+			return ByRule{}, err
+		}
+		if msg != "" {
+			rule = rule.Message(msg)
+		}
+	}
+
+	if spc.ArgExist(ArgErrCode) {
+		code, err := getArg[string](spc.Args, ArgErrCode, ByRuleName)
+		if err != nil {
+			return ByRule{}, err
+		}
+		if code != "" {
+			rule = rule.Code(code)
+		}
+	}
+
+	return rule, nil
 }

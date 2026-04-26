@@ -1,14 +1,63 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac <rzajac@gmail.com>
 // SPDX-License-Identifier: MIT
 
 package verax
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
+	"github.com/ctx42/testing/pkg/must"
 	"github.com/ctx42/xrr/pkg/xrr/xrrtest"
+
+	"github.com/ctx42/verax/pkg/spec"
 )
+
+func Test_Check(t *testing.T) {
+	t.Run("the adapted function is called", func(t *testing.T) {
+		// --- Given ---
+		var with int
+		fn := func(have int) bool { with = have; return true }
+
+		// --- When ---
+		have := Check(fn, "test err", "ECTst")
+
+		// --- Then ---
+		err := have(42)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 42, with)
+	})
+
+	t.Run("error - invalid type", func(t *testing.T) {
+		// --- Given ---
+		fn := func(have int) bool { return true }
+
+		// --- When ---
+		have := Check(fn, "test err", "ECTst")
+
+		// --- Then ---
+		err := have(true)
+		assert.True(t, IsInternalError(err))
+		xrrtest.AssertEqual(t, "test err: expected int, got bool (ECInvType)", err)
+		xrrtest.AssertCode(t, ECInvType, err)
+	})
+
+	t.Run("error returned when the function returns false", func(t *testing.T) {
+		// --- Given ---
+		fn := func(have int) bool { return false }
+
+		// --- When ---
+		have := Check(fn, "test err", "ECTst")
+
+		// --- Then ---
+		err := have(42)
+		assert.True(t, IsError(err))
+		xrrtest.AssertEqual(t, "test err (ECTst)", err)
+		xrrtest.AssertCode(t, "ECTst", err)
+	})
+}
 
 func Test_Validate(t *testing.T) {
 	t.Run("valid nil no rules", func(t *testing.T) {
@@ -69,7 +118,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("valid one rule", func(t *testing.T) {
 		// --- When ---
-		err := Validate("abc", StrRule("abc"))
+		err := Validate("abc", Equal("abc"))
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -77,7 +126,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("valid both ok", func(t *testing.T) {
 		// --- When ---
-		err := Validate("abcxyz", StrContainRule("abc"), StrContainRule("xyz"))
+		err := Validate(42, Min(42), Equal(42))
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -85,7 +134,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("valid first ok skip second", func(t *testing.T) {
 		// --- When ---
-		err := Validate("abc", StrRule("abc"), Skip, ErrRule("error"))
+		err := Validate("abc", Equal("abc"), Skip, Fail("test err", "ECTst"))
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -93,7 +142,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("valid first ok skip when true second", func(t *testing.T) {
 		// --- When ---
-		err := Validate("abc", StrRule("abc"), Skip.When(true), StrRule("xyz"))
+		err := Validate("abc", Equal("abc"), Skip.When(true), Equal("xyz"))
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -118,70 +167,76 @@ func Test_Validate(t *testing.T) {
 		err := Validate(s)
 
 		// --- Then ---
-		xrrtest.AssertEqual(t, "FStr: must be 'abc' (ECMustAbc)", err)
+		wMsg := "FStr: must be equal to 'abc' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
 	t.Run("invalid first fails", func(t *testing.T) {
 		// --- When ---
-		err := Validate("123", StrRule("abc"), StrRule("xyz"))
+		err := Validate("123", Equal("abc"), Equal("xyz"))
 
 		// --- Then ---
-		xrrtest.AssertEqual(t, "must be 'abc' (ECMustAbc)", err)
+		wMsg := "must be equal to 'abc' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
 	t.Run("invalid second fails", func(t *testing.T) {
 		// --- When ---
-		err := Validate("abc", StrRule("abc"), StrRule("xyz"))
+		err := Validate("abc", Equal("abc"), Equal("xyz"))
 
 		// --- Then ---
-		xrrtest.AssertEqual(t, "must be 'xyz' (ECMustXyz)", err)
+		wMsg := "must be equal to 'xyz' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
 	t.Run("invalid first fails skip second", func(t *testing.T) {
 		// --- When ---
-		err := Validate("123", StrRule("abc"), Skip, ErrRule("error"))
+		err := Validate("123", Equal("abc"), Skip, Fail("test err", "ECTst"))
 
 		// --- Then ---
-		xrrtest.AssertEqual(t, "must be 'abc' (ECMustAbc)", err)
+		wMsg := "must be equal to 'abc' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
 	t.Run("invalid first fails skip when true second", func(t *testing.T) {
 		// --- When ---
 		err := Validate(
 			"123",
-			StrRule("abc"),
+			Equal("abc"),
 			Skip.When(true),
-			ErrRule("error"),
+			Fail("test err", "ECTst"),
 		)
 
 		// --- Then ---
-		xrrtest.AssertEqual(t, "must be 'abc' (ECMustAbc)", err)
+		wMsg := "must be equal to 'abc' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
 	t.Run("invalid first fail skip when false second", func(t *testing.T) {
 		// --- When ---
 		err := Validate(
 			"123",
-			StrRule("abc"),
+			Equal("abc"),
 			Skip.When(false),
-			StrRule("xyz"),
+			Equal("xyz"),
 		)
 
 		// --- Then ---
-		xrrtest.AssertEqual(t, "must be 'abc' (ECMustAbc)", err)
+		wMsg := "must be equal to 'abc' (ECNotEqual)"
+		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
 	t.Run("invalid first ok skip when false second", func(t *testing.T) {
 		// --- When ---
 		err := Validate(
 			"abc",
-			StrRule("abc"),
+			Equal("abc"),
 			Skip.When(false),
-			ErrRule("error"),
+			Fail("test err", "ECTst"),
 		)
 
 		// --- Then ---
-		xrrtest.AssertEqual(t, "error (ECGeneric)", err)
+		xrrtest.AssertEqual(t, "test err (ECTst)", err)
 	})
 
 	t.Run("invalid many in slice", func(t *testing.T) {
@@ -192,10 +247,10 @@ func Test_Validate(t *testing.T) {
 		err := Validate(s)
 
 		// --- Then ---
-		exp := "" +
-			"0.FStr: must be 'abc' (ECMustAbc); " +
-			"1.FStr: must be 'abc' (ECMustAbc)"
-		xrrtest.AssertFieldsEqual(t, exp, err)
+		want := "" +
+			"0.FStr: must be equal to 'abc' (ECNotEqual); " +
+			"1.FStr: must be equal to 'abc' (ECNotEqual)"
+		xrrtest.AssertEqual(t, want, err)
 	})
 
 	t.Run("valid all in slice", func(t *testing.T) {
@@ -217,10 +272,10 @@ func Test_Validate(t *testing.T) {
 		err := Validate(m)
 
 		// --- Then ---
-		exp := "" +
-			"0.FStr: must be 'abc' (ECMustAbc); " +
-			"4.FStr: must be 'abc' (ECMustAbc)"
-		xrrtest.AssertFieldsEqual(t, exp, err)
+		want := "" +
+			"0.FStr: must be equal to 'abc' (ECNotEqual); " +
+			"4.FStr: must be equal to 'abc' (ECNotEqual)"
+		xrrtest.AssertEqual(t, want, err)
 	})
 
 	t.Run("valid all in map", func(t *testing.T) {
@@ -239,7 +294,7 @@ func Test_Validate(t *testing.T) {
 		m := &ModelVW{"111"}
 
 		// --- When ---
-		err := Validate(m, StrRule("111"), NotNil)
+		err := Validate(m, Equal("111"), NotNil)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -247,14 +302,14 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("ValidateWith runs provided rule", func(t *testing.T) {
 		// --- Given ---
-		m := &ModelVW{}
+		m := &ModelVW{value: "abc"}
 
 		// --- When ---
-		err := Validate(m, StrRule("111"))
+		err := Validate(m, Equal("111"))
 
 		// --- Then ---
 		assert.Error(t, err)
-		assert.Equal(t, "must be '111'", err.Error())
+		assert.ErrorEqual(t, "must be equal to '111'", err)
 	})
 
 	t.Run("ValidateWith additional validation in the type", func(t *testing.T) {
@@ -262,7 +317,7 @@ func Test_Validate(t *testing.T) {
 		m := &ModelVW{"too_long"}
 
 		// --- When ---
-		err := Validate(m, StrRule("wrong_value"))
+		err := Validate(m, Equal("wrong_value"))
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrTst, err)
@@ -273,7 +328,7 @@ func Test_Validate(t *testing.T) {
 		m := &ModelVW{"too_long"}
 
 		// --- When ---
-		err := Validate(m, StrRule("wrong_value"))
+		err := Validate(m, Equal("wrong_value"))
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrTst, err)
@@ -308,7 +363,7 @@ func Test_Set(t *testing.T) {
 		}
 
 		// --- When ---
-		err := Validate(42, r)
+		err := r.Validate(42)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -322,11 +377,11 @@ func Test_Set(t *testing.T) {
 		}
 
 		// --- When ---
-		err := Validate(39, r)
+		err := r.Validate(39)
 
 		// --- Then ---
-		assert.ErrorEqual(t, "must be no less than 40", err)
-		xrrtest.AssertCode(t, ECInvThreshold, err)
+		assert.ErrorEqual(t, "must be greater or equal to 40", err)
+		xrrtest.AssertCode(t, ECInvRange, err)
 	})
 }
 
@@ -419,8 +474,7 @@ func Test_Named_GetOrError(t *testing.T) {
 		have := nr.GetOrError("r1")
 
 		// --- Then ---
-		assert.NoError(t, have.Validate(1))
-		assert.ErrorIs(t, ErrNotIn, have.Validate(2))
+		assert.Equal(t, r1, have)
 	})
 
 	t.Run("rule does not exist", func(t *testing.T) {
@@ -434,6 +488,214 @@ func Test_Named_GetOrError(t *testing.T) {
 		have := nr.GetOrError("r3")
 
 		// --- Then ---
-		assert.ErrorIs(t, ErrUnkRule, have.Validate(1))
+		err := have.Validate(11)
+		xrrtest.AssertEqual(t, "unknown rule (ECUnkRule)", err)
 	})
+}
+
+func Test_Rule_encoding_round_trip_tabular(t *testing.T) {
+	ruleFunc := RuleFunc(func(v any) error { return nil })
+	ruleFuncSrc := must.Value(spec.NewSource("ruleFunc", ruleFunc))
+
+	tt := []struct {
+		testN string
+
+		src SpecableRule
+		bld spec.Builder[Rule]
+	}{
+		// AbsentRule.
+
+		{
+			"AbsentRule-Nil with error message and code",
+			Nil.Message("test msg").Code("ECTst"),
+			AsRuleBuilder(AbsentRuleFromSpec),
+		},
+		{
+			"AbsentRule-Empty with error message and code",
+			Empty.Message("test msg").Code("ECTst"),
+			AsRuleBuilder(AbsentRuleFromSpec),
+		},
+
+		// ByRule.
+
+		{
+			"ByRule with error message and code",
+			By(ruleFunc).Message("test msg").Code("ECTst"),
+			AsRuleBuilder(ByRuleFromSpec),
+		},
+
+		// ContainRule.
+
+		{
+			"ContainRule using Equal with error message and code",
+			Contain(Equal(42)).Message("test msg").Code("ECTst"),
+			AsRuleBuilder(ContainRuleFromSpec),
+		},
+		{
+			"ContainRule using NotEqual with error message and code",
+			Contain(NotEqual(42)).Message("test msg").Code("ECTst"),
+			AsRuleBuilder(ContainRuleFromSpec),
+		},
+
+		// EachRule.
+
+		{
+			"EachRule",
+			Each(Min(42), Max(44)),
+			AsRuleBuilder(EachRuleFromSpec),
+		},
+
+		// EqualRule.
+
+		{
+			"EqualRule-Equal - with error message and code",
+			Equal(42).Message("test msg").Code("ECTst"),
+			AsRuleBuilder(EqualRuleFromSpec),
+		},
+		{
+			"EqualRule-NotEqual - with error message and code",
+			NotEqual(42).Message("test msg").Code("ECTst"),
+			AsRuleBuilder(EqualRuleFromSpec),
+		},
+		{
+			"EqualRule-EqualField",
+			EqualField(42, "field"),
+			AsRuleBuilder(EqualRuleFromSpec),
+		},
+		{
+			"EqualRule-EqualField - with error message and code",
+			EqualField(42, "field").Message("test msg").Code("ECTst"),
+			AsRuleBuilder(EqualRuleFromSpec),
+		},
+		{
+			"EqualRule-NotEqualField",
+			NotEqualField(42, "field"),
+			AsRuleBuilder(EqualRuleFromSpec),
+		},
+		{
+			"EqualRule-NotEqualField - with error message and code",
+			NotEqualField(42, "field").Message("test msg").Code("ECTst"),
+			AsRuleBuilder(EqualRuleFromSpec),
+		},
+
+		// FailRule.
+
+		{
+			"FailRule",
+			Fail("test msg", "ECTst"),
+			AsRuleBuilder(FailRuleFromSpec),
+		},
+
+		// InRule.
+
+		{
+			"InRule - with error message and code",
+			In(1, 2, 3).Message("test msg").Code("ECTst"),
+			AsRuleBuilder(InRuleFromSpec),
+		},
+
+		// LengthRule.
+
+		{
+			"LengthRule-Length - with error message and code",
+			Length(42, 44).Message("test msg").Code("ECTst"),
+			AsRuleBuilder(LengthRuleFromSpec),
+		},
+		{
+			"LengthRule-RuneLength - with error message and code",
+			RuneLength(42, 44).Message("test msg").Code("ECTst"),
+			AsRuleBuilder(LengthRuleFromSpec),
+		},
+
+		// MapRule.
+
+		{
+			"MapRule",
+			Map(Key(1, Min(42)), Key(3, Max(44))),
+			AsRuleBuilder(MapRuleFromSpec),
+		},
+
+		// MatchRule.
+
+		{
+			"MatchRule - with error message and code",
+			Match(regexp.MustCompile(`\d+`)).Message("test msg").Code("ECTst"),
+			AsRuleBuilder(MatchRuleFromSpec),
+		},
+
+		// NoopRule.
+
+		{
+			"NoopRule",
+			Noop,
+			AsRuleBuilder(NoopRuleFromSpec),
+		},
+
+		// RequiredRule.
+
+		{
+			"RequiredRule-Required - with error message and code",
+			Required.Message("test msg").Code("ECTst"),
+			AsRuleBuilder(RequiredRuleFromSpec),
+		},
+		{
+			"RequiredRule-NotEmpty - with error message and code",
+			NotEmpty.Message("test msg").Code("ECTst"),
+			AsRuleBuilder(RequiredRuleFromSpec),
+		},
+		{
+			"RequiredRule-NotNil - with error message and code",
+			NotNil.Message("test msg").Code("ECTst"),
+			AsRuleBuilder(RequiredRuleFromSpec),
+		},
+
+		// SkipRule.
+
+		{
+			"SkipRule",
+			Skip,
+			AsRuleBuilder(SkipRuleFromSpec),
+		},
+
+		// RangeRule.
+
+		{
+			"RangeRule-Min - with error message and code",
+			Min(42).Exclusive().Message("test msg").Code("ECTst"),
+			AsRuleBuilder(RangeRuleFromSpec),
+		},
+		{
+			"RangeRule-Max - with error message and code",
+			Max(42).Exclusive().Message("test msg").Code("ECTst"),
+			AsRuleBuilder(RangeRuleFromSpec),
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// Setup Registry.
+			reg := spec.NewRegistry[Rule]()
+			reg.RegisterSource(ruleFuncSrc)
+			reg.RegisterBuilders(Builders())
+
+			// Get spec.
+			srcSpc, err := tc.src.Spec()
+			assert.NoError(t, err)
+
+			// Encode.
+			data, err := reg.EncodeSpec(srcSpc)
+			assert.NoError(t, err)
+
+			// Decode.
+			dstSpc := &spec.Spec{}
+			assert.NoError(t, reg.DecodeSpec(data, dstSpc))
+
+			// Build.
+			dst, err := tc.bld(dstSpc)
+			assert.NoError(t, err)
+
+			// Compare.
+			assert.Equal(t, tc.src, dst)
+		})
+	}
 }
