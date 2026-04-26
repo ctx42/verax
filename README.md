@@ -6,6 +6,7 @@
 
 <!-- TOC -->
 * [verax: Validation for Go](#verax-validation-for-go)
+  * [Quick Start](#quick-start)
   * [Features](#features)
   * [Installation](#installation)
   * [Usage](#usage)
@@ -17,39 +18,69 @@
     * [Validating Maps](#validating-maps)
     * [Validating Map Keys and Values](#validating-map-keys-and-values)
     * [Custom Rules](#custom-rules)
-      * [Implementing the `verax.Rule` Interface](#implementing-the-veraxrule-interface)
+      * [Implementing the Rule Interface](#implementing-the-rule-interface)
       * [Reusing Existing Rules](#reusing-existing-rules)
       * [Custom Validation Functions](#custom-validation-functions)
     * [Custom Errors and Error Codes](#custom-errors-and-error-codes)
+    * [Working with Validation Errors](#working-with-validation-errors)
+      * [Error Types](#error-types)
+      * [Error Classification](#error-classification)
+      * [JSON Marshalling](#json-marshalling)
+      * [Inspecting Errors Programmatically](#inspecting-errors-programmatically)
     * [Conditional Rules](#conditional-rules)
     * [Skipping Rules](#skipping-rules)
   * [List of Built-In Rules](#list-of-built-in-rules)
   * [Disclaimer](#disclaimer)
 <!-- TOC -->
 
-`verax` from Latin truthful, is a flexible and intuitive Go module for
-validating data structures, including primitive types, structs, slices, arrays,
-and maps. It offers a simple API to define validation rules and produce clear,
-human-readable error messages as well as JSON serializable error for easy API
-integration. Whether validating user input, configuration data, or complex
-nested structures, `verax` simplifies enforcing constraints and ensuring data
-integrity.
+`verax` (Latin for "truthful") is a Go validation library for primitive types,
+structs, slices, arrays, and maps. It produces human-readable,
+JSON-serializable errors suitable for direct use in API responses.
+
+## Quick Start
+
+```go
+import "github.com/ctx42/verax"
+
+type CreateUserRequest struct {
+    Name  string `json:"name"`
+    Email string `json:"email"`
+    Age   int    `json:"age"`
+}
+
+func (r *CreateUserRequest) Validate() error {
+    return verax.ValidateStruct(r,
+        verax.Field(&r.Name,  verax.Required, verax.Length(2, 50)),
+        verax.Field(&r.Email, verax.Required, verax.Match(emailRx)),
+        verax.Field(&r.Age,   verax.Required, verax.Min(18), verax.Max(120)),
+    )
+}
+
+req := &CreateUserRequest{Name: "A", Email: "bad", Age: 15}
+if err := req.Validate(); err != nil {
+    data, _ := json.Marshal(err)
+    // {
+    //   "age":   {"code": "ECInvRange",  "error": "must be greater or equal to 18"},
+    //   "email": {"code": "ECInvMatch",  "error": "must be in a valid format value"},
+    //   "name":  {"code": "ECInvLength", "error": "the length must be between 2 and 50"}
+    // }
+}
+```
 
 ## Features
 
-- **Simple API**: Validate data with `verax.Validate` or `verax.ValidateStruct` for structs.
-- **Built-In Rules**: Includes multiple built-in rules like `Required`, `Min`, `Max`, `Length`, and more for common validation needs.
-- **Informative Errors**: Provides human-readable errors with error codes.
-- **JSON Serializable Errors**: Errors serialize to JSON for API integration.
-- **Struct Tag Support**: Customize error message field names using struct tags (e.g., `json` or custom tags).
-- **Validator Interface**: Implement `verax.Validator` for custom struct validation logic.
-- **Complex Types**: Validate slices, arrays, and maps with aggregated error reporting.
-- **Extensibility**: Create custom rules implementing `verax.Rule` interface, or by using `verax.Set` and `verax.By`.
-- **Conditional Validation**: Use `verax.When` and `verax.Skip` for validation logic.
+- **Simple API**: `verax.Validate` for values, `verax.ValidateStruct` for structs.
+- **Collect All Errors**: `ValidateStruct` reports every failing field in one pass.
+- **Built-In Rules**: `Required`, `Min`, `Max`, `Length`, `Equal`, `Match`, `In`, `Each`, `Map`, and more.
+- **JSON-Ready Errors**: All error types implement `json.Marshaler` and `json.Unmarshaler` — marshal directly into API responses.
+- **Error Classification**: `IsError`, `IsValidationError`, and `IsInternalError` distinguish error categories without type assertions.
+- **Struct Tag Support**: Field names in errors default to the `json` tag; override with `.Tag()`.
+- **Validator Interface**: Structs implement `verax.Validator` for self-contained, reusable validation logic.
+- **Complex Types**: Validate slices, arrays, and maps with per-element error reporting.
+- **Extensible**: Implement `verax.Rule`, compose with `verax.Set`, or wrap functions with `verax.By`.
+- **Conditional Validation**: `verax.When`, `verax.Skip`, and per-rule `.When()` for fine-grained control.
 
 ## Installation
-
-To use `verax` in your Go project, install it with:
 
 ```bash
 go get github.com/ctx42/verax
@@ -59,63 +90,17 @@ go get github.com/ctx42/verax
 
 ### Validating Primitive Types
 
-The `verax.Validate` function validates primitive types like `int`, `string`, 
-or `float64`. Pass the value and a list of rules. Rules are evaluated in order, 
-and the function returns an error for the first rule that fails.
+`verax.Validate` validates a single value against a list of rules. Rules run in
+order and the function returns on the first failure. `PrintError` and `PrintJSON`
+are helpers defined in `examples_test.go`.
 
+<!-- gmdoceg:pkg/verax/ExampleValidate_primitive_int -->
 ```go
 err := verax.Validate(
-    45,
-    verax.Required,
-    verax.Min(42),
-    verax.Max(44),
-)
-
-PrintError(err) // Helper for formatting error output, see (examples_test.go).
-PrintJSON(err)  // Helper for formatting JSON output, see (examples_test.go).
-// Output:
-// ERROR:
-//
-// - must be no greater than 44
-//
-// JSON:
-// {
-//     "code": "ECInvThreshold",
-//     "error": "must be no greater than 44"
-// }
-```
-
-In this example, the value `45` is checked to be non zero-value (`Required`), 
-at least `42` (`Min`), and no more than `44` (`Max`). It fails the `Max(44)` 
-rule. The example also shows the descriptive error message and JSON output.
-
-### Validating Structs
-
-The `verax.ValidateStruct` function validates struct fields. Pass a pointer to
-the struct and a list of `verax.FieldRules`, each specifying a field and its
-rules. Field names in errors default to the struct field name or `json` tag, 
-but can be customized with `.Tag()`.
-
-Define a struct:
-
-```go
-type Planet struct {
-	Position int    `json:"position"`
-	Name     string `json:"name" solar:"planet_name"`
-	Life     float64
-}
-```
-
-Validate an instance:
-
-```go
-planet := Planet{9, "PlanetXYZ", -1}
-
-err := verax.ValidateStruct(
-    &planet,
-    verax.Field(&planet.Position, verax.Min(1), verax.Max(8)),
-    verax.Field(&planet.Name, verax.Length(4, 7)),
-    verax.Field(&planet.Life, verax.Min(0.0), verax.Max(1.0)),
+	45,
+	verax.Required,
+	verax.Min(42),
+	verax.Max(44),
 )
 
 PrintError(err)
@@ -123,47 +108,82 @@ PrintJSON(err)
 // Output:
 // ERROR:
 //
-// - Life: must be no less than 0
+// - must be less or equal to 44
+//
+// JSON:
+// {
+//     "code": "ECInvRange",
+//     "error": "must be less or equal to 44"
+// }
+```
+
+### Validating Structs
+
+`verax.ValidateStruct` validates all fields in one pass, collecting every
+failure before returning. Pass a pointer to the struct and `verax.Field`
+descriptors, each specifying a field and its rules. Field names in errors
+default to the `json` tag, or the struct field name when no tag is defined.
+
+Define a struct:
+
+```go
+type Planet struct {
+    Position int     `json:"position"`
+    Name     string  `json:"name" solar:"planet_name"`
+    Life     float64
+}
+```
+
+Validate an instance:
+
+<!-- gmdoceg:pkg/verax/ExampleValidateStruct -->
+```go
+planet := Planet{9, "PlanetXYZ", -1}
+
+err := verax.ValidateStruct(
+	&planet,
+	verax.Field(&planet.Position, verax.Min(1), verax.Max(8)),
+	verax.Field(&planet.Name, verax.Length(4, 7)),
+	verax.Field(&planet.Life, verax.Min(0.0), verax.Max(1.0)),
+)
+
+PrintError(err)
+PrintJSON(err)
+// Output:
+// ERROR:
+//
+// - Life: must be greater or equal to 0
 // - name: the length must be between 4 and 7
-// - position: must be no greater than 8
+// - position: must be less or equal to 8
 //
 // JSON:
 // {
 //     "Life": {
-//         "code": "ECInvThreshold",
-//         "error": "must be no less than 0"
+//         "code": "ECInvRange",
+//         "error": "must be greater or equal to 0"
 //     },
 //     "name": {
 //         "code": "ECInvLength",
 //         "error": "the length must be between 4 and 7"
 //     },
 //     "position": {
-//         "code": "ECInvThreshold",
-//         "error": "must be no greater than 8"
+//         "code": "ECInvRange",
+//         "error": "must be less or equal to 8"
 //     }
 // }
 ```
 
-This validates a `Planet` struct where:
- - `Position` must be between 1 and 8, 
- - `Name` must have between 4 and 7 characters long, 
- - `Life` must be between 0.0 and 1.0. 
-
-In the above example all fields fail, and errors are presented with names 
-defined in `json` tag or struct field name if it was not defined.
-
 #### Customizing Struct Tags
 
-By default, error messages use struct field name for the fields in the error
-messages unless there is the `json` tag defined. Use `.Tag()` to specify a 
-custom tag for a field.
+Use `.Tag()` to pick a different struct tag for the field name in errors:
 
+<!-- gmdoceg:pkg/verax/ExampleValidateStruct_custom_tag -->
 ```go
 planet := Planet{1, "Mer", 0.0}
 
 err := verax.ValidateStruct(
-    &planet,
-    verax.Field(&planet.Name, verax.Length(4, 7)).Tag("solar"),
+	&planet,
+	verax.Field(&planet.Name, verax.Length(4, 7)).Tag("solar"),
 )
 
 PrintError(err)
@@ -182,27 +202,24 @@ PrintJSON(err)
 // }
 ```
 
-Here, the `Name` field’s error uses the `solar` tag name (`planet_name`) 
-instead of the `json` tag name (`name`).
-
 #### Implementing the Validator Interface
 
-Structs can implement the `verax.Validator` interface to define custom 
-validation logic, reusable across the application:
+Structs that implement `verax.Validator` are validated automatically when
+passed to `verax.Validate`, or when they appear as elements in a slice, array,
+or map:
 
 ```go
 func (p *Planet) Validate() error {
-	return verax.ValidateStruct(
-		p,
-		verax.Field(&p.Position, verax.Min(1), verax.Max(8)),
-		verax.Field(&p.Name, verax.Length(4, 7)).Tag("solar"),
-		verax.Field(&p.Life, verax.Min(0.0), verax.Max(1.0)),
-	)
+    return verax.ValidateStruct(
+        p,
+        verax.Field(&p.Position, verax.Min(1), verax.Max(8)),
+        verax.Field(&p.Name, verax.Length(4, 7)).Tag("solar"),
+        verax.Field(&p.Life, verax.Min(0.0), verax.Max(1.0)),
+    )
 }
 ```
 
-Validate the struct:
-
+<!-- gmdoceg:pkg/verax/ExampleValidator -->
 ```go
 planet := &Planet{9, "Mer", 0.0}
 
@@ -214,7 +231,7 @@ PrintJSON(err)
 // ERROR:
 //
 // - planet_name: the length must be between 4 and 7
-// - position: must be no greater than 8
+// - position: must be less or equal to 8
 //
 // JSON:
 // {
@@ -223,26 +240,23 @@ PrintJSON(err)
 //         "error": "the length must be between 4 and 7"
 //     },
 //     "position": {
-//         "code": "ECInvThreshold",
-//         "error": "must be no greater than 8"
+//         "code": "ECInvRange",
+//         "error": "must be less or equal to 8"
 //     }
 // }
 ```
 
-This approach encapsulates validation logic within the struct, ideal for 
-consistent validation across multiple uses.
-
 ### Validating Slices and Arrays
 
-The `verax.Validate` supports slices and arrays of structs implementing
-`verax.Validator`. Each element is validated, with errors prefixed by the index 
-or key.
+Slices and arrays of `verax.Validator` values are validated element by element.
+Errors are prefixed with the element index.
 
+<!-- gmdoceg:pkg/verax/ExampleValidate_slices -->
 ```go
 planets := []*Planet{
-    {1, "Mer", 0},
-    {3, "Earth", 1.0},
-    {9, "X", 0.1},
+	{1, "Mer", 0},
+	{3, "Earth", 1.0},
+	{9, "X", 0.1},
 }
 
 err := verax.Validate(planets)
@@ -254,7 +268,7 @@ PrintJSON(err)
 //
 // - 0.planet_name: the length must be between 4 and 7
 // - 2.planet_name: the length must be between 4 and 7
-// - 2.position: must be no greater than 8
+// - 2.position: must be less or equal to 8
 //
 // JSON:
 // {
@@ -267,25 +281,23 @@ PrintJSON(err)
 //         "error": "the length must be between 4 and 7"
 //     },
 //     "2.position": {
-//         "code": "ECInvThreshold",
-//         "error": "must be no greater than 8"
+//         "code": "ECInvRange",
+//         "error": "must be less or equal to 8"
 //     }
 // }
 ```
 
-Each `Planet` in the slice is validated using its `Validate` method. Errors 
-include the index (e.g., `0.planet_name`).
-
 ### Validating Maps
 
-Maps with structs implementing `verax.Validator` can be validated with
-`verax.Validate`. Errors are prefixed with the map key.
+Maps whose values implement `verax.Validator` are validated the same way.
+Errors are prefixed with the map key.
 
+<!-- gmdoceg:pkg/verax/ExampleValidate_maps -->
 ```go
 planets := map[string]*Planet{
-    "mer": {1, "Mer", 0},
-    "ear": {3, "Earth", 1.0},
-    "x":   {9, "X", 0.1},
+	"mer": {1, "Mer", 0},
+	"ear": {3, "Earth", 1.0},
+	"x":   {9, "X", 0.1},
 }
 
 err := verax.Validate(planets)
@@ -297,7 +309,7 @@ PrintJSON(err)
 //
 // - mer.planet_name: the length must be between 4 and 7
 // - x.planet_name: the length must be between 4 and 7
-// - x.position: must be no greater than 8
+// - x.position: must be less or equal to 8
 //
 // JSON:
 // {
@@ -310,35 +322,35 @@ PrintJSON(err)
 //         "error": "the length must be between 4 and 7"
 //     },
 //     "x.position": {
-//         "code": "ECInvThreshold",
-//         "error": "must be no greater than 8"
+//         "code": "ECInvRange",
+//         "error": "must be less or equal to 8"
 //     }
 // }
 ```
 
-Each `Planet` is validated, with errors prefixed by the map key (e.g.,
-`mer.planet_name`).
-
 ### Validating Map Keys and Values
 
-Use `verax.Map` to individually assign validators to map keys-values.  
+Use `verax.Map` to assign rules to specific map keys:
 
+<!-- gmdoceg:pkg/verax/ExampleMap -->
 ```go
 data := map[string]any{
-    "bool":  false,
-    "int":   44,
-    "float": 0.1,
-    "time":  time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
+	"bool":  false,
+	"int":   44,
+	"float": 0.1,
+	"time":  time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
 }
 
 MyRule := verax.Map(
-    verax.Key("bool", verax.Equal(true)),
-    verax.Key("int", verax.Max(42)),
-    verax.Key("float", verax.Min(4.2)),
-    verax.Key("time", verax.Min(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC))),
+	verax.Key("bool", verax.Equal(true)),
+	verax.Key("int", verax.Max(42)),
+	verax.Key("float", verax.Min(4.2)),
+	verax.Key("time", verax.Min(
+		time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
+	)),
 )
 
-err := verax.Validate(data, MyRule)
+err := verax.Validate(data, MyRule) // nolint: ineffassign
 // or
 err = MyRule.Validate(data)
 
@@ -348,9 +360,9 @@ PrintJSON(err)
 // ERROR:
 //
 // - bool: must be equal to 'true'
-// - float: must be no less than 4.2
-// - int: must be no greater than 42
-// - time: must be no less than 2025-01-01T00:00:00Z
+// - float: must be greater or equal to 4.2
+// - int: must be less or equal to 42
+// - time: must be greater or equal to 2025-01-01T00:00:00Z
 //
 // JSON:
 // {
@@ -359,52 +371,57 @@ PrintJSON(err)
 //         "error": "must be equal to 'true'"
 //     },
 //     "float": {
-//         "code": "ECInvThreshold",
-//         "error": "must be no less than 4.2"
+//         "code": "ECInvRange",
+//         "error": "must be greater or equal to 4.2"
 //     },
 //     "int": {
-//         "code": "ECInvThreshold",
-//         "error": "must be no greater than 42"
+//         "code": "ECInvRange",
+//         "error": "must be less or equal to 42"
 //     },
 //     "time": {
-//         "code": "ECInvThreshold",
-//         "error": "must be no less than 2025-01-01T00:00:00Z"
+//         "code": "ECInvRange",
+//         "error": "must be greater or equal to 2025-01-01T00:00:00Z"
 //     }
 // }
 ```
-
-This validates a map with mixed types, with errors prefixed by the key.
 
 ### Custom Rules
 
 `verax` offers three ways to create custom validation rules:
 
-1. Implement the `verax.Rule` Interface.
-2. Reuse Existing Rules.
-3. Custom Validation Functions.
+1. Implement the `verax.Rule` interface.
+2. Compose existing rules with `verax.Set`.
+3. Wrap a plain function with `verax.By`.
 
-#### Implementing the `verax.Rule` Interface
+#### Implementing the Rule Interface
 
-Create a custom rule by implementing `verax.Rule`:
+Implement `verax.Rule` when you need full control, such as querying a database.
+The `Validate` method must return:
+- `nil` on success,
+- `*verax.Error` for a user-facing validation failure, or
+- `*verax.InternalError` for misuse (e.g. a caller passed the wrong type).
 
 ```go
 type UserDoesNotExistRule struct{}
 
-func (u UserDoesNotExistRule) Validate(v any) error {
-	username, err := verax.EnsureString(v)
-	if err != nil {
-		return verax.ErrInvType
-	}
-
-    // Check if the username exists in a database.
-    
-	err := fmt.Errorf("user %s already exists", username)
-	return xrr.Wrap(err, xrr.WithCode("ECMustNotExist"))
+func (u UserDoesNotExistRule) Validate(have any) error {
+    username, ok := have.(string)
+    if !ok {
+        return verax.NewInternalError("must be a string", verax.ECInvType)
+    }
+    if userExists(username) {
+        return verax.NewError(
+            fmt.Sprintf("user %s already exist", username),
+            "ECMustNotExist",
+        )
+    }
+    return nil
 }
 ```
 
 Use the rule:
 
+<!-- gmdoceg:pkg/verax/ExampleRule -->
 ```go
 err := verax.Validate("thor", verax.Required, UserDoesNotExistRule{})
 
@@ -413,28 +430,27 @@ PrintJSON(err)
 // Output:
 // ERROR:
 //
-// - user thor already existexist
+// - user thor already exist
 //
 // JSON:
 // {
 //     "code": "ECMustNotExist",
-//     "error": "user thor already existexist"
+//     "error": "user thor already exist"
 // }
 ```
 
-This is ideal for rules requiring external checks, like database queries.
-
 #### Reusing Existing Rules
 
-Use `verax.Set` to group rules for reuse:
+Use `verax.Set` to compose rules for reuse:
 
+<!-- gmdoceg:pkg/verax/ExampleSet -->
 ```go
 NameRule := verax.Set{
-    verax.Required,
-    verax.Length(4, 5),
+	verax.Required,
+	verax.Length(4, 5),
 }
 
-err := NameRule.Validate("abc")
+err := NameRule.Validate("abc") // nolint: ineffassign
 // or
 err = verax.Validate("abc", NameRule)
 
@@ -452,29 +468,26 @@ PrintJSON(err)
 // }
 ```
 
-This creates a reusable `NameRule` for non-empty strings with length between 
-four and five characters.
-
 #### Custom Validation Functions
 
-Define a function with signature matching `func(v any) error` and use 
-`verax.By`:
+Wrap a `func(v any) error` with `verax.By`:
 
+<!-- gmdoceg:pkg/verax/ExampleBy -->
 ```go
 fn := func(v any) error {
-    str, err := verax.EnsureString(v)
-    if err != nil {
-        return verax.ErrInvType
-    }
-    if str != "" && str != "abc" {
-        return xrr.New("i need abc", "ECMustABC")
-    }
-    return nil
+	str, err := verax.EnsureString(v)
+	if err != nil {
+		return verax.ErrInvType
+	}
+	if str != "" && str != "abc" {
+		return verax.NewError("i need abc", "ECMustABC")
+	}
+	return nil
 }
 
 AbcRule := verax.By(fn)
 
-err := AbcRule.Validate("xyz")
+err := AbcRule.Validate("xyz") // nolint: ineffassign
 // or
 err = verax.Validate("xyz", AbcRule)
 
@@ -492,17 +505,16 @@ PrintJSON(err)
 // }
 ```
 
-This is useful for simple, one-off validation logic. Notice that the function
-should not return errors for nils or zero-values. This is because `verax` 
-has a special rule for that: `verax.Required`.
+> **Tip**: Custom functions should return `nil` for nil or zero values. Use
+> `verax.Required` as a separate rule to enforce non-zero values.
 
 ### Custom Errors and Error Codes
 
-Customize error messages and codes with `.Error()` and `.Code()`:
+Customize error messages and codes with `.Message()` and `.Code()`:
 
+<!-- gmdoceg:pkg/verax/ExampleRule_customMessage -->
 ```go
-custom := xrr.New("must be my favorite number", "EC42")
-rule := verax.Equal(42).Error(custom)
+rule := verax.Equal(42).Message("must be my favorite number").Code("EC42")
 
 err := verax.Validate(44, rule)
 
@@ -520,8 +532,9 @@ PrintJSON(err)
 // }
 ```
 
-Customize only the error code:
+Customize only the error code, keeping the default message:
 
+<!-- gmdoceg:pkg/verax/ExampleRule_customErrorCode -->
 ```go
 rule := verax.Equal(42).Code("EC42")
 
@@ -541,20 +554,140 @@ PrintJSON(err)
 // }
 ```
 
-These methods allow tailoring errors to your application’s needs.
+### Working with Validation Errors
+
+#### Error Types
+
+`verax` uses three distinct error types, all in the same error domain:
+
+| Type                   | Meaning                                                            |
+|------------------------|--------------------------------------------------------------------|
+| `*verax.Error`         | Single-value validation failure (user-facing)                      |
+| `*verax.FieldsError`   | Multi-field validation failure from `ValidateStruct` (user-facing) |
+| `*verax.InternalError` | Library misuse — wrong type, incomplete rule setup, etc.           |
+
+#### Error Classification
+
+Three predicate functions classify errors without type assertions:
+
+```go
+err := someValidation()
+
+// IsValidationError is true for *Error and *FieldsError — safe to return to
+// the client.
+if verax.IsValidationError(err) {
+    // handle user-facing validation failure
+}
+
+// IsInternalError is true for *InternalError — indicates a programming
+// mistake; log it and return a 500.
+if verax.IsInternalError(err) {
+    log.Println("bug: internal validation error:", err)
+}
+
+// IsError is true for any verax error (the union of the two above).
+if verax.IsError(err) {
+    // handle any verax error
+}
+```
+
+The three functions satisfy the invariant:
+`IsError(err) == IsValidationError(err) || IsInternalError(err)`
+
+#### JSON Marshalling
+
+All three error types implement `json.Marshaler` and `json.Unmarshaler`. Pass
+a `verax` error directly to `json.Marshal` or any JSON encoder — no manual
+conversion is needed.
+
+A single validation error (`*verax.Error`):
+
+```json
+{"error": "must be no greater than 44", "code": "ECInvRange"}
+```
+
+With optional metadata attached via `xrr.Meta`:
+
+```json
+{"error": "must be no greater than 44", "code": "ECInvRange", "meta": {"field": "age"}}
+```
+
+A struct validation error (`*verax.FieldsError`) from `ValidateStruct`:
+
+```json
+{
+    "name":     {"error": "the length must be between 4 and 7", "code": "ECInvLength"},
+    "position": {"error": "must be less or equal to 8",          "code": "ECInvRange"}
+}
+```
+
+A typical HTTP handler using verax errors directly:
+
+```go
+func CreateUser(w http.ResponseWriter, r *http.Request) {
+    var req CreateUserRequest
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        http.Error(w, "bad request", http.StatusBadRequest)
+        return
+    }
+
+    if err := req.Validate(); err != nil {
+        if verax.IsInternalError(err) {
+            http.Error(w, "internal error", http.StatusInternalServerError)
+            return
+        }
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusUnprocessableEntity)
+        json.NewEncoder(w).Encode(err) // marshals to structured JSON automatically
+        return
+    }
+
+    // process the valid request ...
+}
+```
+
+Because errors also implement `json.Unmarshaler`, they can be decoded back from
+JSON — useful for forwarding validation errors between services or for
+client-side processing.
+
+#### Inspecting Errors Programmatically
+
+Use `errors.AsType` (Go 1.25+) to obtain a typed handle on a validation error:
+
+```go
+err := verax.ValidateStruct(&planet, ...)
+
+// Iterate over field-level failures.
+if fe, ok := errors.AsType[*verax.FieldsError](err); ok {
+    for field, fieldErr := range fe.ErrorFields() {
+        fmt.Println(field, fieldErr)
+    }
+}
+
+// Read the error code from a single validation error.
+if e, ok := errors.AsType[*verax.Error](err); ok {
+    fmt.Println(e.ErrorCode())
+}
+
+// Handle an internal error (library misuse).
+if _, ok := errors.AsType[*verax.InternalError](err); ok {
+    log.Println("internal validation error:", err)
+}
+```
 
 ### Conditional Rules
 
 Use `verax.When` for conditional rules, with an optional `Else` clause:
 
+<!-- gmdoceg:pkg/verax/ExampleWhen -->
 ```go
 r := Range{Start: 44, End: 42}
 
-ErrRange := xrr.New("the end must be greater than the start", "ECRange")
+failRule := verax.Fail("the end must be greater than the start", "ECRange")
 
 err := verax.ValidateStruct(
-    &r,
-    verax.Field(&r.End, verax.When(r.End < r.Start, verax.Error(ErrRange))),
+	&r,
+	verax.Field(&r.End, verax.When(r.End < r.Start, failRule)),
 )
 
 PrintError(err)
@@ -573,18 +706,16 @@ PrintJSON(err)
 // }
 ```
 
-This checks if `Range.End` is less than `range.Start`, applying the error if 
-true.
+Most built-in rules also have a `.When(condition bool)` method for inline
+conditioning:
 
-Most of the rules in the `verax` package have `When` method which accepts a 
-condition to run it or not.
-
+<!-- gmdoceg:pkg/verax/ExampleRule_conditioned -->
 ```go
 r := Range{Start: 51, End: 42}
 
 err := verax.ValidateStruct(
-    &r,
-    verax.Field(&r.End, verax.Min(100).When(r.Start > 50)),
+	&r,
+	verax.Field(&r.End, verax.Min(100).When(r.Start > 50)),
 )
 
 PrintError(err)
@@ -592,36 +723,32 @@ PrintJSON(err)
 // Output:
 // ERROR:
 //
-// - End: must be no less than 100
+// - End: must be greater or equal to 100
 //
 // JSON:
 // {
 //     "End": {
-//         "code": "ECInvThreshold",
-//         "error": "must be no less than 100"
+//         "code": "ECInvRange",
+//         "error": "must be greater or equal to 100"
 //     }
 // }
 ```
 
-This checks if `Range.Start` is greater than 50, and if so, applies the `Min` 
-rule to `Range.End`.
-
 ### Skipping Rules
 
-Use `verax.Skip` to skip subsequent rules if a condition is met:
+Use `verax.Skip` to skip subsequent rules when a condition is met:
 
+<!-- gmdoceg:pkg/verax/ExampleSkip -->
 ```go
 r := Range{Start: 0, End: 0}
 
-ErrRequiredBoth := xrr.New("both values must be set", "ECRange")
-
 err := verax.ValidateStruct(
-    &r,
-    verax.Field(
-        &r.End,
-        verax.Skip.When(r.Start > 0 && r.End > 0),
-        verax.Error(ErrRequiredBoth),
-    ),
+	&r,
+	verax.Field(
+		&r.End,
+		verax.Skip.When(r.Start > 0 && r.End > 0),
+		verax.Fail("both values must be set", "ECRange"),
+	),
 )
 
 PrintError(err)
@@ -640,37 +767,40 @@ PrintJSON(err)
 // }
 ```
 
-The error triggers only if `Range.Start` and `Range.End` are both zero.
-
 ## List of Built-In Rules
 
-`verax` provides rules for common validation scenarios:
+| Rule                   | Description                                                                   |
+|------------------------|-------------------------------------------------------------------------------|
+| `Required`             | Value must not be nil and not a zero value.                                   |
+| `Nil`                  | Value must be nil.                                                            |
+| `NotNil`               | Value must not be nil.                                                        |
+| `Empty`                | Value must be a non-nil zero value.                                           |
+| `NotEmpty`             | Value must be non-zero when non-nil; nil is allowed.                          |
+| `Equal(want)`          | Value must equal `want`.                                                      |
+| `NotEqual(want)`       | Value must not equal `want`.                                                  |
+| `Min(n)`               | Value must be ≥ `n`.                                                          |
+| `Max(n)`               | Value must be ≤ `n`.                                                          |
+| `Length(min, max)`     | Length must be in `[min, max]`.                                               |
+| `Match(rx)`            | Value must match the regular expression `rx`.                                 |
+| `In(values...)`        | Value must be one of `values`.                                                |
+| `NotIn(values...)`     | Value must not be in `values`.                                                |
+| `Contain(values...)`   | Value must contain all of `values`.                                           |
+| `Each(rules...)`       | Apply `rules` to every element of a slice, array, or map.                     |
+| `Map(keys...)`         | Apply per-key rules to a map (see `verax.Key`).                               |
+| `Type(t)`              | Value must be of reflect type `t`.                                            |
+| `By(fn)`               | Wrap a `func(have any) error` as a rule.                                      |
+| `Check(fn, msg, code)` | Wrap a typed `func[T any](v T) bool` as a rule with a fixed message and code. |
+| `Set{rules...}`        | Compose rules into a reusable group.                                          |
+| `Fail(msg, code)`      | Always fails with the given message and code.                                 |
+| `Noop`                 | Always passes (useful as a placeholder).                                      |
+| `When(cond, rules...)` | Apply `rules` only when `cond` is true.                                       |
+| `Skip`                 | Skip subsequent rules; combine with `.When()` for conditions.                 |
 
-- `Nil`: Ensures a value is `nil`.
-- `Empty`: Ensures a value is not `nil` but holds `zero-value`.
-- `NotNil`: Ensures a value is not `nil`.
-- `Required`: Ensures a value is not `nil` and not `zero-value`.
-- `NotEmpty`: Ensures a value is not `zero-value` when `non-nil`. Allows `nil` values.
-- `By`: Creates a rule from a `func(v any) error`.
-- `Contain`: Checks if a value is in a list using `Equal`.
-- `Each`: Applies rules to each element of an array, slice, or map.
-- `Equal`: Ensures a value equals a specified value.
-- `NotEqual`: Ensures a value does not equal a specified value.
-- `EqualBy`: Checks equality with a custom function.
-- `Error`: Always fails with a specified error.
-- `In`: Ensures a value is in a specified list.
-- `NotIn`: Ensures a value is not in a specified list.
-- `Length`: Ensures a value’s length is within a range.
-- `Map`: Validates map keys with provided rules.
-- `Match`: Ensures a value matches a regular expression.
-- `Min`: Ensures a value is at least a specified value.
-- `Max`: Ensures a value is at most a specified value.
-- `Type`: Ensures a value is of a specified type.
-- `Noop`: A rule that always passes.
-- `Skip`: Skips subsequent rules if a condition is met.
-- `When`: Applies rules conditionally, with optional `Else`.
+Additional rules for network addresses (IP, IPv4, IPv6, port, DNS, domain,
+host), Base64, and Semantic Versioning live in `pkg/verax/rule`.
 
-See [GoDoc](https://pkg.go.dev/github.com/ctx42/verax) for details.
+See [GoDoc](https://pkg.go.dev/github.com/ctx42/verax) for the complete API
+reference.
 
 ## Disclaimer
 
