@@ -1,3 +1,10 @@
+## v0.3.0 (Sun, 26 Apr 2026 14:43:31 UTC)
+- chore: Update dependencies.
+- feat(spec): add spec package for serializable rule descriptions.
+- feat(verax): overhaul error types, restructure rules, and implement Specable.
+- docs(verax): fix incorrect error messages in README examples.
+- chore: remove email from SPDX copyright headers.
+
 ## v0.2.0 (Fri, 17 Oct 2025 14:48:20 UTC)
 - doc: Add missing SPDX file header.
 - doc: Update README.md stryle.
