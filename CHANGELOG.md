@@ -1,3 +1,7 @@
+## v0.4.0 (Fri, 01 May 2026 21:14:10 UTC)
+- refactor(verax): overhaul error types and unify field error domain.
+- refactor(verax): propagate FieldErrors rename across callsites.
+
 ## v0.3.0 (Sun, 26 Apr 2026 14:43:31 UTC)
 - chore: Update dependencies.
 - feat(spec): add spec package for serializable rule descriptions.
