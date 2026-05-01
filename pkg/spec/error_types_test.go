@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: (c) 2026 Rafal Zajac
 // SPDX-License-Identifier: MIT
 
-package vcfg
+package spec
 
 import (
 	"encoding/json"
@@ -95,13 +95,58 @@ func Test_NewFieldError(t *testing.T) {
 	})
 }
 
-func Test_IsCfgError(t *testing.T) {
+func Test_NewFieldErrors(t *testing.T) {
+	t.Run("the error message includes all field names", func(t *testing.T) {
+		// --- Given ---
+		fields := map[string]error{
+			"field0": errors.New("msg0"),
+			"field1": errors.New("msg1"),
+		}
+
+		// --- When ---
+		err := NewFieldErrors(fields)
+
+		// --- Then ---
+		assert.ErrorEqual(t, "field0: msg0; field1: msg1", err)
+		xrrtest.AssertHasField(t, "field0", err)
+		xrrtest.AssertHasField(t, "field1", err)
+	})
+
+	t.Run("stores the map directly without copying", func(t *testing.T) {
+		// --- Given ---
+		fields := map[string]error{"field0": errors.New("msg0")}
+		err := NewFieldErrors(fields)
+
+		// --- When ---
+		fields["field1"] = errors.New("msg1")
+
+		// --- Then ---
+		xrrtest.AssertHasField(t, "field1", err)
+	})
+
+	t.Run("marshals to JSON", func(t *testing.T) {
+		// --- Given ---
+		e := NewFieldErrors(map[string]error{
+			"field0": NewError("inner msg", "ECInner"),
+		})
+
+		// --- When ---
+		data, err := json.Marshal(e)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		wData := `{"field0":{"error":"inner msg","code":"ECInner"}}`
+		assert.JSON(t, wData, string(data))
+	})
+}
+
+func Test_IsSpecError(t *testing.T) {
 	t.Run("true for Error", func(t *testing.T) {
 		// --- Given ---
 		err := NewError("msg", "ECTst")
 
 		// --- When ---
-		have := IsConfigError(err)
+		have := IsSpecError(err)
 
 		// --- Then ---
 		assert.True(t, have)
@@ -112,15 +157,26 @@ func Test_IsCfgError(t *testing.T) {
 		err := NewFieldError("field0", NewError("msg", "ECTst"))
 
 		// --- When ---
-		have := IsConfigError(err)
+		have := IsSpecError(err)
 
 		// --- Then ---
 		assert.True(t, have)
 	})
 
+	t.Run("false for errors not from this domain", func(t *testing.T) {
+		// --- Given ---
+		err := errors.New("test message")
+
+		// --- When ---
+		have := IsSpecError(err)
+
+		// --- Then ---
+		assert.False(t, have)
+	})
+
 	t.Run("false for nil", func(t *testing.T) {
 		// --- When ---
-		have := IsConfigError(nil)
+		have := IsSpecError(nil)
 
 		// --- Then ---
 		assert.False(t, have)

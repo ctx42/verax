@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: (c) 2026 Rafal Zajac
 // SPDX-License-Identifier: MIT
 
-package vcfg
+package spec
 
 import (
 	"encoding/json"
@@ -25,24 +25,24 @@ var (
 	_ json.Unmarshaler = (*FieldErrors)(nil)
 )
 
-// Error constructor functions for the verax package domains.
+// Error constructor functions for the package's error domain.
 var (
 	newError       = xrr.ErrorFunc[edError]()
 	newFieldsError = xrr.FieldsFunc[edError]()
 )
 
-// Error represents an error in the verax package error domain.
+// Error represents an error in the package's error domain.
 type Error = xrr.GenericError[edError]
 
-// NewError returns a new error in the verax package error domain.
+// NewError returns a new error in the package's error domain.
 func NewError(msg, code string, opts ...xrr.Option) error {
 	return newError(msg, code, opts...)
 }
 
-// FieldErrors represents a field error in the verax error domain.
+// FieldErrors represents a field error in the package's error domain.
 type FieldErrors = xrr.GenericFields[edError]
 
-// NewFieldError returns a new field error in the verax package error domain.
+// NewFieldError returns a new field error in the package's error domain.
 func NewFieldError(field string, err error) *FieldErrors {
 	return newFieldsError(field, err)
 }
@@ -53,9 +53,7 @@ func NewFieldErrors(fields map[string]error) *FieldErrors {
 	return xrr.NewFields[edError](fields)
 }
 
-// IsConfigError reports whether the error belongs to the vcfg package error
-// domain.
-func IsConfigError(err error) bool {
-	// TODO(rz): test this. err != nil
+// IsSpecError reports whether the error is non-nil [Error] or [FieldErrors].
+func IsSpecError(err error) bool {
 	return err != nil && xrr.IsDomain[edError](err)
 }

@@ -9,11 +9,10 @@ import (
 	"github.com/ctx42/xrr/pkg/xrr"
 )
 
-// Unexported zero-size marker types used as domain type parameters.
+// Marker types for the package's error domain.
 type (
 	edError    struct{}
 	edInternal struct{}
-	edFields   struct{}
 )
 
 // Compile checks.
@@ -23,73 +22,68 @@ var (
 	_ json.Marshaler   = (*Error)(nil)
 	_ json.Unmarshaler = (*Error)(nil)
 
-	_ error            = (*FieldsError)(nil)
-	_ xrr.Fielder      = (*FieldsError)(nil)
-	_ json.Marshaler   = (*FieldsError)(nil)
-	_ json.Unmarshaler = (*FieldsError)(nil)
-
 	_ error            = (*InternalError)(nil)
 	_ xrr.Coder        = (*InternalError)(nil)
 	_ json.Marshaler   = (*InternalError)(nil)
 	_ json.Unmarshaler = (*InternalError)(nil)
+
+	_ error            = (*FieldErrors)(nil)
+	_ xrr.Fielder      = (*FieldErrors)(nil)
+	_ json.Marshaler   = (*FieldErrors)(nil)
+	_ json.Unmarshaler = (*FieldErrors)(nil)
 )
 
-// Error constructor functions for the verax package domains.
+// Error constructor functions for the package's error domain.
 var (
-	newError    = xrr.ErrorFactory[edError]()
-	newInternal = xrr.ErrorFactory[edInternal]()
-	fieldError  = xrr.FieldsFactory[edFields]()
+	newError         = xrr.ErrorFunc[edError]()
+	newInternalError = xrr.ErrorFunc[edInternal]()
+	newFieldsError   = xrr.FieldsFunc[edError]()
 )
 
-// Error represents an error in the verax package error domain.
+// Error represents an error in the package's error domain.
 type Error = xrr.GenericError[edError]
 
-// InternalError represents an internal error (library misuse) in the verax
-// package error domain.
-type InternalError = xrr.GenericError[edInternal]
-
-// FieldsError represents a field error in the verax error domain.
-type FieldsError = xrr.GenericFields[edFields]
-
-// NewError returns a new error in the verax package error domain.
+// NewError returns a new error in the package's error domain.
 func NewError(msg, code string, opts ...xrr.Option) error {
 	return newError(msg, code, opts...)
 }
 
-// NewInternalError returns a new internal error in the verax package domain.
+// InternalError represents an internal error (library misuse) in the package's
+// error domain.
+type InternalError = xrr.GenericError[edInternal]
+
+// NewInternalError returns a new internal error in the package's domain.
 func NewInternalError(msg, code string, opts ...xrr.Option) error {
-	return newInternal(msg, code, opts...)
+	return newInternalError(msg, code, opts...)
 }
 
-// NewFieldsErrors returns a new empty [FieldsError].
-func NewFieldsErrors() *FieldsError {
-	return &FieldsError{}
+// FieldErrors represents a field error in the package's error domain.
+type FieldErrors = xrr.GenericFields[edError]
+
+// NewFieldError returns a new field error in the package's error domain.
+func NewFieldError(field string, err error) *FieldErrors {
+	return newFieldsError(field, err)
 }
 
-// FieldError returns a new field error in the verax package error domain.
-func FieldError(field string, err error) error {
-	return fieldError(field, err)
-}
-
-// FieldsErrors creates a new [FieldsError] from the given map. The map is
+// NewFieldErrors creates a new [FieldErrors] from the given map. The map is
 // stored directly without copying.
-func FieldsErrors(fields map[string]error) error {
-	return xrr.NewDomainFields[edFields](fields).Filter()
+func NewFieldErrors(fields map[string]error) *FieldErrors {
+	return xrr.NewFields[edError](fields)
 }
 
-// IsError reports whether err belongs to the verax error domain, i.e. it is
-// one of [Error], [InternalError], or [FieldsError].
-func IsError(err error) bool {
+// IsVeraxError reports whether the error is non-nil [Error], [FieldErrors] or
+// [InternalError].
+func IsVeraxError(err error) bool {
 	return IsValidationError(err) || IsInternalError(err)
 }
 
-// IsValidationError reports whether an err is a user-facing validation error
-// i.e. [Error] or [FieldsError].
+// IsValidationError reports whether the error is non-nil [Error] or
+// [FieldErrors].
 func IsValidationError(err error) bool {
-	//goland:noinspection GoTypeAssertionOnErrors
-	_, isFields := err.(*FieldsError)
-	return isFields || xrr.IsDomain[edError](err)
+	return err != nil && xrr.IsDomain[edError](err)
 }
 
-// IsInternalError reports whether an err is an [InternalError].
-func IsInternalError(err error) bool { return xrr.IsDomain[edInternal](err) }
+// IsInternalError reports whether the error is non-nil [InternalError].
+func IsInternalError(err error) bool {
+	return err != nil && xrr.IsDomain[edInternal](err)
+}

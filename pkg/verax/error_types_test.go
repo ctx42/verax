@@ -123,13 +123,13 @@ func Test_NewInternalError(t *testing.T) {
 	})
 }
 
-func Test_FieldError(t *testing.T) {
+func Test_NewFieldError(t *testing.T) {
 	t.Run("the error message includes the field name", func(t *testing.T) {
 		// --- Given ---
 		e := errors.New("msg")
 
 		// --- When ---
-		err := FieldError("field0", e)
+		err := NewFieldError("field0", e)
 
 		// --- Then ---
 		assert.ErrorEqual(t, "field0: msg", err)
@@ -138,7 +138,7 @@ func Test_FieldError(t *testing.T) {
 
 	t.Run("marshals to JSON", func(t *testing.T) {
 		// --- Given ---
-		e := FieldError("field0", NewError("inner msg", "ECInner"))
+		e := NewFieldError("field0", NewError("inner msg", "ECInner"))
 
 		// --- When ---
 		data, err := json.Marshal(e)
@@ -150,34 +150,99 @@ func Test_FieldError(t *testing.T) {
 	})
 }
 
-func Test_IsError(t *testing.T) {
-	t.Run("true for Error", func(t *testing.T) {
+func Test_NewFieldErrors(t *testing.T) {
+	t.Run("the error message includes all field names", func(t *testing.T) {
+		// --- Given ---
+		fields := map[string]error{
+			"field0": errors.New("msg0"),
+			"field1": errors.New("msg1"),
+		}
+
 		// --- When ---
-		have := IsError(NewError("msg", "ECTst"))
+		err := NewFieldErrors(fields)
+
+		// --- Then ---
+		assert.ErrorEqual(t, "field0: msg0; field1: msg1", err)
+		xrrtest.AssertHasField(t, "field0", err)
+		xrrtest.AssertHasField(t, "field1", err)
+	})
+
+	t.Run("stores the map directly without copying", func(t *testing.T) {
+		// --- Given ---
+		fields := map[string]error{"field0": errors.New("msg0")}
+		err := NewFieldErrors(fields)
+
+		// --- When ---
+		fields["field1"] = errors.New("msg1")
+
+		// --- Then ---
+		xrrtest.AssertHasField(t, "field1", err)
+	})
+
+	t.Run("marshals to JSON", func(t *testing.T) {
+		// --- Given ---
+		e := NewFieldErrors(map[string]error{
+			"field0": NewError("inner msg", "ECInner"),
+		})
+
+		// --- When ---
+		data, err := json.Marshal(e)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		wData := `{"field0":{"error":"inner msg","code":"ECInner"}}`
+		assert.JSON(t, wData, string(data))
+	})
+}
+
+func Test_IsVeraxError(t *testing.T) {
+	t.Run("true for Error", func(t *testing.T) {
+		// --- Given ---
+		err := NewError("msg", "ECTst")
+
+		// --- When ---
+		have := IsVeraxError(err)
 
 		// --- Then ---
 		assert.True(t, have)
 	})
 
 	t.Run("true for InternalError", func(t *testing.T) {
+		// --- Given ---
+		err := NewInternalError("msg", "ECTst")
+
 		// --- When ---
-		have := IsError(NewInternalError("msg", "ECTst"))
+		have := IsVeraxError(err)
 
 		// --- Then ---
 		assert.True(t, have)
 	})
 
 	t.Run("true for FieldsError", func(t *testing.T) {
+		// --- Given ---
+		err := NewFieldError("field0", NewError("msg", "ECTst"))
+
 		// --- When ---
-		have := IsError(FieldError("field0", NewError("msg", "ECTst")))
+		have := IsVeraxError(err)
 
 		// --- Then ---
 		assert.True(t, have)
 	})
 
+	t.Run("false for errors not from this domain", func(t *testing.T) {
+		// --- Given ---
+		err := errors.New("test message")
+
+		// --- When ---
+		have := IsVeraxError(err)
+
+		// --- Then ---
+		assert.False(t, have)
+	})
+
 	t.Run("false for nil", func(t *testing.T) {
 		// --- When ---
-		have := IsError(nil)
+		have := IsVeraxError(nil)
 
 		// --- Then ---
 		assert.False(t, have)
@@ -186,24 +251,44 @@ func Test_IsError(t *testing.T) {
 
 func Test_IsValidationError(t *testing.T) {
 	t.Run("true for Error", func(t *testing.T) {
+		// --- Given ---
+		err := NewError("msg", "ECTst")
+
 		// --- When ---
-		have := IsValidationError(NewError("msg", "ECTst"))
+		have := IsValidationError(err)
 
 		// --- Then ---
 		assert.True(t, have)
 	})
 
 	t.Run("true for FieldsError", func(t *testing.T) {
+		// --- Given ---
+		err := NewFieldError("field0", NewError("msg", "ECTst"))
+
 		// --- When ---
-		have := IsValidationError(FieldError("field0", NewError("msg", "ECTst")))
+		have := IsValidationError(err)
 
 		// --- Then ---
 		assert.True(t, have)
 	})
 
 	t.Run("false for InternalError", func(t *testing.T) {
+		// --- Given ---
+		err := NewInternalError("msg", "ECTst")
+
 		// --- When ---
-		have := IsValidationError(NewInternalError("msg", "ECTst"))
+		have := IsValidationError(err)
+
+		// --- Then ---
+		assert.False(t, have)
+	})
+
+	t.Run("false for errors not from this domain", func(t *testing.T) {
+		// --- Given ---
+		err := errors.New("test message")
+
+		// --- When ---
+		have := IsValidationError(err)
 
 		// --- Then ---
 		assert.False(t, have)
@@ -230,6 +315,17 @@ func Test_IsInternalError(t *testing.T) {
 	t.Run("false for Error", func(t *testing.T) {
 		// --- When ---
 		have := IsInternalError(NewError("msg", "ECTst"))
+
+		// --- Then ---
+		assert.False(t, have)
+	})
+
+	t.Run("false for errors not from this domain", func(t *testing.T) {
+		// --- Given ---
+		err := errors.New("test message")
+
+		// --- When ---
+		have := IsInternalError(err)
 
 		// --- Then ---
 		assert.False(t, have)
