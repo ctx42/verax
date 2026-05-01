@@ -63,7 +63,7 @@ func (fr FieldRule) Tag(tag string) FieldRule {
 //	// Value: the length must be between 5 and 10.
 //
 // Returns [InternalError] on unexpected errors, otherwise it returns
-// [FieldsError] error.
+// [FieldErrors] error.
 //
 // nolint: cyclop
 func ValidateStruct(v any, fields ...FieldRule) error {
@@ -77,7 +77,7 @@ func ValidateStruct(v any, fields ...FieldRule) error {
 	}
 	val = val.Elem()
 
-	var ers *FieldsError
+	var ers *FieldErrors
 	for i, fr := range fields {
 		fv := reflect.ValueOf(fr.fieldPtr)
 		if fv.Kind() != reflect.Pointer {
@@ -100,7 +100,7 @@ func ValidateStruct(v any, fields ...FieldRule) error {
 				return NewInternalError(msg, ECInternal)
 			}
 			if ers == nil {
-				ers = &FieldsError{}
+				ers = &FieldErrors{}
 			}
 			if sf.Anonymous {
 				// Merge errors from the anonymous struct field.

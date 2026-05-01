@@ -28,10 +28,9 @@ var (
 
 // In returns a validation rule that conditions if a value can be found in the
 // given list of values. Note that the value being conditioned and the possible
-// range of values must be of the same type. The reflect.DeepEqual() will be
-// used to determine if two values are equal. For more details please refer to
-// https://golang.org/pkg/reflect/#DeepEqual. An empty value is considered
-// valid. Use the [Required] rule to make sure a value is not empty.
+// range of values must be of the same type. Values are compared using
+// [reflect.DeepEqual]. An empty value is considered valid. Use the [Required]
+// rule to make sure a value is not empty.
 func In(values ...any) InRule {
 	var eqs []EqualRule
 	for _, v := range values {
@@ -46,12 +45,11 @@ func In(values ...any) InRule {
 	}
 }
 
-// NotIn returns a validation rule that conditions if a value cannot be found in
-// the given list of values. Note that the value being conditioned and the possible
-// range of values must be of the same type. The reflect.DeepEqual() will be
-// used to determine if two values are equal. For more details please refer to
-// https://golang.org/pkg/reflect/#DeepEqual. An empty value is considered
-// valid. Use the [Required] rule to make sure a value is not empty.
+// NotIn returns a validation rule that conditions if a value cannot be found
+// in the given list of values. Note that the value being conditioned and the
+// possible range of values must be of the same type. Values are compared using
+// [reflect.DeepEqual]. An empty value is considered valid. Use the [Required]
+// rule to make sure a value is not empty.
 func NotIn(values ...any) InRule {
 	var eqs []EqualRule
 	for _, v := range values {

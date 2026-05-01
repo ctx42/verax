@@ -296,7 +296,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		err := Map(kr0, kr1).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		want := "" +
 			"KStrAbc: must be equal to 'xyz' (ECNotEqual); " +
 			"KpStr: must be equal to 'abc' (ECNotEqual)"
@@ -311,7 +311,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "123: the key type does not match the map (ECInternal)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
@@ -324,7 +324,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "X: missing key (ECMapKeyMissing)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
@@ -337,7 +337,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "KStructInvalid.FStr: must be equal to 'abc' (ECNotEqual)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
@@ -350,7 +350,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "KStructInvalid.FStr: must be equal to 'abc' (ECNotEqual)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
@@ -363,7 +363,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		xrrtest.AssertEqual(t, "KStrEmpty: cannot be blank (ECRequired)", err)
 	})
 
@@ -375,7 +375,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		xrrtest.AssertEqual(t, "KpStrNil: is required (ECReqNotNil)", err)
 	})
 
@@ -388,7 +388,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		err := Map(kr0, kr1).AllowUnknown().Validate(TMapInt)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		want := "" +
 			"1: must be equal to 'xyz' (ECNotEqual); " +
 			"3: must be equal to 'abc' (ECNotEqual)"
@@ -403,7 +403,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		err := Map(kr).AllowUnknown().Validate(TMap)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		xrrtest.AssertEqual(t, "KStrAbc: test err (ECTst)", err)
 	})
 
@@ -415,7 +415,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		err := Map(kr).Validate(TMap)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		want := "" +
 			"KStrEmpty: unexpected key (ECMapKeyUnexpected); " +
 			"KStrXyz: unexpected key (ECMapKeyUnexpected); " +

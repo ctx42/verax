@@ -72,7 +72,7 @@ func Test_IP(t *testing.T) {
 		err := IP.Validate(42)
 
 		// --- Then ---
-		assert.True(t, verax.IsInternalError(err))
+		assert.SameType(t, &verax.InternalError{}, err)
 		wMsg := "must be a valid IP address: expected string, got int"
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
@@ -139,7 +139,7 @@ func Test_IPv4(t *testing.T) {
 		err := IPv4.Validate(42)
 
 		// --- Then ---
-		assert.True(t, verax.IsInternalError(err))
+		assert.SameType(t, &verax.InternalError{}, err)
 		wMsg := "must be a valid IPv4 address: expected string, got int"
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
@@ -206,7 +206,7 @@ func Test_IPv6(t *testing.T) {
 		err := IPv6.Validate(42)
 
 		// --- Then ---
-		assert.True(t, verax.IsInternalError(err))
+		assert.SameType(t, &verax.InternalError{}, err)
 		wMsg := "must be a valid IPv6 address: expected string, got int"
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
@@ -271,7 +271,7 @@ func Test_Port(t *testing.T) {
 		err := Port.Validate(42)
 
 		// --- Then ---
-		assert.True(t, verax.IsInternalError(err))
+		assert.SameType(t, &verax.InternalError{}, err)
 		wMsg := "must be a valid network port: expected string, got int"
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
@@ -364,7 +364,7 @@ func Test_DNSName(t *testing.T) {
 		err := DNSName.Validate(42)
 
 		// --- Then ---
-		assert.True(t, verax.IsInternalError(err))
+		assert.SameType(t, &verax.InternalError{}, err)
 		wMsg := "must be a valid DNS name: expected string, got int"
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
@@ -457,7 +457,7 @@ func Test_Domain(t *testing.T) {
 		err := Domain.Validate(42)
 
 		// --- Then ---
-		assert.True(t, verax.IsInternalError(err))
+		assert.SameType(t, &verax.InternalError{}, err)
 		wMsg := "must be a valid domain: expected string, got int"
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
@@ -525,7 +525,7 @@ func Test_Host(t *testing.T) {
 		err := Host.Validate(42)
 
 		// --- Then ---
-		assert.True(t, verax.IsInternalError(err))
+		assert.SameType(t, &verax.InternalError{}, err)
 		wMsg := "must be a valid network hostname: expected string, got int"
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)

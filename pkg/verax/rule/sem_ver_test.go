@@ -103,7 +103,7 @@ func Test_SemVer(t *testing.T) {
 		err := SemVer.Validate(42)
 
 		// --- Then ---
-		assert.True(t, verax.IsInternalError(err))
+		assert.SameType(t, &verax.InternalError{}, err)
 		wMsg := "must be a valid semantic version: expected string, got int"
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)

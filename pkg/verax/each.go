@@ -43,7 +43,7 @@ func (r EachRule) Validate(have any) error {
 	if !r.condition {
 		return nil
 	}
-	var ers *FieldsError
+	var ers *FieldErrors
 	vo := reflect.ValueOf(have)
 	switch vo.Kind() {
 	case reflect.Map:
@@ -51,7 +51,7 @@ func (r EachRule) Validate(have any) error {
 			val := getInterface(vo.MapIndex(k))
 			if err := Validate(val, r.rules...); err != nil {
 				if ers == nil {
-					ers = NewFieldsErrors()
+					ers = &FieldErrors{}
 				}
 				ers.Set(mapErrKey(k), err)
 			}
@@ -62,7 +62,7 @@ func (r EachRule) Validate(have any) error {
 			val := getInterface(vo.Index(i))
 			if err := Validate(val, r.rules...); err != nil {
 				if ers == nil {
-					ers = NewFieldsErrors()
+					ers = &FieldErrors{}
 				}
 				ers.Set(strconv.Itoa(i), err)
 			}

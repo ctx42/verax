@@ -39,7 +39,7 @@ func Test_Check(t *testing.T) {
 
 		// --- Then ---
 		err := have(true)
-		assert.True(t, IsInternalError(err))
+		assert.SameType(t, &InternalError{}, err)
 		xrrtest.AssertEqual(t, "test err: expected int, got bool (ECInvType)", err)
 		xrrtest.AssertCode(t, ECInvType, err)
 	})
@@ -53,7 +53,7 @@ func Test_Check(t *testing.T) {
 
 		// --- Then ---
 		err := have(42)
-		assert.True(t, IsError(err))
+		assert.SameType(t, &Error{}, err)
 		xrrtest.AssertEqual(t, "test err (ECTst)", err)
 		xrrtest.AssertCode(t, "ECTst", err)
 	})

@@ -212,7 +212,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&mf, fr...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "f_json: must be equal to 'other' (ECNotEqual)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
@@ -229,7 +229,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&mf, fr...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "fStr: must be equal to 'other' (ECNotEqual)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
@@ -246,7 +246,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&mf, fr...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "FpStr: must be equal to 'other' (ECNotEqual)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
@@ -268,7 +268,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&s, fr...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "FStr: must be equal to 'other' (ECNotEqual)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
@@ -289,7 +289,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&s, fr...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		xrrtest.AssertEqual(t, "FStr: cannot be blank (ECRequired)", err)
 	})
 
@@ -310,7 +310,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&s, fr...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		xrrtest.AssertEqual(t, "FStr: test msg (ECTst)", err)
 	})
 
@@ -328,7 +328,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&s, fr...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		xrrtest.AssertEqual(t, "f_json: test msg (ECTst)", err)
 	})
 
@@ -349,7 +349,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&s, fr...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "SvSM1.FStr: must be equal to 'abc' (ECNotEqual)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
@@ -371,7 +371,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&s, fr...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "SpSM1.FStr: must be equal to 'abc' (ECNotEqual)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
@@ -393,7 +393,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&s, fr...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "SpSM2.FStr: must be equal to 'abc' (ECNotEqual)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
@@ -409,7 +409,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&mf, rs...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		want := "" +
 			"FaStr.0: the length must be exactly 2 (ECInvLength); " +
 			"FaStr.1: the length must be exactly 2 (ECInvLength); " +
@@ -430,7 +430,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&mf, rs...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		want := "" +
 			"FaStr: the length must be exactly 2 (ECInvLength); " +
 			"FpStr: the length must be exactly 2 (ECInvLength)"
@@ -494,7 +494,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&mf, rs...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		xrrtest.AssertEqual(t, "FpStr: cannot be blank (ECRequired)", err)
 	})
 
@@ -511,7 +511,7 @@ func Test_ValidateStruct(t *testing.T) {
 		err := ValidateStruct(&mf, rs...)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		xrrtest.AssertEqual(t, "f_json: cannot be blank (ECRequired)", err)
 	})
 
@@ -554,7 +554,7 @@ func Test_ValidateStruct(t *testing.T) {
 		)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "Value: the length must be between 5 and 10 (ECInvLength)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})

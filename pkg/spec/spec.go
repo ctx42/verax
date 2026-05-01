@@ -97,13 +97,13 @@ const (
 	ArgSpecs = "specs"
 
 	// ArgTypes is a reserved [Spec] argument name holding a list of typed
-	// values. The [Registry] encodes and decodes this argument specially: on
+	// values. The [Registry] encodes and decodes this argument especially: on
 	// marshaling each element is turned into a [Spec]; on unmarshaling each
 	// element spec is rebuilt via a registered [Builder].
 	ArgTypes = "types"
 )
 
-// Specable types implementing this interface can be encoded as [Spec] instance.
+// Specable is implemented by types that can describe themselves as a [Spec].
 type Specable interface {
 	// Spec returns the [Spec] describing the given structure. The returned
 	// spec must include all information needed to instantiate the structure at

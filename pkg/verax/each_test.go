@@ -60,7 +60,7 @@ func Test_EachRule_Validate(t *testing.T) {
 		err := Each(By(fn)).Validate(s)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		xrrtest.AssertEqual(t, "1: error (ECTst)", err)
 	})
 
@@ -80,7 +80,7 @@ func Test_EachRule_Validate(t *testing.T) {
 		err := Each(By(fn)).Validate(s)
 
 		// --- Then ---
-		assert.SameType(t, &FieldsError{}, err)
+		assert.SameType(t, &FieldErrors{}, err)
 		xrrtest.AssertEqual(t, "1: error (ECTst)", err)
 	})
 
@@ -275,7 +275,7 @@ func Test_EachRule_Validate_invalid_tabular(t *testing.T) {
 			err := r.Validate(tc.have)
 
 			// --- Then ---
-			assert.SameType(t, &FieldsError{}, err)
+			assert.SameType(t, &FieldErrors{}, err)
 			xrrtest.AssertEqual(t, tc.err, err)
 		})
 	}

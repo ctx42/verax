@@ -240,23 +240,23 @@ func Validate(v any, rules ...Rule) error {
 }
 
 // ValidateNamed validates v using the provided rules, wrapping any error in
-// [FieldsError] with the specified field name.
+// [FieldErrors] with the specified field name.
 func ValidateNamed(name string, have any, rules ...Rule) error {
 	if err := Set(rules).Validate(have); err != nil {
-		return FieldError(name, err)
+		return NewFieldError(name, err)
 	}
 	return nil
 }
 
 // validateMap validates a map of validatable elements.
 func validateMap(rv reflect.Value) error {
-	var ers *FieldsError
+	var ers *FieldErrors
 	for _, key := range rv.MapKeys() {
 		if mv := rv.MapIndex(key).Interface(); mv != nil {
 			// nolint: forcetypeassert
 			if err := mv.(Validator).Validate(); err != nil {
 				if ers == nil {
-					ers = &FieldsError{}
+					ers = &FieldErrors{}
 				}
 				ers.Set(fmt.Sprintf("%v", key.Interface()), err)
 			}
@@ -270,13 +270,13 @@ func validateMap(rv reflect.Value) error {
 
 // validateSlice validates a slice/array of validatable elements.
 func validateSlice(rv reflect.Value) error {
-	var ers *FieldsError
+	var ers *FieldErrors
 	for i := range rv.Len() {
 		if ev := rv.Index(i).Interface(); ev != nil {
 			// nolint: forcetypeassert
 			if err := ev.(Validator).Validate(); err != nil {
 				if ers == nil {
-					ers = &FieldsError{}
+					ers = &FieldErrors{}
 				}
 				ers.Set(strconv.Itoa(i), err)
 			}

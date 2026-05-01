@@ -110,8 +110,6 @@ func (r MapRule) IsDefined(key any) bool {
 	return false
 }
 
-// Validate conditions if the given value is valid or not.
-//
 // nolint: cyclop, gocognit
 func (r MapRule) Validate(have any) error {
 	val := reflect.ValueOf(have)
@@ -128,7 +126,7 @@ func (r MapRule) Validate(have any) error {
 		return nil
 	}
 
-	var ers *FieldsError
+	var ers *FieldErrors
 	kt := val.Type().Key()
 
 	var extraKeys map[any]bool
@@ -154,10 +152,10 @@ func (r MapRule) Validate(have any) error {
 
 		if err != nil {
 			if xrr.GetCode(err) == ECInternal {
-				return FieldError(kr.KeyString(), err)
+				return NewFieldError(kr.KeyString(), err)
 			}
 			if ers == nil {
-				ers = &FieldsError{}
+				ers = &FieldErrors{}
 			}
 			ers.Set(kr.KeyString(), err)
 		}
@@ -169,7 +167,7 @@ func (r MapRule) Validate(have any) error {
 	if !r.allowUnknown {
 		for key := range extraKeys {
 			if ers == nil {
-				ers = &FieldsError{}
+				ers = &FieldErrors{}
 			}
 			ers.Set(getErrorKeyName(key), ErrKeyUnexpected)
 		}

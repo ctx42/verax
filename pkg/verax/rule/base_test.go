@@ -131,7 +131,7 @@ func Test_Base64(t *testing.T) {
 		err := Base64.Validate(42)
 
 		// --- Then ---
-		assert.True(t, verax.IsInternalError(err))
+		assert.SameType(t, &verax.InternalError{}, err)
 		wMsg := "must be a valid base64: expected string, got int"
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)

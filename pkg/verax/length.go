@@ -109,8 +109,6 @@ type LengthRule struct {
 	flags     uint8  // Customizations.
 }
 
-// Validate conditions if the given value is valid or not.
-//
 // nolint: cyclop
 func (r LengthRule) Validate(have any) error {
 	if r.sticky != nil {

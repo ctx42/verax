@@ -73,7 +73,7 @@ if err := req.Validate(); err != nil {
 - **Collect All Errors**: `ValidateStruct` reports every failing field in one pass.
 - **Built-In Rules**: `Required`, `Min`, `Max`, `Length`, `Equal`, `Match`, `In`, `Each`, `Map`, and more.
 - **JSON-Ready Errors**: All error types implement `json.Marshaler` and `json.Unmarshaler` — marshal directly into API responses.
-- **Error Classification**: `IsError`, `IsValidationError`, and `IsInternalError` distinguish error categories without type assertions.
+- **Error Classification**: `IsVeraxError`, `IsValidationError`, and `IsInternalError` distinguish error categories without type assertions.
 - **Struct Tag Support**: Field names in errors default to the `json` tag; override with `.Tag()`.
 - **Validator Interface**: Structs implement `verax.Validator` for self-contained, reusable validation logic.
 - **Complex Types**: Validate slices, arrays, and maps with per-element error reporting.
@@ -585,14 +585,14 @@ if verax.IsInternalError(err) {
     log.Println("bug: internal validation error:", err)
 }
 
-// IsError is true for any verax error (the union of the two above).
-if verax.IsError(err) {
+// IsVeraxError is true for any verax error (the union of the two above).
+if verax.IsVeraxError(err) {
     // handle any verax error
 }
 ```
 
 The three functions satisfy the invariant:
-`IsError(err) == IsValidationError(err) || IsInternalError(err)`
+`IsVeraxError(err) == IsValidationError(err) || IsInternalError(err)`
 
 #### JSON Marshalling
 
@@ -781,6 +781,7 @@ PrintJSON(err)
 | `Min(n)`               | Value must be ≥ `n`.                                                          |
 | `Max(n)`               | Value must be ≤ `n`.                                                          |
 | `Length(min, max)`     | Length must be in `[min, max]`.                                               |
+| `RuneLength(min, max)` | Rune length must be in `[min, max]`; for non-strings, behaves like `Length`.  |
 | `Match(rx)`            | Value must match the regular expression `rx`.                                 |
 | `In(values...)`        | Value must be one of `values`.                                                |
 | `NotIn(values...)`     | Value must not be in `values`.                                                |
