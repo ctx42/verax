@@ -1,3 +1,6 @@
+## v0.5.0 (Fri, 01 May 2026 21:27:38 UTC)
+- fix!: Invalid merge.
+
 ## v0.4.0 (Fri, 01 May 2026 21:14:10 UTC)
 - refactor(verax): overhaul error types and unify field error domain.
 - refactor(verax): propagate FieldErrors rename across callsites.
