@@ -74,7 +74,7 @@ func FieldError(field string, err error) error {
 // FieldsErrors creates a new [FieldsError] from the given map. The map is
 // stored directly without copying.
 func FieldsErrors(fields map[string]error) error {
-	return xrr.NewDomainFields[edFields](fields)
+	return xrr.NewDomainFields[edFields](fields).Filter()
 }
 
 // IsError reports whether err belongs to the verax error domain, i.e. it is
