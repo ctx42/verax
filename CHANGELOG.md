@@ -1,3 +1,6 @@
+## v0.6.0 (Fri, 08 May 2026 15:17:25 UTC)
+- feat: add Registry.Build, DecodeAndBuild, and Set serialization.
+
 ## v0.5.0 (Fri, 01 May 2026 21:27:38 UTC)
 - fix!: Invalid merge.
 
