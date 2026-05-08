@@ -136,6 +136,21 @@ func (reg *Registry[T]) BuilderFor(name string) Builder[T] {
 	return reg.builders[name]
 }
 
+// Build creates an instance of T from the given [Spec] using a registered
+// [Builder]. Returns [ErrInvSpec] if spc is nil, or [ErrUnkBuilder] if no
+// [Builder] is registered for [Spec.Name].
+func (reg *Registry[T]) Build(spc *Spec) (T, error) {
+	var zero T
+	if spc == nil {
+		return zero, ErrInvSpec
+	}
+	bld := reg.BuilderFor(spc.Name)
+	if bld == nil {
+		return zero, fmt.Errorf("%w %s", ErrUnkBuilder, spc.Name)
+	}
+	return bld(spc)
+}
+
 // EncodeSpec encodes the given [Spec] to JSON.
 func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 	for name, value := range spc.Args {
@@ -240,6 +255,25 @@ func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
 		}
 	}
 	return nil
+}
+
+// DecodeAndBuild decodes the JSON representation of a [Spec] and builds an
+// instance of T from it. It is a convenience wrapper around
+// [Registry.DecodeSpec] followed by [Registry.Build].
+func (reg *Registry[T]) DecodeAndBuild(data []byte) (T, error) {
+	var zero T
+
+	spec := &Spec{}
+	if err := reg.DecodeSpec(data, spec); err != nil {
+		return zero, err
+	}
+
+	value, err := reg.Build(spec)
+	if err != nil {
+		return zero, err
+	}
+
+	return value, nil
 }
 
 // encodeSpecs expects the provided value to be a slice of [Spec] instances and

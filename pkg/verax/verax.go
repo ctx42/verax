@@ -8,6 +8,7 @@ package verax
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 
 	"github.com/ctx42/verax/pkg/spec"
@@ -113,7 +114,9 @@ func Builders() map[string]spec.Builder[Rule] {
 		SkipRuleName:     AsRuleBuilder(SkipRuleFromSpec),
 		RangeRuleName:    AsRuleBuilder(RangeRuleFromSpec),
 
-		// [TypeRule] is not supported.
+		// [TypeRule] is intentionally excluded: it holds a reflect.Type which has
+		// no portable cross-language representation.
+		SetRuleName: AsRuleBuilder(SetRuleFromSpec),
 	}
 }
 
@@ -128,10 +131,34 @@ const (
 	ArgAllowUnk = "allow_unknown" // Allow unknown map keys.
 )
 
+// SetRuleName represents [Set] name.
+const SetRuleName = "set-rule"
+
 // Set groups multiple validation rules and implements the [Rule] interface.
 type Set []Rule
 
-func (rg Set) Validate(have any) error { return Validate(have, rg...) }
+func (set Set) Validate(have any) error { return Validate(have, set...) }
+
+func (set Set) Spec() (*spec.Spec, error) {
+	spc := spec.NewSpec(SetRuleName)
+	if len(set) > 0 {
+		spc.SetArg(spec.ArgTypes, slices.Clone([]Rule(set)))
+	}
+	return spc, nil
+}
+
+// SetRuleFromSpec creates a new instance of [Set] from the [spec.Spec].
+func SetRuleFromSpec(spc *spec.Spec) (Set, error) {
+	if spc.Name != SetRuleName {
+		msg := fmt.Sprintf("%s: invalid spec name: %q", SetRuleName, spc.Name)
+		return nil, NewInternalError(msg, spec.ECInvSpec)
+	}
+	rs, err := getArg[[]Rule](spc.Args, spec.ArgTypes, SetRuleName)
+	if err != nil {
+		return nil, err
+	}
+	return Set(rs), nil
+}
 
 // RuleFunc represents a custom validation function.
 //

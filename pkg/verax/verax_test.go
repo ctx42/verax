@@ -385,6 +385,96 @@ func Test_Set(t *testing.T) {
 	})
 }
 
+func Test_Set_Spec(t *testing.T) {
+	t.Run("no rules", func(t *testing.T) {
+		// --- Given ---
+		r := Set{}
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, SetRuleName, have.Name)
+		assert.Equal(t, map[string]any{}, have.Args)
+	})
+
+	t.Run("with rules", func(t *testing.T) {
+		// --- Given ---
+		rules := []Rule{Min(42), Max(44)}
+		r := Set(rules)
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, SetRuleName, have.Name)
+		wArgs := map[string]any{spec.ArgTypes: rules}
+		assert.Equal(t, wArgs, have.Args)
+		assert.NotSame(t, rules, have.Args[spec.ArgTypes])
+	})
+}
+
+func Test_SetRuleFromSpec(t *testing.T) {
+	t.Run("error - wrong spec name", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec("bad-name")
+
+		// --- When ---
+		have, err := SetRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, `set-rule: invalid spec name: "bad-name"`, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Nil(t, have)
+	})
+
+	t.Run("error - missing types argument", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(SetRuleName)
+
+		// --- When ---
+		have, err := SetRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := "set-rule: spec missing required argument: types"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Nil(t, have)
+	})
+
+	t.Run("success - with rules", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(SetRuleName).
+			SetArg(spec.ArgTypes, []Rule{Min(42), Max(44)})
+
+		// --- When ---
+		have, err := SetRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Set{Min(42), Max(44)}, have)
+	})
+}
+
+func Test_Set_Spec_SetRuleFromSpec_round_trip(t *testing.T) {
+	t.Run("round trip", func(t *testing.T) {
+		// --- Given ---
+		want := Set{Min(42), Required}
+		spc := must.Value(want.Spec())
+
+		// --- When ---
+		have, err := SetRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
+	})
+}
+
 func Test_Named_Set_Get_GetOrNoop(t *testing.T) {
 	t.Run("get set", func(t *testing.T) {
 		// --- Given ---

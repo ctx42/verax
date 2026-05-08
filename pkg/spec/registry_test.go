@@ -270,6 +270,65 @@ func Test_Registry_BuilderFor(t *testing.T) {
 	})
 }
 
+func Test_Registry_Build(t *testing.T) {
+	t.Run("error - no builder registered", func(t *testing.T) {
+		// --- Given ---
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.Build(NewSpec("my-spec"))
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrUnkBuilder, err)
+		assert.ErrorEqual(t, "unknown builder my-spec", err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("error - nil spec", func(t *testing.T) {
+		// --- Given ---
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.Build(nil)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrInvSpec, err)
+		assert.ErrorEqual(t, "invalid spec", err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("error - builder returns error", func(t *testing.T) {
+		// --- Given ---
+		reg := NewRegistry[TstType]()
+		reg.RegisterBuilder("my-spec", func(*Spec) (TstType, error) {
+			return TstType{}, ErrTst
+		})
+
+		// --- When ---
+		have, err := reg.Build(NewSpec("my-spec"))
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrTst, err)
+		assert.ErrorEqual(t, "test msg", err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("builds value", func(t *testing.T) {
+		// --- Given ---
+		reg := NewRegistry[TstType]()
+		reg.RegisterBuilder("my-spec", func(*Spec) (TstType, error) {
+			return TstType{"built"}, nil
+		})
+
+		// --- When ---
+		have, err := reg.Build(NewSpec("my-spec"))
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, TstType{"built"}, have)
+	})
+}
+
 func Test_Registry_EncodeSpec(t *testing.T) {
 	t.Run("error - specs argument", func(t *testing.T) {
 		// --- Given ---
@@ -783,6 +842,62 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 			},
 		}
 		assert.Equal(t, want, have)
+	})
+}
+
+func Test_Registry_DecodeAndBuild(t *testing.T) {
+	t.Run("error - nil slice", func(t *testing.T) {
+		// --- Given ---
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(nil)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrInvSpec, err)
+		assert.ErrorEqual(t, "JSON to spec: invalid spec", err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("error - decode spec", func(t *testing.T) {
+		// --- Given ---
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild([]byte(`{!!!}`))
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrInvSpec, err)
+		assert.ErrorEqual(t, "JSON to spec: invalid spec", err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("error - no builder registered", func(t *testing.T) {
+		// --- Given ---
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild([]byte(`{"name": "my-spec"}`))
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrUnkBuilder, err)
+		assert.ErrorEqual(t, "unknown builder my-spec", err)
+		assert.Zero(t, have)
+	})
+
+	t.Run("builds value", func(t *testing.T) {
+		// --- Given ---
+		reg := NewRegistry[TstType]()
+		reg.RegisterBuilder("my-spec", func(*Spec) (TstType, error) {
+			return TstType{"built"}, nil
+		})
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild([]byte(`{"name": "my-spec"}`))
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, TstType{"built"}, have)
 	})
 }
 
