@@ -6,13 +6,31 @@ package verax_test
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/ctx42/xrr/pkg/xrr"
 
+	"github.com/ctx42/verax/pkg/spec"
 	"github.com/ctx42/verax/pkg/verax"
 )
+
+var emailRx = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+
+type CreateUserRequest struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Age   int    `json:"age"`
+}
+
+func (r *CreateUserRequest) Validate() error {
+	return verax.ValidateStruct(r,
+		verax.Field(&r.Name, verax.Required, verax.Length(2, 50)),
+		verax.Field(&r.Email, verax.Required, verax.Match(emailRx)),
+		verax.Field(&r.Age, verax.Required, verax.Min(18), verax.Max(120)),
+	)
+}
 
 type Planet struct {
 	Position int    `json:"position"`
@@ -133,6 +151,41 @@ func ExampleValidator() {
 	//     "position": {
 	//         "code": "ECInvRange",
 	//         "error": "must be less or equal to 8"
+	//     }
+	// }
+}
+
+func ExampleValidator_quick_start() {
+	req := &CreateUserRequest{
+		Name:  "A",
+		Email: "bad-email",
+		Age:   15,
+	}
+
+	err := req.Validate()
+
+	PrintError(err)
+	PrintJSON(err)
+	// Output:
+	// ERROR:
+	//
+	// - age: must be greater or equal to 18
+	// - email: must be in a valid format value
+	// - name: the length must be between 2 and 50
+	//
+	// JSON:
+	// {
+	//     "age": {
+	//         "code": "ECInvRange",
+	//         "error": "must be greater or equal to 18"
+	//     },
+	//     "email": {
+	//         "code": "ECInvMatch",
+	//         "error": "must be in a valid format value"
+	//     },
+	//     "name": {
+	//         "code": "ECInvLength",
+	//         "error": "the length must be between 2 and 50"
 	//     }
 	// }
 }
@@ -465,6 +518,69 @@ func ExampleRule_customErrorCode() {
 	//     "code": "EC42",
 	//     "error": "must be equal to '42'"
 	// }
+}
+
+func ExampleBuilders_encode() {
+	rule := verax.Min(18)
+
+	reg := spec.NewRegistry[verax.Rule]()
+	reg.RegisterBuilders(verax.Builders())
+
+	spc, _ := rule.Spec()
+	data, _ := reg.EncodeSpec(spc)
+
+	fmt.Println(string(data))
+	// Output:
+	// {"name":"range-rule","args":{"mode":{"type":"string","value":"min"},"value":{"type":"int","value":18}}}
+}
+
+func ExampleBuilders_decode() {
+	data := []byte(`{"name":"range-rule","args":{"mode":{"type":"string","value":"min"},"value":{"type":"int","value":18}}}`)
+
+	reg := spec.NewRegistry[verax.Rule]()
+	reg.RegisterBuilders(verax.Builders())
+
+	restored, _ := reg.DecodeAndBuild(data)
+
+	err := verax.Validate(15, restored)
+	fmt.Println(err)
+	// Output:
+	// must be greater or equal to 18
+}
+
+// nonEmptyWord is a custom RuleFunc used in ExampleBuilders_by.
+// Declared as verax.RuleFunc so the type assertion in ByRuleFromSpec succeeds.
+var nonEmptyWord verax.RuleFunc = func(v any) error {
+	str, err := verax.EnsureString(v)
+	if err != nil {
+		return verax.ErrInvType
+	}
+	if len(str) < 3 {
+		return verax.NewError("must be at least 3 characters long", "ECShort")
+	}
+	return nil
+}
+
+func ExampleBuilders_by() {
+	// Register the function as a named source so it survives serialization.
+	src, _ := spec.NewSource("nonEmptyWord", nonEmptyWord)
+
+	reg := spec.NewRegistry[verax.Rule]()
+	reg.RegisterBuilders(verax.Builders())
+	reg.RegisterSource(src)
+
+	// Encode.
+	rule := verax.By(nonEmptyWord)
+	spc, _ := rule.Spec()
+	data, _ := reg.EncodeSpec(spc)
+
+	// Decode and rebuild — the function is resolved by name from the registry.
+	restored, _ := reg.DecodeAndBuild(data)
+
+	err := verax.Validate("hi", restored)
+	fmt.Println(err)
+	// Output:
+	// must be at least 3 characters long
 }
 
 // PrintJSON marshals value to JSON string.
