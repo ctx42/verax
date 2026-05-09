@@ -110,6 +110,9 @@ func (r MapRule) IsDefined(key any) bool {
 	return false
 }
 
+// Validate checks the value against the rule's condition(s) and returns
+// a validation error if it fails.
+//
 // nolint: cyclop, gocognit
 func (r MapRule) Validate(have any) error {
 	val := reflect.ValueOf(have)
@@ -268,7 +271,8 @@ func (mk MapKey) Optional() MapKey {
 	return mk
 }
 
-// When marks the key as required when condition is true, optional otherwise.
+// When marks the key as required when the condition is true, optional
+// otherwise.
 func (mk MapKey) When(condition bool) MapKey {
 	mk.optional = !condition
 	return mk

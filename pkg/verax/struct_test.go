@@ -558,6 +558,44 @@ func Test_ValidateStruct(t *testing.T) {
 		wMsg := "Value: the length must be between 5 and 10 (ECInvLength)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
+
+	t.Run("rule returning ECInternal propagates as InternalError", func(t *testing.T) {
+		// --- Given ---
+		mf := NewTStruct()
+		rs := []FieldRule{
+			Field(&mf.FStr, By(func(v any) error {
+				return NewInternalError("bad rule", ECInternal)
+			})),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&mf, rs...)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		xrrtest.AssertCode(t, ECInternal, err)
+		assert.ErrorContain(t, "f_json", err)
+	})
+
+	t.Run("anonymous field non-Fielder error stored under field name", func(t *testing.T) {
+		// --- Given ---
+		s := Model{
+			ModelVal: ModelVal{"abc"},
+			SvSM1:    ModelVal{"abc"},
+			SpSM1:    &ModelVal{"abc"},
+			SpSM2:    &ModelPtr{"abc"},
+		}
+		rs := []FieldRule{
+			Field(&s.ModelVal, Fail("anon err", "ECTst")),
+		}
+
+		// --- When ---
+		err := ValidateStruct(&s, rs...)
+
+		// --- Then ---
+		assert.SameType(t, &FieldErrors{}, err)
+		xrrtest.AssertEqual(t, "ModelVal: anon err (ECTst)", err)
+	})
 }
 
 func Test_findStructField_found_tabular(t *testing.T) {

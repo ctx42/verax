@@ -490,6 +490,23 @@ func Test_MapRule_Spec(t *testing.T) {
 		assert.Len(t, 1, have.Args)
 		assert.HasKeyValue(t, ArgAllowUnk, true, have.Args)
 	})
+
+	t.Run("with rules and AllowUnknown", func(t *testing.T) {
+		// --- Given ---
+		r := Map(Key(1, Min(42))).AllowUnknown()
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, MapRuleName, have.Name)
+		assert.Len(t, 2, have.Args)
+		assert.HasKeyValue(t, ArgAllowUnk, true, have.Args)
+		wRules := []*spec.Spec{must.Value(Key(1, Min(42)).Spec())}
+		hRules, _ := assert.HasKey(t, spec.ArgSpecs, have.Args)
+		assert.Equal(t, wRules, hRules)
+	})
 }
 
 func Test_MapRuleFromSpec(t *testing.T) {

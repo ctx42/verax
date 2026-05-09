@@ -533,6 +533,84 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 			}`
 		assert.JSON(t, want, string(have))
 	})
+
+	t.Run("no args spec", func(t *testing.T) {
+		// --- Given ---
+		spc := NewSpec("my-spec")
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.EncodeSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.JSON(t, `{"name":"my-spec"}`, string(have))
+	})
+
+	t.Run("error - nested sub-spec encode error", func(t *testing.T) {
+		// --- Given ---
+		sub := NewSpec("sub").SetArg("custom", TstFn0) // TstFn0 is func() — not serializable
+		spc := NewSpec("my-spec").SetArg(ArgSpecs, []*Spec{sub})
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.EncodeSpec(spc)
+
+		// --- Then ---
+		assert.ErrorIs(t, convert.ErrUnsType, err)
+		wMsg := "spec to JSON: spec my-spec, argument specs: " +
+			"index 0: spec sub to JSON: unsupported type: func()"
+		assert.ErrorEqual(t, wMsg, err)
+		assert.Nil(t, have)
+	})
+
+	t.Run("error - types contains non-Specable element", func(t *testing.T) {
+		// --- Given ---
+		spc := NewSpec("my-spec").SetArg(ArgTypes, []TstType{{name: "x"}})
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.EncodeSpec(spc)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrNotSpecable, err)
+		wMsg := "spec to JSON: spec my-spec, argument types: " +
+			"index 0: type not specable"
+		assert.ErrorEqual(t, wMsg, err)
+		assert.Nil(t, have)
+	})
+
+	t.Run("error - types element Spec returns error", func(t *testing.T) {
+		// --- Given ---
+		spc := NewSpec("my-spec").SetArg(ArgTypes, []TstSpec{{name: "x", err: ErrTst}})
+		reg := NewRegistry[TstSpec]()
+
+		// --- When ---
+		have, err := reg.EncodeSpec(spc)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrTst, err)
+		wMsg := "spec to JSON: spec my-spec, argument types: " +
+			"index 0: test msg"
+		assert.ErrorEqual(t, wMsg, err)
+		assert.Nil(t, have)
+	})
+
+	t.Run("error - values element cannot be serialized", func(t *testing.T) {
+		// --- Given ---
+		spc := NewSpec("my-spec").SetArg(ArgValues, []any{func() {}})
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.EncodeSpec(spc)
+
+		// --- Then ---
+		assert.ErrorIs(t, convert.ErrUnsType, err)
+		wMsg := "spec to JSON: spec my-spec, argument values: " +
+			"index 0: unsupported type: func()"
+		assert.ErrorEqual(t, wMsg, err)
+		assert.Nil(t, have)
+	})
 }
 
 func Test_Registry_DecodeSpec(t *testing.T) {

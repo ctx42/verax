@@ -22,6 +22,44 @@ func Test_ToAnySlice(t *testing.T) {
 	assert.Equal(t, []any{1, 2, 3}, ToAnySlice(1, 2, 3))
 }
 
+func Test_AsRuleBuilder(t *testing.T) {
+	t.Run("returns nil when T does not implement Rule", func(t *testing.T) {
+		// --- When ---
+		have := AsRuleBuilder(func(_ *spec.Spec) (int, error) { return 0, nil })
+
+		// --- Then ---
+		assert.Nil(t, have)
+	})
+
+	t.Run("wraps the typed constructor", func(t *testing.T) {
+		// --- Given ---
+		fn := func(_ *spec.Spec) (NoopRule, error) { return Noop, nil }
+
+		// --- When ---
+		bld := AsRuleBuilder(fn)
+
+		// --- Then ---
+		assert.NotNil(t, bld)
+		have, err := bld(spec.NewSpec(NoopRuleName))
+		assert.NoError(t, err)
+		assert.Equal(t, Rule(Noop), have)
+	})
+
+	t.Run("propagates constructor error", func(t *testing.T) {
+		// --- Given ---
+		wErr := NewInternalError("spec error", ECInternal)
+		fn := func(_ *spec.Spec) (NoopRule, error) { return NoopRule{}, wErr }
+
+		// --- When ---
+		bld := AsRuleBuilder(fn)
+		have, err := bld(spec.NewSpec(NoopRuleName))
+
+		// --- Then ---
+		assert.ErrorIs(t, wErr, err)
+		assert.Nil(t, have)
+	})
+}
+
 func Test_hasGoSource(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// --- Given ---

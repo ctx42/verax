@@ -211,6 +211,47 @@ func Test_WhenRule_Validate_invalid_tabular(t *testing.T) {
 	}
 }
 
+func Test_WhenRule_Validate_custom_msg_code(t *testing.T) {
+	t.Run("custom message only", func(t *testing.T) {
+		// --- Given ---
+		r := When(true, Equal("abc")).Message("custom msg")
+
+		// --- When ---
+		err := r.Validate("xyz")
+
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		assert.ErrorEqual(t, "custom msg", err)
+		xrrtest.AssertCode(t, ECNotEqual, err)
+	})
+
+	t.Run("custom code only", func(t *testing.T) {
+		// --- Given ---
+		r := When(true, Equal("abc")).Code("ECCustom")
+
+		// --- When ---
+		err := r.Validate("xyz")
+
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		assert.ErrorEqual(t, "must be equal to 'abc'", err)
+		xrrtest.AssertCode(t, "ECCustom", err)
+	})
+
+	t.Run("custom message and code", func(t *testing.T) {
+		// --- Given ---
+		r := When(true, Equal("abc")).Message("custom msg").Code("ECCustom")
+
+		// --- When ---
+		err := r.Validate("xyz")
+
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		assert.ErrorEqual(t, "custom msg", err)
+		xrrtest.AssertCode(t, "ECCustom", err)
+	})
+}
+
 func Test_WhenRule_Message(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// --- Given ---
