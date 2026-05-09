@@ -1,3 +1,7 @@
+## v0.7.1 (Sat, 09 May 2026 19:42:20 UTC)
+- test(error_types): add Test_NewInternalErrorf.
+- test: improve coverage for registry and validation rules.
+
 ## v0.7.0 (Sat, 09 May 2026 13:14:23 UTC)
 - refactor(error): use format-string error constructors from xrr upgrade.
 - docs(readme): replace detailed guide with concise intro.
