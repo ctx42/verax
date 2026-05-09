@@ -183,8 +183,7 @@ func (r RangeRule) Validate(have any) error {
 
 	res, err := r.fn(r.threshold, have)
 	if err != nil {
-		var e *InternalError
-		if errors.As(err, &e) {
+		if e, ok := errors.AsType[*InternalError](err); ok {
 			return e
 		}
 		customMsg := r.flags&flgCustomMsg != 0
@@ -225,18 +224,24 @@ func (r RangeRule) Message(tpl string) RangeRule {
 		Option("missingkey=error").
 		Parse(tpl)
 	if r.sticky != nil {
-		format := "%s(%s): custom template parse error"
-		msg := fmt.Sprintf(format, RangeRuleName, r.mode)
-		r.sticky = NewInternalError(msg, ECInternal)
+		r.sticky = NewInternalErrorf(
+			"%s(%s): custom template parse error",
+			RangeRuleName,
+			r.mode,
+			xrr.WithCode(ECInternal),
+		)
 		return r
 	}
 
 	buf := &bytes.Buffer{}
 	r.sticky = parsed.Execute(buf, map[string]any{spec.ArgValue: r.threshold})
 	if r.sticky != nil {
-		format := "%s(%s): custom template render error"
-		msg := fmt.Sprintf(format, RangeRuleName, r.mode)
-		r.sticky = NewInternalError(msg, ECInternal)
+		r.sticky = NewInternalErrorf(
+			"%s(%s): custom template render error",
+			RangeRuleName,
+			r.mode,
+			xrr.WithCode(ECInternal),
+		)
 		return r
 	}
 	r.tpl = tpl
@@ -269,9 +274,12 @@ func (r RangeRule) Spec() (*spec.Spec, error) {
 	case "max-exclusive":
 		spc.SetArg(ArgMode, "max-exclusive")
 	default:
-		format := "%s: invalid rule mode: %q"
-		msg := fmt.Sprintf(format, RangeRuleName, r.mode)
-		return nil, NewInternalError(msg, ECInvRuleMode)
+		return nil, NewInternalErrorf(
+			"%s: invalid rule mode: %q",
+			RangeRuleName,
+			r.mode,
+			xrr.WithCode(ECInvRuleMode),
+		)
 	}
 	spc.SetArg(spec.ArgValue, r.threshold)
 
@@ -292,9 +300,12 @@ func (r RangeRule) Spec() (*spec.Spec, error) {
 // RangeRuleFromSpec creates a new instance of [RangeRule] from the [spec.Spec].
 func RangeRuleFromSpec(spc *spec.Spec) (RangeRule, error) {
 	if spc.Name != RangeRuleName {
-		format := "%s: invalid spec name: %q"
-		msg := fmt.Sprintf(format, RangeRuleName, spc.Name)
-		return RangeRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return RangeRule{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			RangeRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	mode, err := getArg[string](spc.Args, ArgMode, RangeRuleName)
 	if err != nil {
@@ -316,9 +327,12 @@ func RangeRuleFromSpec(spc *spec.Spec) (RangeRule, error) {
 	case "max-exclusive":
 		rule = Max(val).Exclusive()
 	default:
-		format := "%s: invalid spec rule mode: %q"
-		msg := fmt.Sprintf(format, RangeRuleName, mode)
-		return RangeRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return RangeRule{}, NewInternalErrorf(
+			"%s: invalid spec rule mode: %q",
+			RangeRuleName,
+			mode,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 
 	if rule.sticky != nil {
@@ -443,8 +457,11 @@ func compareFor(val any) (CompareFunc, error) {
 		return compareTime, nil
 
 	default:
-		format := "%s: unsupported type comparison: %T"
-		msg := fmt.Sprintf(format, RangeRuleName, val)
-		return nil, NewInternalError(msg, ECInvType)
+		return nil, NewInternalErrorf(
+			"%s: unsupported type comparison: %T",
+			RangeRuleName,
+			val,
+			xrr.WithCode(ECInvType),
+		)
 	}
 }

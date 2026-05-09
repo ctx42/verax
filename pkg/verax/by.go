@@ -4,8 +4,6 @@
 package verax
 
 import (
-	"fmt"
-
 	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
@@ -96,8 +94,12 @@ func (r ByRule) Spec() (*spec.Spec, error) {
 // ByRuleFromSpec creates a new instance of [ByRule] from the [spec.Spec].
 func ByRuleFromSpec(spc *spec.Spec) (ByRule, error) {
 	if spc.Name != ByRuleName {
-		msg := fmt.Sprintf("%s: invalid spec name: %q", ByRuleName, spc.Name)
-		return ByRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return ByRule{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			ByRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	fn, err := getArg[RuleFunc](spc.Args, spec.ArgSrc, ByRuleName)
 	if err != nil {

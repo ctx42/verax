@@ -4,8 +4,6 @@
 package verax
 
 import (
-	"fmt"
-
 	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
@@ -65,9 +63,11 @@ func (r FailRule) Code(code string) FailRule {
 
 func (r FailRule) Spec() (*spec.Spec, error) {
 	if r.msg == "" {
-		format := "%s: error cannot have an empty message"
-		msg := fmt.Sprintf(format, FailRuleName)
-		return nil, NewInternalError(msg, ECInternal)
+		return nil, NewInternalErrorf(
+			"%s: error cannot have an empty message",
+			FailRuleName,
+			xrr.WithCode(ECInternal),
+		)
 	}
 
 	spc := spec.NewSpec(FailRuleName).SetArg(ArgErrMsg, r.msg)
@@ -80,8 +80,12 @@ func (r FailRule) Spec() (*spec.Spec, error) {
 // FailRuleFromSpec creates a new instance of [FailRule] from the [spec.Spec].
 func FailRuleFromSpec(spc *spec.Spec) (FailRule, error) {
 	if spc.Name != FailRuleName {
-		msg := fmt.Sprintf("%s: invalid spec name: %q", FailRuleName, spc.Name)
-		return FailRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return FailRule{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			FailRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 
 	msg, err := getArg[string](spc.Args, ArgErrMsg, FailRuleName)

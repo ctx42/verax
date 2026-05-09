@@ -4,7 +4,7 @@
 package verax
 
 import (
-	"fmt"
+	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
 )
@@ -144,9 +144,12 @@ func (r RequiredRule) Spec() (*spec.Spec, error) {
 	case "required", "not-empty", "not-nil":
 		spc.SetArg(ArgMode, r.mode)
 	default:
-		format := "%s: invalid rule mode: %q"
-		msg := fmt.Sprintf(format, RequiredRuleName, r.mode)
-		return nil, NewInternalError(msg, ECInvRuleMode)
+		return nil, NewInternalErrorf(
+			"%s: invalid rule mode: %q",
+			RequiredRuleName,
+			r.mode,
+			xrr.WithCode(ECInvRuleMode),
+		)
 	}
 	return spc, nil
 }
@@ -155,9 +158,12 @@ func (r RequiredRule) Spec() (*spec.Spec, error) {
 // [spec.Spec].
 func RequiredRuleFromSpec(spc *spec.Spec) (RequiredRule, error) {
 	if spc.Name != RequiredRuleName {
-		format := "%s: invalid spec name: %q"
-		msg := fmt.Sprintf(format, RequiredRuleName, spc.Name)
-		return RequiredRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return RequiredRule{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			RequiredRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	mode, err := getArg[string](spc.Args, ArgMode, RequiredRuleName)
 	if err != nil {
@@ -173,9 +179,12 @@ func RequiredRuleFromSpec(spc *spec.Spec) (RequiredRule, error) {
 	case "not-nil":
 		rule = NotNil
 	default:
-		format := "%s: invalid spec rule mode: %q"
-		msg := fmt.Sprintf(format, RequiredRuleName, mode)
-		return RequiredRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return RequiredRule{}, NewInternalErrorf(
+			"%s: invalid spec rule mode: %q",
+			RequiredRuleName,
+			mode,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 
 	if spc.ArgExist(ArgErrMsg) {

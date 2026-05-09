@@ -4,7 +4,7 @@
 package verax
 
 import (
-	"fmt"
+	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
 )
@@ -103,8 +103,12 @@ func (r AbsentRule) Spec() (*spec.Spec, error) {
 	case "nil", "empty":
 		spc.SetArg(ArgMode, r.mode)
 	default:
-		msg := fmt.Sprintf("%s: invalid rule mode: %q", AbsentRuleName, r.mode)
-		return nil, NewInternalError(msg, ECInvRuleMode)
+		return nil, NewInternalErrorf(
+			"%s: invalid rule mode: %q",
+			AbsentRuleName,
+			r.mode,
+			xrr.WithCode(ECInvRuleMode),
+		)
 	}
 
 	if r.flags&flgCustomMsg != 0 {
@@ -119,8 +123,13 @@ func (r AbsentRule) Spec() (*spec.Spec, error) {
 // AbsentRuleFromSpec creates an instance of [AbsentRule] from the [spec.Spec].
 func AbsentRuleFromSpec(spc *spec.Spec) (AbsentRule, error) {
 	if spc.Name != AbsentRuleName {
-		msg := fmt.Sprintf("%s: invalid spec name: %q", AbsentRuleName, spc.Name)
-		return AbsentRule{}, NewInternalError(msg, spec.ECInvSpec)
+		// TODO(rz): code style.
+		return AbsentRule{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			AbsentRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	mode, err := getArg[string](spc.Args, ArgMode, AbsentRuleName)
 	if err != nil {
@@ -134,9 +143,12 @@ func AbsentRuleFromSpec(spc *spec.Spec) (AbsentRule, error) {
 	case "nil":
 		rule = Nil
 	default:
-		format := "%s: invalid spec rule mode: %q"
-		msg := fmt.Sprintf(format, AbsentRuleName, mode)
-		return AbsentRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return AbsentRule{}, NewInternalErrorf(
+			"%s: invalid spec rule mode: %q",
+			AbsentRuleName,
+			mode,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 
 	if spc.ArgExist(ArgErrMsg) {

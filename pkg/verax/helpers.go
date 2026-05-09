@@ -5,9 +5,10 @@ package verax
 
 import (
 	"bytes"
-	"fmt"
 	"text/template"
 	"time"
+
+	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
 )
@@ -42,8 +43,11 @@ func AsRuleBuilder[T any](fn func(*spec.Spec) (T, error)) spec.Builder[Rule] {
 // is Go.
 func hasGoSource(name string, srs ...*spec.Source) error {
 	if len(srs) == 0 {
-		msg := fmt.Sprintf("%s: incomplete rule", name)
-		return NewInternalError(msg, ECInternal)
+		return NewInternalErrorf(
+			"%s: incomplete rule",
+			name,
+			xrr.WithCode(ECInternal),
+		)
 	}
 	var hasGo bool
 	for _, src := range srs {
@@ -55,8 +59,12 @@ func hasGoSource(name string, srs ...*spec.Source) error {
 	if hasGo {
 		return nil
 	}
-	msg := fmt.Sprintf("%s: %s", name, spec.ErrNoGoSource)
-	return NewInternalError(msg, spec.ECNoGoSource)
+	return NewInternalErrorf(
+		"%s: %s",
+		name,
+		spec.ErrNoGoSource,
+		xrr.WithCode(spec.ECNoGoSource),
+	)
 }
 
 // mustTpl returns parsed text template with the given name. Panics on error.
@@ -87,8 +95,8 @@ func renderTpl(tpl *template.Template, val any, prefix string) (string, error) {
 	buf := &bytes.Buffer{}
 	data := map[string]any{spec.ArgValue: formatValue(val)}
 	if err := tpl.Execute(buf, data); err != nil {
-		msg := fmt.Sprintf("%s: template render error", prefix)
-		return "", NewInternalError(msg, ECInternal)
+		format := "%s: template render error"
+		return "", NewInternalErrorf(format, prefix, xrr.WithCode(ECInternal))
 	}
 	return buf.String(), nil
 }
@@ -103,14 +111,23 @@ func getArg[T any](args map[string]any, key, rule string) (T, error) {
 	var retVal T
 
 	if anyVal, ok = args[key]; !ok {
-		msg := fmt.Sprintf("%s: spec missing required argument: %s", rule, key)
-		return retVal, NewInternalError(msg, spec.ECInvSpec)
+		return retVal, NewInternalErrorf(
+			"%s: spec missing required argument: %s",
+			rule,
+			key,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 
 	if retVal, ok = anyVal.(T); !ok {
-		format := "%s: spec argument %q must be %T, got %T"
-		msg := fmt.Sprintf(format, rule, key, retVal, anyVal)
-		return retVal, NewInternalError(msg, spec.ECInvSpec)
+		return retVal, NewInternalErrorf(
+			"%s: spec argument %q must be %T, got %T",
+			rule,
+			key,
+			retVal,
+			anyVal,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	return retVal, nil
 }
@@ -119,7 +136,11 @@ func getArg[T any](args map[string]any, key, rule string) (T, error) {
 // the value "from" cannot be converted to the type of "to". The name argument
 // identifies the rule that triggered the error.
 func errConvert(name string, from, to any) error {
-	format := "%s: cannot convert %T to %T"
-	msg := fmt.Sprintf(format, name, from, to)
-	return NewInternalError(msg, ECInvType)
+	return NewInternalErrorf(
+		"%s: cannot convert %T to %T",
+		name,
+		from,
+		to,
+		xrr.WithCode(ECInvType),
+	)
 }

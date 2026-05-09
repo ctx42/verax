@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ctx42/xrr/pkg/xrr"
+
 	"github.com/ctx42/verax/pkg/verax"
 )
 
@@ -406,7 +408,8 @@ func (u UserDoesNotExistRule) Validate(v any) error {
 
 	// Check if the username exists in a database.
 
-	return verax.NewError(fmt.Sprintf("user %s already exist", username), "ECMustNotExist")
+	format := "user %s already exist"
+	return verax.NewErrorf(format, username, xrr.WithCode("ECMustNotExist"))
 }
 
 func ExampleRule() {

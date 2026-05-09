@@ -12,3 +12,5 @@ github.com/ctx42/xrr v0.13.0 h1:O4t+KAhuO495bytOj7c9VC/n+Ljl0puxBMs1NvPlaWo=
 github.com/ctx42/xrr v0.13.0/go.mod h1:nGFecPoe3swXIXH8O6EPEH6NeOld0cHwo/dgj03Onak=
 github.com/ctx42/xrr v0.14.1 h1:OoYz3Nkif/38tH+gb55gCFGoS7MRMS0hmbtLLPapB90=
 github.com/ctx42/xrr v0.14.1/go.mod h1:nGFecPoe3swXIXH8O6EPEH6NeOld0cHwo/dgj03Onak=
+github.com/ctx42/xrr v0.15.0 h1:Bb+Ylu0FhDzCEgwelTBpFCB0QCI2i+izgfTfthk9s9I=
+github.com/ctx42/xrr v0.15.0/go.mod h1:nGFecPoe3swXIXH8O6EPEH6NeOld0cHwo/dgj03Onak=

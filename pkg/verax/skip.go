@@ -4,7 +4,7 @@
 package verax
 
 import (
-	"fmt"
+	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
 )
@@ -35,8 +35,12 @@ func (_ SkipRule) Spec() (*spec.Spec, error) {
 // SkipRuleFromSpec creates a new instance of [SkipRule] from the [spec.Spec].
 func SkipRuleFromSpec(spc *spec.Spec) (SkipRule, error) {
 	if spc.Name != SkipRuleName {
-		msg := fmt.Sprintf("%s: invalid spec name: %q", SkipRuleName, spc.Name)
-		return false, NewInternalError(msg, spec.ECInvSpec)
+		return false, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			SkipRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	return Skip, nil
 }

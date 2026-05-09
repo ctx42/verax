@@ -4,10 +4,11 @@
 package verax
 
 import (
-	"fmt"
 	"reflect"
 	"slices"
 	"strconv"
+
+	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
 )
@@ -69,7 +70,7 @@ func (r EachRule) Validate(have any) error {
 		}
 
 	default:
-		return NewInternalError("must be iterable", ECInvType)
+		return NewInternalErrorf("must be iterable", xrr.WithCode(ECInvType))
 	}
 
 	if ers != nil {
@@ -94,8 +95,12 @@ func (r EachRule) Spec() (*spec.Spec, error) {
 // EachRuleFromSpec creates a new instance of [EachRule] from the [spec.Spec].
 func EachRuleFromSpec(spc *spec.Spec) (EachRule, error) {
 	if spc.Name != EachRuleName {
-		msg := fmt.Sprintf("%s: invalid spec name: %q", EachRuleName, spc.Name)
-		return EachRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return EachRule{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			EachRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	rs, err := getArg[[]Rule](spc.Args, spec.ArgTypes, EachRuleName)
 	if err != nil {

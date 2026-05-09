@@ -4,7 +4,7 @@
 package verax
 
 import (
-	"fmt"
+	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
 )
@@ -138,8 +138,12 @@ func (r InRule) Spec() (*spec.Spec, error) {
 	case "in", "not-in":
 		spc.SetArg(ArgMode, r.mode)
 	default:
-		msg := fmt.Sprintf("%s: invalid rule mode: %q", InRuleName, r.mode)
-		return nil, NewInternalError(msg, ECInvRuleMode)
+		return nil, NewInternalErrorf(
+			"%s: invalid rule mode: %q",
+			InRuleName,
+			r.mode,
+			xrr.WithCode(ECInvRuleMode),
+		)
 	}
 
 	var vls []any
@@ -159,8 +163,12 @@ func (r InRule) Spec() (*spec.Spec, error) {
 // InRuleFromSpec creates a new instance of [InRule] from the [spec.Spec].
 func InRuleFromSpec(spc *spec.Spec) (InRule, error) {
 	if spc.Name != InRuleName {
-		msg := fmt.Sprintf("%s: invalid spec name: %q", InRuleName, spc.Name)
-		return InRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return InRule{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			InRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	mode, err := getArg[string](spc.Args, ArgMode, InRuleName)
 	if err != nil {
@@ -178,9 +186,12 @@ func InRuleFromSpec(spc *spec.Spec) (InRule, error) {
 	case "not-in":
 		rule = NotIn(vls...)
 	default:
-		format := "%s: invalid spec rule mode: %q"
-		msg := fmt.Sprintf(format, InRuleName, mode)
-		return InRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return InRule{}, NewInternalErrorf(
+			"%s: invalid spec rule mode: %q",
+			InRuleName,
+			mode,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 
 	if spc.ArgExist(ArgErrMsg) {

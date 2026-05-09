@@ -178,8 +178,12 @@ func (r EqualRule) With(fn EqualFunc) EqualRule {
 	case "not-equal", "not-equal-by":
 		r.mode = "not-equal-by"
 	default:
-		msg := fmt.Sprintf("%s: invalid rule mode: %q", EqualRuleName, r.mode)
-		r.sticky = NewInternalError(msg, ECInvRuleMode)
+		r.sticky = NewInternalErrorf(
+			"%s: invalid rule mode: %q",
+			EqualRuleName,
+			r.mode,
+			xrr.WithCode(ECInvRuleMode),
+		)
 		return r
 	}
 	r.fn = fn
@@ -196,18 +200,24 @@ func (r EqualRule) Message(tpl string) EqualRule {
 		Option("missingkey=error").
 		Parse(tpl)
 	if r.sticky != nil {
-		format := "%s(%s): custom template parse error"
-		msg := fmt.Sprintf(format, EqualRuleName, r.mode)
-		r.sticky = NewInternalError(msg, ECInternal)
+		r.sticky = NewInternalErrorf(
+			"%s(%s): custom template parse error",
+			EqualRuleName,
+			r.mode,
+			xrr.WithCode(ECInternal),
+		)
 		return r
 	}
 
 	buf := &bytes.Buffer{}
 	r.sticky = parsed.Execute(buf, map[string]any{spec.ArgValue: r.want})
 	if r.sticky != nil {
-		format := "%s(%s): custom template render error"
-		msg := fmt.Sprintf(format, EqualRuleName, r.mode)
-		r.sticky = NewInternalError(msg, ECInternal)
+		r.sticky = NewInternalErrorf(
+			"%s(%s): custom template render error",
+			EqualRuleName,
+			r.mode,
+			xrr.WithCode(ECInternal),
+		)
 		return r
 	}
 
@@ -240,8 +250,12 @@ func (r EqualRule) spec(name string) (*spec.Spec, error) {
 	case "equal-by", "not-equal-by":
 		spc.SetArg(spec.ArgSrc, r.fn)
 	default:
-		msg := fmt.Sprintf("%s: invalid rule mode: %q", name, r.mode)
-		return nil, NewInternalError(msg, ECInvRuleMode)
+		return nil, NewInternalErrorf(
+			"%s: invalid rule mode: %q",
+			name,
+			r.mode,
+			xrr.WithCode(ECInvRuleMode),
+		)
 	}
 	spc.SetArg(ArgMode, r.mode)
 	spc.SetArg(spec.ArgValue, r.want)
@@ -265,8 +279,12 @@ func EqualRuleFromSpec(spc *spec.Spec) (EqualRule, error) {
 }
 func equalRuleFromSpec(spc *spec.Spec, name string) (EqualRule, error) {
 	if spc.Name != name {
-		msg := fmt.Sprintf("%s: invalid spec name: %q", name, spc.Name)
-		return EqualRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return EqualRule{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			name,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	mode, err := getArg[string](spc.Args, ArgMode, name)
 	if err != nil {
@@ -296,9 +314,12 @@ func equalRuleFromSpec(spc *spec.Spec, name string) (EqualRule, error) {
 		}
 		rule = NotEqual(val).With(fn)
 	default:
-		format := "%s: invalid spec rule mode: %q"
-		msg := fmt.Sprintf(format, name, mode)
-		return EqualRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return EqualRule{}, NewInternalErrorf(
+			"%s: invalid spec rule mode: %q",
+			name,
+			mode,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 
 	if spc.ArgExist(ArgErrMsg) {

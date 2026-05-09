@@ -4,8 +4,9 @@
 package verax
 
 import (
-	"fmt"
 	"reflect"
+
+	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
 )
@@ -52,15 +53,15 @@ func (r ContainRule) Validate(have any) error {
 		}
 
 	default:
-		return NewInternalError("must be iterable", ECInvType)
+		return NewInternalErrorf("must be iterable", xrr.WithCode(ECInvType))
 	}
 
 	if success {
 		return nil
 	}
 
-	msg := fmt.Sprintf("must contain at least one '%v' value", r.rule.want)
-	return NewError(msg, ECNotEqual)
+	format := "must contain at least one '%v' value"
+	return NewErrorf(format, r.rule.want, xrr.WithCode(ECNotEqual))
 }
 
 func (r ContainRule) When(condition bool) ContainRule {

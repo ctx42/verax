@@ -4,7 +4,6 @@
 package verax
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -81,23 +80,31 @@ func ValidateStruct(v any, fields ...FieldRule) error {
 	for i, fr := range fields {
 		fv := reflect.ValueOf(fr.fieldPtr)
 		if fv.Kind() != reflect.Pointer {
-			format := "field #%v must be specified as a pointer"
-			msg := fmt.Sprintf(format, i)
-			return NewInternalError(msg, ECInternal)
+			return NewInternalErrorf(
+				"field #%v must be specified as a pointer",
+				i,
+				xrr.WithCode(ECInternal),
+			)
 		}
 
 		sf := findStructField(val, fv)
 		if sf == nil {
-			format := "the field #%v cannot be found in the struct"
-			msg := fmt.Sprintf(format, i)
-			return NewInternalError(msg, ECInternal)
+			return NewInternalErrorf(
+				"the field #%v cannot be found in the struct",
+				i,
+				xrr.WithCode(ECInternal),
+			)
 		}
 
 		v = fv.Elem().Interface()
 		if err := Validate(v, fr.rules...); err != nil {
 			if xrr.GetCode(err) == ECInternal {
-				msg := fmt.Sprintf("%s: %s", getErrorFieldName(fr.tag, sf), err)
-				return NewInternalError(msg, ECInternal)
+				return NewInternalErrorf(
+					"%s: %s",
+					getErrorFieldName(fr.tag, sf),
+					err,
+					xrr.WithCode(ECInternal),
+				)
 			}
 			if ers == nil {
 				ers = &FieldErrors{}

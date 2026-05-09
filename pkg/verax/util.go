@@ -5,9 +5,10 @@ package verax
 
 import (
 	"database/sql/driver"
-	"fmt"
 	"reflect"
 	"strconv"
+
+	"github.com/ctx42/xrr/pkg/xrr"
 )
 
 var bytesType = reflect.TypeFor[[]byte]()
@@ -55,8 +56,8 @@ func LengthOfValue(value any) (int, error) {
 		return v.Len(), nil
 
 	default:
-		msg := fmt.Sprintf("cannot get the length of %T", value)
-		return 0, NewError(msg, ECInvType)
+		format := "cannot get the length of %T"
+		return 0, NewErrorf(format, value, xrr.WithCode(ECInvType))
 	}
 }
 

@@ -11,6 +11,8 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/ctx42/xrr/pkg/xrr"
+
 	"github.com/ctx42/verax/pkg/spec"
 )
 
@@ -150,8 +152,12 @@ func (set Set) Spec() (*spec.Spec, error) {
 // SetRuleFromSpec creates a new instance of [Set] from the [spec.Spec].
 func SetRuleFromSpec(spc *spec.Spec) (Set, error) {
 	if spc.Name != SetRuleName {
-		msg := fmt.Sprintf("%s: invalid spec name: %q", SetRuleName, spc.Name)
-		return nil, NewInternalError(msg, spec.ECInvSpec)
+		return nil, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			SetRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	rs, err := getArg[[]Rule](spc.Args, spec.ArgTypes, SetRuleName)
 	if err != nil {
@@ -188,8 +194,12 @@ func Check[T any](fn IsFunc[T], msg, code string) RuleFunc {
 	return func(have any) error {
 		vt, ok := have.(T)
 		if !ok {
-			errMsg := fmt.Sprintf(msg+": expected %T, got %T", vt, have)
-			return NewInternalError(errMsg, ECInvType)
+			return NewInternalErrorf(
+				msg+": expected %T, got %T",
+				vt,
+				have,
+				xrr.WithCode(ECInvType),
+			)
 		}
 		if !fn(vt) {
 			return NewError(msg, code)

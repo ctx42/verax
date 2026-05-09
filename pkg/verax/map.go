@@ -189,8 +189,13 @@ func (r MapRule) Spec() (*spec.Spec, error) {
 	for _, key := range r.keys {
 		spc, err := key.Spec()
 		if err != nil {
-			msg := fmt.Sprintf("%s[%s]: %s", MapRuleName, key.KeyString(), err)
-			return nil, NewInternalError(msg, ECInternal)
+			return nil, NewInternalErrorf(
+				"%s[%s]: %s",
+				MapRuleName,
+				key.KeyString(),
+				err,
+				xrr.WithCode(ECInternal),
+			)
 		}
 		sps = append(sps, spc)
 	}
@@ -208,8 +213,12 @@ func (r MapRule) Spec() (*spec.Spec, error) {
 // MapRuleFromSpec creates a new instance of [MapRule] from the [spec.Spec].
 func MapRuleFromSpec(spc *spec.Spec) (MapRule, error) {
 	if spc.Name != MapRuleName {
-		msg := fmt.Sprintf("%s: invalid spec name: %q", MapRuleName, spc.Name)
-		return MapRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return MapRule{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			MapRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 
 	var mks []MapKey
@@ -221,9 +230,13 @@ func MapRuleFromSpec(spc *spec.Spec) (MapRule, error) {
 		for idx, keySpc := range sps {
 			key, err := MapKeyFromSpec(keySpc)
 			if err != nil {
-				format := "%s: key-spec[%d]: %s"
-				msg := fmt.Sprintf(format, MapRuleName, idx, err)
-				return MapRule{}, NewInternalError(msg, spec.ECInvSpec)
+				return MapRule{}, NewInternalErrorf(
+					"%s: key-spec[%d]: %s",
+					MapRuleName,
+					idx,
+					err,
+					xrr.WithCode(spec.ECInvSpec),
+				)
 			}
 			mks = append(mks, key)
 		}
@@ -278,8 +291,12 @@ func (mk MapKey) Spec() (*spec.Spec, error) {
 // MapKeyFromSpec creates a new instance of [MapKey] from the [spec.Spec].
 func MapKeyFromSpec(spc *spec.Spec) (MapKey, error) {
 	if spc.Name != MapKeyName {
-		msg := fmt.Sprintf("%s: invalid spec name: %q", MapKeyName, spc.Name)
-		return MapKey{}, NewInternalError(msg, spec.ECInvSpec)
+		return MapKey{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			MapKeyName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	key, err := getArg[any](spc.Args, spec.ArgValue, MapKeyName)
 	if err != nil {

@@ -4,7 +4,6 @@
 package verax
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -219,13 +218,13 @@ func (t TstRule) Validate(have any) error {
 		if val == 42 {
 			return nil
 		}
-		return fmt.Errorf("invalid value '%v'", val)
+		return NewErrorf("invalid value '%v'", val)
 
 	case string:
 		if val == "abc" {
 			return nil
 		}
-		return fmt.Errorf("invalid value '%v'", val)
+		return NewErrorf("invalid value '%v'", val)
 	}
-	return fmt.Errorf("invalid value type: %T", have)
+	return NewErrorf("invalid value type: %T", have)
 }

@@ -4,7 +4,7 @@
 package verax
 
 import (
-	"fmt"
+	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
 )
@@ -37,8 +37,12 @@ func (r NoopRule) Spec() (*spec.Spec, error) {
 // NoopRuleFromSpec creates a new instance of [NoopRule] from the [spec.Spec].
 func NoopRuleFromSpec(spc *spec.Spec) (NoopRule, error) {
 	if spc.Name != NoopRuleName {
-		msg := fmt.Sprintf("%s: invalid spec name: %q", NoopRuleName, spc.Name)
-		return NoopRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return NoopRule{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			NoopRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	return Noop, nil
 }

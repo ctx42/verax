@@ -6,7 +6,6 @@ package spec
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"sync"
 
@@ -146,7 +145,7 @@ func (reg *Registry[T]) Build(spc *Spec) (T, error) {
 	}
 	bld := reg.BuilderFor(spc.Name)
 	if bld == nil {
-		return zero, fmt.Errorf("%w %s", ErrUnkBuilder, spc.Name)
+		return zero, NewErrorf("%w %s", ErrUnkBuilder, spc.Name)
 	}
 	return bld(spc)
 }
@@ -159,7 +158,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 			specs, err := reg.encodeSpecs(value)
 			if err != nil {
 				format := "spec to JSON: spec %s, argument %s: %w"
-				return nil, fmt.Errorf(format, spc.Name, name, err)
+				return nil, NewErrorf(format, spc.Name, name, err)
 			}
 			spc.SetArg(name, specs)
 
@@ -167,7 +166,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 			tps, err := reg.encodeTypes(value)
 			if err != nil {
 				format := "spec to JSON: spec %s, argument %s: %w"
-				return nil, fmt.Errorf(format, spc.Name, name, err)
+				return nil, NewErrorf(format, spc.Name, name, err)
 			}
 			spc.SetArg(name, tps)
 
@@ -175,7 +174,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 			src, err := reg.encodeSource(value)
 			if err != nil {
 				format := "spec to JSON: spec %s, argument %s: %w"
-				return nil, fmt.Errorf(format, spc.Name, name, err)
+				return nil, NewErrorf(format, spc.Name, name, err)
 			}
 			spc.SetArg(name, src)
 
@@ -183,7 +182,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 			values, err := reg.encodeValues(value)
 			if err != nil {
 				format := "spec to JSON: spec %s, argument %s: %w"
-				return nil, fmt.Errorf(format, spc.Name, name, err)
+				return nil, NewErrorf(format, spc.Name, name, err)
 			}
 			spc.SetArg(name, values)
 
@@ -191,7 +190,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 			val, err := jsontype.NewValue(value)
 			if err != nil {
 				format := "spec %s to JSON: %w"
-				return nil, fmt.Errorf(format, spc.Name, err)
+				return nil, NewErrorf(format, spc.Name, err)
 			}
 			spc.SetArg(name, val)
 		}
@@ -199,7 +198,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 
 	data, err := json.Marshal(spc)
 	if err != nil {
-		return nil, fmt.Errorf("spec to JSON: spec %s: %w", spc.Name, err)
+		return nil, NewErrorf("spec to JSON: spec %s: %w", spc.Name, err)
 	}
 	return data, nil
 }
@@ -216,7 +215,7 @@ func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
 		Spec: spc,
 	}
 	if err := json.Unmarshal(data, &tmp); err != nil {
-		return fmt.Errorf("JSON to spec: %w", ErrInvSpec)
+		return NewErrorf("JSON to spec: %w", ErrInvSpec)
 	}
 
 	for name, value := range tmp.Args {
@@ -229,7 +228,7 @@ func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
 			sps, err := reg.decodeSpecs(value)
 			if err != nil {
 				format := "JSON to spec: spec %s, argument %s: %w"
-				return fmt.Errorf(format, spc.Name, name, err)
+				return NewErrorf(format, spc.Name, name, err)
 			}
 			spc.SetArg(ArgSpecs, sps)
 
@@ -288,7 +287,7 @@ func (reg *Registry[T]) encodeSpecs(value any) (any, error) {
 	for idx, spc := range sps {
 		data, err := reg.EncodeSpec(spc)
 		if err != nil {
-			return nil, fmt.Errorf("index %d: %w", idx, err)
+			return nil, NewErrorf("index %d: %w", idx, err)
 		}
 		subs = append(subs, data)
 	}
@@ -307,7 +306,7 @@ func (reg *Registry[T]) decodeSpecs(data []byte) ([]*Spec, error) {
 	for idx, sub := range subs {
 		s := &Spec{}
 		if err := reg.DecodeSpec(sub, s); err != nil {
-			return nil, fmt.Errorf("index %d: %w", idx, err)
+			return nil, NewErrorf("index %d: %w", idx, err)
 		}
 		sps = append(sps, s)
 	}
@@ -326,15 +325,15 @@ func (reg *Registry[T]) encodeTypes(data any) (any, error) {
 	for idx, typ := range tps {
 		spt, ok := any(typ).(Specable)
 		if !ok {
-			return nil, fmt.Errorf("index %d: %w", idx, ErrNotSpecable)
+			return nil, NewErrorf("index %d: %w", idx, ErrNotSpecable)
 		}
 		spc, err := spt.Spec()
 		if err != nil {
-			return nil, fmt.Errorf("index %d: %w", idx, err)
+			return nil, NewErrorf("index %d: %w", idx, err)
 		}
 		sub, err := reg.EncodeSpec(spc)
 		if err != nil {
-			return nil, fmt.Errorf("index %d: %w", idx, err)
+			return nil, NewErrorf("index %d: %w", idx, err)
 		}
 		subs = append(subs, sub)
 	}
@@ -349,15 +348,14 @@ func (reg *Registry[T]) decodeTypes(data []byte, spc *Spec) error {
 	sps, err := reg.decodeSpecs(data)
 	if err != nil {
 		format := "JSON to spec: spec %s, argument %s: %w"
-		return fmt.Errorf(format, spc.Name, ArgTypes, err)
+		return NewErrorf(format, spc.Name, ArgTypes, err)
 	}
 	var tps []T
 	for idx, s := range sps {
 		bld := reg.BuilderFor(s.Name)
 		if bld == nil {
-			format := "JSON to spec: spec %s, argument %s[%d]: %w %s"
-			return fmt.Errorf(
-				format,
+			return NewErrorf(
+				"JSON to spec: spec %s, argument %s[%d]: %w %s",
 				spc.Name,
 				ArgTypes,
 				idx,
@@ -367,9 +365,8 @@ func (reg *Registry[T]) decodeTypes(data []byte, spc *Spec) error {
 		}
 		typ, err := bld(s)
 		if err != nil {
-			format := "JSON to spec: spec %s, argument %s[%d]: %w"
-			return fmt.Errorf(
-				format,
+			return NewErrorf(
+				"JSON to spec: spec %s, argument %s[%d]: %w",
 				spc.Name,
 				ArgTypes,
 				idx,
@@ -398,20 +395,20 @@ func (reg *Registry[T]) decodeSource(data []byte, spc *Spec) error {
 	src := Source{}
 	if err := json.Unmarshal(data, &src); err != nil {
 		format := "JSON to spec: spec %s, argument %s: %w"
-		return fmt.Errorf(format, spc.Name, ArgSrc, ErrInvArg)
+		return NewErrorf(format, spc.Name, ArgSrc, ErrInvArg)
 	}
 	if src.Name == "" {
 		format := "JSON to spec: spec %s, argument %s: %w"
-		return fmt.Errorf(format, spc.Name, ArgSrc, ErrInvSource)
+		return NewErrorf(format, spc.Name, ArgSrc, ErrInvSource)
 	}
 	if src.Lang != "go" {
 		format := "JSON to spec: spec %s, argument %s: %w"
-		return fmt.Errorf(format, spc.Name, ArgSrc, ErrInvSource)
+		return NewErrorf(format, spc.Name, ArgSrc, ErrInvSource)
 	}
 	src = reg.SourceByName(src.Name)
 	if src.IsZero() {
 		format := "JSON to spec: spec %s, argument %s: %w"
-		return fmt.Errorf(format, spc.Name, ArgSrc, ErrUnkSource)
+		return NewErrorf(format, spc.Name, ArgSrc, ErrUnkSource)
 	}
 	spc.SetArg(ArgSrc, src.Val())
 	return nil
@@ -428,7 +425,7 @@ func (reg *Registry[T]) encodeValues(value any) (any, error) {
 	for idx, v := range vs {
 		jv, err := jsontype.NewValue(v, jsontype.WithRegistry(reg.jtr))
 		if err != nil {
-			return nil, fmt.Errorf("index %d: %w", idx, err)
+			return nil, NewErrorf("index %d: %w", idx, err)
 		}
 		values = append(values, jv)
 	}
@@ -441,16 +438,15 @@ func (reg *Registry[T]) decodeValues(data []byte, spc *Spec) error {
 	var rv []json.RawMessage
 	if err := json.Unmarshal(data, &rv); err != nil {
 		format := "JSON to spec: spec %s, argument %s: %w"
-		return fmt.Errorf(format, spc.Name, ArgValues, ErrInvArg)
+		return NewErrorf(format, spc.Name, ArgValues, ErrInvArg)
 	}
 	var vs []any
 	for idx, v := range rv {
 		val := jsontype.Value{}
 		err := jsontype.Unmarshal(reg.jtr, v, &val)
 		if err != nil {
-			format := "JSON to spec: spec %s, argument %s: index %d: %w"
-			return fmt.Errorf(
-				format,
+			return NewErrorf(
+				"JSON to spec: spec %s, argument %s: index %d: %w",
 				spc.Name,
 				ArgValues,
 				idx,
@@ -475,7 +471,7 @@ func (reg *Registry[T]) decodeValue(
 	err := jsontype.Unmarshal(reg.jtr, data, &val)
 	if err != nil {
 		format := "JSON to spec: spec %s, argument %s: %w"
-		return fmt.Errorf(format, spc.Name, ArgValue, ErrInvArg)
+		return NewErrorf(format, spc.Name, ArgValue, ErrInvArg)
 	}
 	spc.SetArg(name, val.GoValue())
 	return nil

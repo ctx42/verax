@@ -123,6 +123,71 @@ func Test_NewInternalError(t *testing.T) {
 	})
 }
 
+func Test_NewErrorf(t *testing.T) {
+	t.Run("plain format", func(t *testing.T) {
+		// --- When ---
+		err := NewErrorf("msg")
+
+		// --- Then ---
+		e, _ := assert.SameType(t, &Error{}, err)
+		assert.ErrorEqual(t, "msg", err)
+		xrrtest.AssertCode(t, xrr.ECGeneric, e)
+		assert.Nil(t, e.MetaAll())
+	})
+
+	t.Run("format with args", func(t *testing.T) {
+		// --- When ---
+		err := NewErrorf("value: %d", 42)
+
+		// --- Then ---
+		e, _ := assert.SameType(t, &Error{}, err)
+		assert.ErrorEqual(t, "value: 42", err)
+		xrrtest.AssertCode(t, xrr.ECGeneric, e)
+		assert.Nil(t, e.MetaAll())
+	})
+
+	t.Run("with code", func(t *testing.T) {
+		// --- When ---
+		err := NewErrorf("msg %d", 42, xrr.WithCode("ECTst"))
+
+		// --- Then ---
+		e, _ := assert.SameType(t, &Error{}, err)
+		assert.ErrorEqual(t, "msg 42", err)
+		xrrtest.AssertCode(t, "ECTst", e)
+		assert.Nil(t, e.MetaAll())
+	})
+
+	t.Run("wraps error via %w", func(t *testing.T) {
+		// --- Given ---
+		cause := errors.New("original")
+
+		// --- When ---
+		err := NewErrorf("connect failed: %w", cause)
+
+		// --- Then ---
+		e, _ := assert.SameType(t, &Error{}, err)
+		assert.ErrorEqual(t, "connect failed: original", err)
+		assert.True(t, errors.Is(err, cause))
+		xrrtest.AssertCode(t, xrr.ECGeneric, e)
+		assert.Nil(t, e.MetaAll())
+	})
+
+	t.Run("wraps error with code", func(t *testing.T) {
+		// --- Given ---
+		cause := errors.New("original")
+
+		// --- When ---
+		err := NewErrorf("connect failed: %w", cause, xrr.WithCode("ECTst"))
+
+		// --- Then ---
+		e, _ := assert.SameType(t, &Error{}, err)
+		assert.ErrorEqual(t, "connect failed: original", err)
+		assert.True(t, errors.Is(err, cause))
+		xrrtest.AssertCode(t, "ECTst", e)
+		assert.Nil(t, e.MetaAll())
+	})
+}
+
 func Test_NewFieldError(t *testing.T) {
 	t.Run("the error message includes the field name", func(t *testing.T) {
 		// --- Given ---

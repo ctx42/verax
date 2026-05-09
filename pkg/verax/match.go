@@ -4,8 +4,9 @@
 package verax
 
 import (
-	"fmt"
 	"regexp"
+
+	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
 )
@@ -34,8 +35,11 @@ func Match(want *regexp.Regexp) MatchRule {
 		code:      ECInvMatch,
 	}
 	if r.want == nil {
-		msg := fmt.Sprintf("%s: nil regexp", MatchRuleName)
-		r.sticky = NewInternalError(msg, ECInternal)
+		r.sticky = NewInternalErrorf(
+			"%s: nil regexp",
+			MatchRuleName,
+			xrr.WithCode(ECInternal),
+		)
 	}
 	return r
 }
@@ -117,8 +121,12 @@ func (r MatchRule) Spec() (*spec.Spec, error) {
 // MatchRuleFromSpec creates a new instance of [MatchRule] from the [spec.Spec].
 func MatchRuleFromSpec(spc *spec.Spec) (MatchRule, error) {
 	if spc.Name != MatchRuleName {
-		msg := fmt.Sprintf("%s: invalid spec name: %q", MatchRuleName, spc.Name)
-		return MatchRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return MatchRule{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			MatchRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	rxs, err := getArg[string](spc.Args, spec.ArgValue, MatchRuleName)
 	if err != nil {
@@ -126,8 +134,12 @@ func MatchRuleFromSpec(spc *spec.Spec) (MatchRule, error) {
 	}
 	rx, err := regexp.Compile(rxs)
 	if err != nil {
-		msg := fmt.Sprintf("%s: invalid regexp: %#q", MatchRuleName, rxs)
-		return MatchRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return MatchRule{}, NewInternalErrorf(
+			"%s: invalid regexp: %#q",
+			MatchRuleName,
+			rxs,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 	rule := Match(rx)
 

@@ -35,26 +35,104 @@ var (
 
 // Error constructor functions for the package's error domain.
 var (
-	newError         = xrr.ErrorFunc[edError]()
-	newInternalError = xrr.ErrorFunc[edInternal]()
-	newFieldsError   = xrr.FieldsFunc[edError]()
+	newError          = xrr.ErrorFunc[edError]()
+	newErrorf         = xrr.ErrorfFunc[edError]()
+	newInternalError  = xrr.ErrorFunc[edInternal]()
+	newInternalErrorf = xrr.ErrorfFunc[edInternal]()
+	newFieldsError    = xrr.FieldsFunc[edError]()
 )
 
 // Error represents an error in the package's error domain.
 type Error = xrr.GenericError[edError]
 
-// NewError returns a new error in the package's error domain.
-func NewError(msg, code string, opts ...xrr.Option) error {
-	return newError(msg, code, opts...)
+// NewError creates a new [Error] with the given message. The args may contain
+// an optional string error code and any number of [xrr.Option] values in any
+// order.
+//
+// Examples:
+//
+//	NewError("message")
+//	NewError("message", "ECode")
+//	NewError("message", "ECode", xrr.Option())
+//
+// When [xrr.WithCause] is provided:
+//   - If msg is empty, Error() returns the cause's message directly.
+//   - If msg is non-empty, Error() returns "msg: cause message".
+//   - If no code is given and [xrr.WithCode] is not provided, the cause's
+//     code is inherited via [xrr.GetCode]. Pass a code string or
+//     [xrr.WithCode] to override it.
+//
+// For wrapping without a new message, prefer [xrr.Wrap], which makes the
+// intent clearer.
+func NewError(msg string, args ...any) error {
+	return newError(msg, args...)
 }
 
 // InternalError represents an internal error (library misuse) in the package's
 // error domain.
 type InternalError = xrr.GenericError[edInternal]
 
-// NewInternalError returns a new internal error in the package's domain.
-func NewInternalError(msg, code string, opts ...xrr.Option) error {
-	return newInternalError(msg, code, opts...)
+// NewInternalError creates a new [InternalError] with the given message. The
+// args may contain an optional string error code and any number of [xrr.Option]
+// values in any order.
+//
+// Examples:
+//
+//	NewInternalError("message")
+//	NewInternalError("message", "ECode")
+//	NewInternalError("message", "ECode", xrr.Option())
+//
+// When [xrr.WithCause] is provided:
+//   - If msg is empty, Error() returns the cause's message directly.
+//   - If msg is non-empty, Error() returns "msg: cause message".
+//   - If no code is given and [xrr.WithCode] is not provided, the cause's
+//     code is inherited via [xrr.GetCode]. Pass a code string or
+//     [xrr.WithCode] to override it.
+//
+// For wrapping without a new message, prefer [xrr.Wrap], which makes the
+// intent clearer.
+func NewInternalError(msg string, args ...any) error {
+	return newInternalError(msg, args...)
+}
+
+// NewInternalErrorf creates a new [InternalError] using a format string. It is
+// the format-style counterpart of [NewInternalError]: non-[xrr.Option] args are
+// passed to the format string, while [xrr.Option] values are applied to the
+// error. Unlike [NewInternalError], a bare string argument is treated as a
+// format argument, not an error code — pass [xrr.WithCode] to set the code.
+//
+// When the format string contains %w, the error is created via [fmt.Errorf]
+// and stored as the cause; [xrr.GenericError.Error] delegates to it. Without
+// %w, the message is set to fmt.Sprintf(format, args...).
+//
+// Examples:
+//
+//	NewInternalErrorf("user %d not found", userID)
+//	NewInternalErrorf("user %d not found", userID, xrr.WithCode("ECode"))
+//	NewInternalErrorf("connect failed: %w", err)
+//	NewInternalErrorf("connect failed: %w", err, xrr.WithCode("ECode"))
+func NewInternalErrorf(format string, args ...any) error {
+	return newInternalErrorf(format, args...)
+}
+
+// NewErrorf creates a new [Error] using a format string. It is the
+// format-style counterpart of [NewError]: non-[xrr.Option] args are passed to
+// the format string, while [xrr.Option] values are applied to the error.
+// Unlike [NewError], a bare string argument is treated as a format argument,
+// not an error code — pass [xrr.WithCode] to set the code.
+//
+// When the format string contains %w, the error is created via [fmt.Errorf]
+// and stored as the cause; [xrr.GenericError.Error] delegates to it. Without
+// %w, the message is set to fmt.Sprintf(format, args...).
+//
+// Examples:
+//
+//	NewErrorf("user %d not found", userID)
+//	NewErrorf("user %d not found", userID, xrr.WithCode("ECode"))
+//	NewErrorf("connect failed: %w", err)
+//	NewErrorf("connect failed: %w", err, xrr.WithCode("ECode"))
+func NewErrorf(format string, args ...any) error {
+	return newErrorf(format, args...)
 }
 
 // FieldErrors represents a field error in the package's error domain.

@@ -5,9 +5,10 @@ package verax
 
 import (
 	"bytes"
-	"fmt"
 	"text/template"
 	"unicode/utf8"
+
+	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
 )
@@ -151,9 +152,12 @@ func (r LengthRule) Message(tpl string) LengthRule {
 		Option("missingkey=error").
 		Parse(tpl)
 	if r.sticky != nil {
-		format := "%s(%s): custom template parse error"
-		msg := fmt.Sprintf(format, LengthRuleName, r.mode)
-		r.sticky = NewInternalError(msg, ECInternal)
+		r.sticky = NewInternalErrorf(
+			"%s(%s): custom template parse error",
+			LengthRuleName,
+			r.mode,
+			xrr.WithCode(ECInternal),
+		)
 		return r
 	}
 
@@ -161,9 +165,12 @@ func (r LengthRule) Message(tpl string) LengthRule {
 	data := map[string]any{ArgMin: r.min, ArgMax: r.max}
 	r.sticky = parsed.Execute(buf, data)
 	if r.sticky != nil {
-		format := "%s(%s): custom template render error"
-		msg := fmt.Sprintf(format, LengthRuleName, r.mode)
-		r.sticky = NewInternalError(msg, ECInternal)
+		r.sticky = NewInternalErrorf(
+			"%s(%s): custom template render error",
+			LengthRuleName,
+			r.mode,
+			xrr.WithCode(ECInternal),
+		)
 		return r
 	}
 	r.tpl = tpl
@@ -190,8 +197,12 @@ func (r LengthRule) Spec() (*spec.Spec, error) {
 	case "length", "rune-length":
 		spc.SetArg(ArgMode, r.mode)
 	default:
-		msg := fmt.Sprintf("%s: invalid rule mode: %q", LengthRuleName, r.mode)
-		return nil, NewInternalError(msg, ECInvRuleMode)
+		return nil, NewInternalErrorf(
+			"%s: invalid rule mode: %q",
+			LengthRuleName,
+			r.mode,
+			xrr.WithCode(ECInvRuleMode),
+		)
 	}
 
 	spc.SetArg(ArgMin, r.min)
@@ -210,9 +221,12 @@ func (r LengthRule) Spec() (*spec.Spec, error) {
 // [spec.Spec].
 func LengthRuleFromSpec(spc *spec.Spec) (LengthRule, error) {
 	if spc.Name != LengthRuleName {
-		format := "%s: invalid spec name: %q"
-		msg := fmt.Sprintf(format, LengthRuleName, spc.Name)
-		return LengthRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return LengthRule{}, NewInternalErrorf(
+			"%s: invalid spec name: %q",
+			LengthRuleName,
+			spc.Name,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 
 	mode, err := getArg[string](spc.Args, ArgMode, LengthRuleName)
@@ -237,9 +251,12 @@ func LengthRuleFromSpec(spc *spec.Spec) (LengthRule, error) {
 	case "rune-length":
 		rule = RuneLength(iMin, iMax)
 	default:
-		format := "%s: invalid spec rule mode: %q"
-		msg := fmt.Sprintf(format, LengthRuleName, mode)
-		return LengthRule{}, NewInternalError(msg, spec.ECInvSpec)
+		return LengthRule{}, NewInternalErrorf(
+			"%s: invalid spec rule mode: %q",
+			LengthRuleName,
+			mode,
+			xrr.WithCode(spec.ECInvSpec),
+		)
 	}
 
 	if spc.ArgExist(ArgErrMsg) {
@@ -310,17 +327,23 @@ func buildLengthRuleMsg(
 
 	tpl, parsed := pickLengthRuleMsg(minimum, maximum)
 	if tpl == "" || parsed == nil {
-		format := "%s(%s): custom template parse error"
-		msg := fmt.Sprintf(format, LengthRuleName, mode)
-		return "", "", NewInternalError(msg, ECInternal)
+		return "", "", NewInternalErrorf(
+			"%s(%s): custom template parse error",
+			LengthRuleName,
+			mode,
+			xrr.WithCode(ECInternal),
+		)
 	}
 
 	buf := bytes.Buffer{}
 	err := parsed.Execute(&buf, map[string]any{"min": minimum, "max": maximum})
 	if err != nil {
-		format := "%s(%s): custom template render error"
-		msg := fmt.Sprintf(format, LengthRuleName, mode)
-		return "", "", NewInternalError(msg, ECInternal)
+		return "", "", NewInternalErrorf(
+			"%s(%s): custom template render error",
+			LengthRuleName,
+			mode,
+			xrr.WithCode(ECInternal),
+		)
 	}
 	return buf.String(), tpl, nil
 }
