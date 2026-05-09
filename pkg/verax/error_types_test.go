@@ -68,61 +68,6 @@ func Test_NewError(t *testing.T) {
 	})
 }
 
-func Test_NewInternalError(t *testing.T) {
-	t.Run("without options", func(t *testing.T) {
-		// --- When ---
-		err := NewInternalError("msg", "ECTst")
-
-		// --- Then ---
-		e, _ := assert.SameType(t, &InternalError{}, err)
-		assert.ErrorEqual(t, "msg", e)
-		xrrtest.AssertCode(t, "ECTst", e)
-	})
-
-	t.Run("with a metadata option", func(t *testing.T) {
-		// --- Given ---
-		meta := xrr.Meta().Str("key", "val").Option()
-
-		// --- When ---
-		err := NewInternalError("msg", "ECTst", meta)
-
-		// --- Then ---
-		e, _ := assert.SameType(t, &InternalError{}, err)
-		assert.ErrorEqual(t, "msg", e)
-		xrrtest.AssertCode(t, "ECTst", e)
-		assert.Equal(t, map[string]any{"key": "val"}, e.MetaAll())
-	})
-
-	t.Run("marshals to JSON", func(t *testing.T) {
-		// --- Given ---
-		meta := xrr.Meta().Str("k", "v").Option()
-		e := NewInternalError("msg", "ECTst", meta)
-
-		// --- When ---
-		data, err := json.Marshal(e)
-
-		// --- Then ---
-		assert.NoError(t, err)
-		wData := `{"error":"msg", "code":"ECTst", "meta":{"k":"v"}}`
-		assert.JSON(t, wData, string(data))
-	})
-
-	t.Run("unmarshals from JSON", func(t *testing.T) {
-		// --- Given ---
-		data := []byte(`{"error":"msg","code":"ECTst","meta":{"k":"v"}}`)
-		var e *InternalError
-
-		// --- When ---
-		err := json.Unmarshal(data, &e)
-
-		// --- Then ---
-		assert.NoError(t, err)
-		assert.ErrorEqual(t, "msg", e)
-		xrrtest.AssertCode(t, "ECTst", e)
-		assert.Equal(t, map[string]any{"k": "v"}, e.MetaAll())
-	})
-}
-
 func Test_NewErrorf(t *testing.T) {
 	t.Run("plain format", func(t *testing.T) {
 		// --- When ---
@@ -181,6 +126,126 @@ func Test_NewErrorf(t *testing.T) {
 
 		// --- Then ---
 		e, _ := assert.SameType(t, &Error{}, err)
+		assert.ErrorEqual(t, "connect failed: original", err)
+		assert.True(t, errors.Is(err, cause))
+		xrrtest.AssertCode(t, "ECTst", e)
+		assert.Nil(t, e.MetaAll())
+	})
+}
+
+func Test_NewInternalError(t *testing.T) {
+	t.Run("without options", func(t *testing.T) {
+		// --- When ---
+		err := NewInternalError("msg", "ECTst")
+
+		// --- Then ---
+		e, _ := assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, "msg", e)
+		xrrtest.AssertCode(t, "ECTst", e)
+	})
+
+	t.Run("with a metadata option", func(t *testing.T) {
+		// --- Given ---
+		meta := xrr.Meta().Str("key", "val").Option()
+
+		// --- When ---
+		err := NewInternalError("msg", "ECTst", meta)
+
+		// --- Then ---
+		e, _ := assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, "msg", e)
+		xrrtest.AssertCode(t, "ECTst", e)
+		assert.Equal(t, map[string]any{"key": "val"}, e.MetaAll())
+	})
+
+	t.Run("marshals to JSON", func(t *testing.T) {
+		// --- Given ---
+		meta := xrr.Meta().Str("k", "v").Option()
+		e := NewInternalError("msg", "ECTst", meta)
+
+		// --- When ---
+		data, err := json.Marshal(e)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		wData := `{"error":"msg", "code":"ECTst", "meta":{"k":"v"}}`
+		assert.JSON(t, wData, string(data))
+	})
+
+	t.Run("unmarshals from JSON", func(t *testing.T) {
+		// --- Given ---
+		data := []byte(`{"error":"msg","code":"ECTst","meta":{"k":"v"}}`)
+		var e *InternalError
+
+		// --- When ---
+		err := json.Unmarshal(data, &e)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.ErrorEqual(t, "msg", e)
+		xrrtest.AssertCode(t, "ECTst", e)
+		assert.Equal(t, map[string]any{"k": "v"}, e.MetaAll())
+	})
+}
+
+func Test_NewInternalErrorf(t *testing.T) {
+	t.Run("plain format", func(t *testing.T) {
+		// --- When ---
+		err := NewInternalErrorf("msg")
+
+		// --- Then ---
+		e, _ := assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, "msg", err)
+		xrrtest.AssertCode(t, xrr.ECGeneric, e)
+		assert.Nil(t, e.MetaAll())
+	})
+
+	t.Run("format with args", func(t *testing.T) {
+		// --- When ---
+		err := NewInternalErrorf("value: %d", 42)
+
+		// --- Then ---
+		e, _ := assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, "value: 42", err)
+		xrrtest.AssertCode(t, xrr.ECGeneric, e)
+		assert.Nil(t, e.MetaAll())
+	})
+
+	t.Run("with code", func(t *testing.T) {
+		// --- When ---
+		err := NewInternalErrorf("msg %d", 42, xrr.WithCode("ECTst"))
+
+		// --- Then ---
+		e, _ := assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, "msg 42", err)
+		xrrtest.AssertCode(t, "ECTst", e)
+		assert.Nil(t, e.MetaAll())
+	})
+
+	t.Run("wraps error via %w", func(t *testing.T) {
+		// --- Given ---
+		cause := errors.New("original")
+
+		// --- When ---
+		err := NewInternalErrorf("connect failed: %w", cause)
+
+		// --- Then ---
+		e, _ := assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, "connect failed: original", err)
+		assert.True(t, errors.Is(err, cause))
+		xrrtest.AssertCode(t, xrr.ECGeneric, e)
+		assert.Nil(t, e.MetaAll())
+	})
+
+	t.Run("wraps error with code", func(t *testing.T) {
+		// --- Given ---
+		cause := errors.New("original")
+
+		// --- When ---
+		err := NewInternalErrorf("connect failed: %w", cause, xrr.WithCode("ECTst"))
+
+		// --- Then ---
+		e, _ := assert.SameType(t, &InternalError{}, err)
 		assert.ErrorEqual(t, "connect failed: original", err)
 		assert.True(t, errors.Is(err, cause))
 		xrrtest.AssertCode(t, "ECTst", e)

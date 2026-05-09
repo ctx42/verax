@@ -68,6 +68,26 @@ func NewError(msg string, args ...any) error {
 	return newError(msg, args...)
 }
 
+// NewErrorf creates a new [Error] using a format string. It is the
+// format-style counterpart of [NewError]: non-[xrr.Option] args are passed to
+// the format string, while [xrr.Option] values are applied to the error.
+// Unlike [NewError], a bare string argument is treated as a format argument,
+// not an error code — pass [xrr.WithCode] to set the code.
+//
+// When the format string contains %w, the error is created via [fmt.Errorf]
+// and stored as the cause; [xrr.GenericError.Error] delegates to it. Without
+// %w, the message is set to fmt.Sprintf(format, args...).
+//
+// Examples:
+//
+//	NewErrorf("user %d not found", userID)
+//	NewErrorf("user %d not found", userID, xrr.WithCode("ECode"))
+//	NewErrorf("connect failed: %w", err)
+//	NewErrorf("connect failed: %w", err, xrr.WithCode("ECode"))
+func NewErrorf(format string, args ...any) error {
+	return newErrorf(format, args...)
+}
+
 // InternalError represents an internal error (library misuse) in the package's
 // error domain.
 type InternalError = xrr.GenericError[edInternal]
@@ -113,26 +133,6 @@ func NewInternalError(msg string, args ...any) error {
 //	NewInternalErrorf("connect failed: %w", err, xrr.WithCode("ECode"))
 func NewInternalErrorf(format string, args ...any) error {
 	return newInternalErrorf(format, args...)
-}
-
-// NewErrorf creates a new [Error] using a format string. It is the
-// format-style counterpart of [NewError]: non-[xrr.Option] args are passed to
-// the format string, while [xrr.Option] values are applied to the error.
-// Unlike [NewError], a bare string argument is treated as a format argument,
-// not an error code — pass [xrr.WithCode] to set the code.
-//
-// When the format string contains %w, the error is created via [fmt.Errorf]
-// and stored as the cause; [xrr.GenericError.Error] delegates to it. Without
-// %w, the message is set to fmt.Sprintf(format, args...).
-//
-// Examples:
-//
-//	NewErrorf("user %d not found", userID)
-//	NewErrorf("user %d not found", userID, xrr.WithCode("ECode"))
-//	NewErrorf("connect failed: %w", err)
-//	NewErrorf("connect failed: %w", err, xrr.WithCode("ECode"))
-func NewErrorf(format string, args ...any) error {
-	return newErrorf(format, args...)
 }
 
 // FieldErrors represents a field error in the package's error domain.
