@@ -1,3 +1,7 @@
+## v0.7.0 (Sat, 09 May 2026 13:14:23 UTC)
+- refactor(error): use format-string error constructors from xrr upgrade.
+- docs(readme): replace detailed guide with concise intro.
+
 ## v0.6.0 (Fri, 08 May 2026 15:17:25 UTC)
 - feat: add Registry.Build, DecodeAndBuild, and Set serialization.
 
