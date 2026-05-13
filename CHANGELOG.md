@@ -1,3 +1,9 @@
+## v0.8.0 (Wed, 13 May 2026 20:10:28 UTC)
+- test: add JSON representation tests for Specable rules.
+- test: use reg.EncodeSpec in JSON representation tests.
+- wip.
+- wip.
+
 ## v0.7.1 (Sat, 09 May 2026 19:42:20 UTC)
 - test(error_types): add Test_NewInternalErrorf.
 - test: improve coverage for registry and validation rules.
