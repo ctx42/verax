@@ -5,7 +5,6 @@ package verax
 
 import (
 	"database/sql"
-	"encoding/json"
 	"testing"
 	"text/template"
 
@@ -549,18 +548,21 @@ func Test_LengthRule_Spec(t *testing.T) {
 	})
 
 	t.Run("Length - JSON representation", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+
 		// --- When ---
-		have, err := Length(3, 10).Spec()
+		spc, err := Length(3, 10).Spec()
 
 		// --- Then ---
 		assert.NoError(t, err)
-		data := must.Value(json.Marshal(have))
+		data := must.Value(reg.EncodeSpec(spc))
 		want := `{
 			"name": "length-rule",
 			"args": {
-				"mode": "length",
-				"min": 3,
-				"max": 10
+				"mode": {"type": "string", "value": "length"},
+				"min": {"type": "int", "value": 3},
+				"max": {"type": "int", "value": 10}
 			}
 		}`
 		assert.JSON(t, want, data)

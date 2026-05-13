@@ -116,8 +116,8 @@ func Builders() map[string]spec.Builder[Rule] {
 		SkipRuleName:     AsRuleBuilder(SkipRuleFromSpec),
 		RangeRuleName:    AsRuleBuilder(RangeRuleFromSpec),
 
-		// [TypeRule] is intentionally excluded: it holds a reflect.Type which has
-		// no portable cross-language representation.
+		// [TypeRule] is intentionally excluded: it holds a [reflect.Type]
+		// which has no portable cross-language representation.
 		SetRuleName: AsRuleBuilder(SetRuleFromSpec),
 	}
 }
@@ -126,7 +126,7 @@ func Builders() map[string]spec.Builder[Rule] {
 const (
 	ArgErrMsg   = "err_msg"       // Custom error message.
 	ArgErrCode  = "err_code"      // Custom error code.
-	ArgMode     = "mode"          // Rule mode (e.g. exclusive, inclusive).
+	ArgMode     = "mode"          // Rule mode (e.g., exclusive, inclusive).
 	ArgMin      = "min"           // Minimum value.
 	ArgMax      = "max"           // Maximum value.
 	ArgOptional = "optional"      // Optional value flag.

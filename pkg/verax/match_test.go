@@ -4,7 +4,6 @@
 package verax
 
 import (
-	"encoding/json"
 	"regexp"
 	"testing"
 
@@ -272,16 +271,19 @@ func Test_MatchRule_Spec(t *testing.T) {
 	})
 
 	t.Run("Match - JSON representation", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+
 		// --- When ---
-		have, err := Match(regexp.MustCompile(`\d+`)).Spec()
+		spc, err := Match(regexp.MustCompile(`\d+`)).Spec()
 
 		// --- Then ---
 		assert.NoError(t, err)
-		data := must.Value(json.Marshal(have))
+		data := must.Value(reg.EncodeSpec(spc))
 		want := `{
 			"name": "match-rule",
 			"args": {
-				"value": "\\d+"
+				"value": {"type": "string", "value": "\\d+"}
 			}
 		}`
 		assert.JSON(t, want, data)

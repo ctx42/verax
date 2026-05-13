@@ -4,7 +4,6 @@
 package verax
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
@@ -78,15 +77,16 @@ func Test_SkipRule_Spec(t *testing.T) {
 	})
 
 	t.Run("Skip - JSON representation", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+
 		// --- When ---
-		have, err := Skip.Spec()
+		spc, err := Skip.Spec()
 
 		// --- Then ---
 		assert.NoError(t, err)
-		data := must.Value(json.Marshal(have))
-		want := `{
-			"name": "skip-rule"
-		}`
+		data := must.Value(reg.EncodeSpec(spc))
+		want := `{"name": "skip-rule"}`
 		assert.JSON(t, want, data)
 	})
 }

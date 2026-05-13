@@ -4,7 +4,6 @@
 package verax
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
@@ -363,16 +362,19 @@ func Test_RequiredRule_Spec(t *testing.T) {
 	})
 
 	t.Run("Required - JSON representation", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+
 		// --- When ---
-		have, err := Required.Spec()
+		spc, err := Required.Spec()
 
 		// --- Then ---
 		assert.NoError(t, err)
-		data := must.Value(json.Marshal(have))
+		data := must.Value(reg.EncodeSpec(spc))
 		want := `{
 			"name": "required-rule",
 			"args": {
-				"mode": "required"
+				"mode": {"type": "string", "value": "required"}
 			}
 		}`
 		assert.JSON(t, want, data)

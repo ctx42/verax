@@ -4,7 +4,6 @@
 package verax
 
 import (
-	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -781,17 +780,20 @@ func Test_EqualRule_Spec(t *testing.T) {
 	})
 
 	t.Run("Equal - JSON representation", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+
 		// --- When ---
-		have, err := Equal("foo").Spec()
+		spc, err := Equal("foo").Spec()
 
 		// --- Then ---
 		assert.NoError(t, err)
-		data := must.Value(json.Marshal(have))
+		data := must.Value(reg.EncodeSpec(spc))
 		want := `{
 			"name": "equal-rule",
 			"args": {
-				"mode": "equal",
-				"value": "foo"
+				"mode": {"type": "string", "value": "equal"},
+				"value": {"type": "string", "value": "foo"}
 			}
 		}`
 		assert.JSON(t, want, data)

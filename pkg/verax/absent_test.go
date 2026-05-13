@@ -4,7 +4,6 @@
 package verax
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -274,16 +273,20 @@ func Test_AbsentRule_Spec(t *testing.T) {
 	})
 
 	t.Run("Nil - JSON representation", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+
 		// --- When ---
-		have, err := Nil.Spec()
+		spc, err := Nil.Spec()
 
 		// --- Then ---
 		assert.NoError(t, err)
-
-		data := must.Value(json.Marshal(have))
+		data := must.Value(reg.EncodeSpec(spc))
 		want := `{
 			"name": "absent-rule",
-			"args": {"mode": "nil"}
+			"args": {
+				"mode": {"type": "string", "value": "nil"}
+			}
 		}`
 		assert.JSON(t, want, data)
 	})

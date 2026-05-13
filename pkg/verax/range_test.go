@@ -4,7 +4,6 @@
 package verax
 
 import (
-	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -727,17 +726,20 @@ func Test_RangeRule_Spec(t *testing.T) {
 	})
 
 	t.Run("Min - JSON representation", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+
 		// --- When ---
-		have, err := Min(18).Spec()
+		spc, err := Min(18).Spec()
 
 		// --- Then ---
 		assert.NoError(t, err)
-		data := must.Value(json.Marshal(have))
+		data := must.Value(reg.EncodeSpec(spc))
 		want := `{
 			"name": "range-rule",
 			"args": {
-				"mode": "min",
-				"value": 18
+				"mode": {"type": "string", "value": "min"},
+				"value": {"type": "int", "value": 18}
 			}
 		}`
 		assert.JSON(t, want, data)
