@@ -6,11 +6,22 @@ package spec
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"reflect"
 	"sync"
 
 	"github.com/ctx42/jsontype/pkg/jsontype"
 )
+
+// ArgEncoder is a function that encodes a [Spec] argument value into a form
+// suitable for JSON marshaling. It receives the registry and the raw argument
+// value, and returns the encoded representation or an error.
+type ArgEncoder[T any] func(reg *Registry[T], value any) (any, error)
+
+// ArgDecoder is a function that decodes a JSON-encoded [Spec] argument and
+// stores the result in spc. It receives the registry, the raw JSON bytes, and
+// the target [Spec].
+type ArgDecoder[T any] func(reg *Registry[T], data []byte, spc *Spec) error
 
 // Registry manages a collection of [Source] and [Builder] instances and
 // provides methods to encode and decode [Spec] instances to generic type T. It
@@ -25,16 +36,33 @@ type Registry[T any] struct {
 	// Maps specification names [Spec.Name] to their [Builder].
 	builders map[string]Builder[T]
 
+	// In the below maps keys are argument names.
+	encoder map[string]ArgEncoder[T]
+	decoder map[string]ArgDecoder[T]
+
 	mx sync.RWMutex // Guards struct fields.
 }
 
 // NewRegistry returns a new instance of [Registry].
 func NewRegistry[T any]() *Registry[T] {
-	return &Registry[T]{
+	reg := &Registry[T]{
 		jtr:      jsontype.DefaultRegistry(),
 		sources:  make([]Source, 0, 20),
 		builders: make(map[string]Builder[T], 20),
+		encoder:  make(map[string]ArgEncoder[T], 20),
+		decoder:  make(map[string]ArgDecoder[T], 20),
 	}
+
+	reg.encoder[ArgTypes] = encodeTypes[T]
+	reg.decoder[ArgTypes] = decodeTypes[T]
+
+	reg.encoder[ArgSrc] = encodeSource[T]
+	reg.decoder[ArgSrc] = decodeSource[T]
+
+	reg.encoder[ArgValues] = encodeValues[T]
+	reg.decoder[ArgValues] = decodeValues[T]
+
+	return reg
 }
 
 // RegisterSource registers a source so it can be later used during decoding.
@@ -110,6 +138,36 @@ func (reg *Registry[T]) RegisterBuilder(
 	return old
 }
 
+// RegisterCodec registers custom encoder and decoder functions for the given
+// [Spec] argument name. When enc and dec are both nil, any existing codec for
+// the name is removed. Returns the previously registered encoder and decoder
+// (both nil if none existed). Panics if exactly one of enc or dec is nil.
+func (reg *Registry[T]) RegisterCodec(
+	name string,
+	enc ArgEncoder[T],
+	dec ArgDecoder[T],
+) (ArgEncoder[T], ArgDecoder[T], error) {
+
+	if (enc == nil) != (dec == nil) {
+		msg := "enc and dec must both be nil or both non-nil"
+		return nil, nil, errors.New(msg)
+	}
+
+	reg.mx.Lock()
+	defer reg.mx.Unlock()
+
+	oldEnc := reg.encoder[name]
+	oldDec := reg.decoder[name]
+	if enc == nil {
+		delete(reg.encoder, name)
+		delete(reg.decoder, name)
+	} else {
+		reg.encoder[name] = enc
+		reg.decoder[name] = dec
+	}
+	return oldEnc, oldDec, nil
+}
+
 // RegisterBuilders registers multiple [Builder] instances in a single call.
 //
 // It invokes [Registry.RegisterBuilder] for each entry in bls and returns a
@@ -152,7 +210,20 @@ func (reg *Registry[T]) Build(spc *Spec) (T, error) {
 
 // EncodeSpec encodes the given [Spec] to JSON.
 func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
+	reg.mx.RLock()
+	defer reg.mx.RUnlock()
+
 	for name, value := range spc.Args {
+		if enc := reg.encoder[name]; enc != nil {
+			encoded, err := enc(reg, value)
+			if err != nil {
+				format := "spec to JSON: spec %s, argument %s: %w"
+				return nil, NewErrorf(format, spc.Name, name, err)
+			}
+			spc.SetArg(name, encoded)
+			continue
+		}
+
 		switch name {
 		case ArgSpecs:
 			specs, err := reg.encodeSpecs(value)
@@ -161,30 +232,6 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 				return nil, NewErrorf(format, spc.Name, name, err)
 			}
 			spc.SetArg(name, specs)
-
-		case ArgTypes:
-			tps, err := reg.encodeTypes(value)
-			if err != nil {
-				format := "spec to JSON: spec %s, argument %s: %w"
-				return nil, NewErrorf(format, spc.Name, name, err)
-			}
-			spc.SetArg(name, tps)
-
-		case ArgSrc:
-			src, err := reg.encodeSource(value)
-			if err != nil {
-				format := "spec to JSON: spec %s, argument %s: %w"
-				return nil, NewErrorf(format, spc.Name, name, err)
-			}
-			spc.SetArg(name, src)
-
-		case ArgValues:
-			values, err := reg.encodeValues(value)
-			if err != nil {
-				format := "spec to JSON: spec %s, argument %s: %w"
-				return nil, NewErrorf(format, spc.Name, name, err)
-			}
-			spc.SetArg(name, values)
 
 		default:
 			val, err := jsontype.NewValue(value)
@@ -208,6 +255,9 @@ var jsNull = json.RawMessage(`null`)
 
 // DecodeSpec decodes JSON representation of [Spec].
 func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
+	reg.mx.RLock()
+	defer reg.mx.RUnlock()
+
 	tmp := struct {
 		*Spec
 		Args map[string]json.RawMessage `json:"args"`
@@ -223,6 +273,14 @@ func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
 			continue
 		}
 
+		if dec := reg.decoder[name]; dec != nil {
+			if err := dec(reg, value, spc); err != nil {
+				format := "JSON to spec: spec %s: %w"
+				return NewErrorf(format, spc.Name, err)
+			}
+			continue
+		}
+
 		switch name {
 		case ArgSpecs:
 			sps, err := reg.decodeSpecs(value)
@@ -232,23 +290,8 @@ func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
 			}
 			spc.SetArg(ArgSpecs, sps)
 
-		case ArgTypes:
-			if err := reg.decodeTypes(value, spc); err != nil {
-				return err
-			}
-
-		case ArgSrc:
-			if err := reg.decodeSource(value, spc); err != nil {
-				return err
-			}
-
-		case ArgValues:
-			if err := reg.decodeValues(value, spc); err != nil {
-				return err
-			}
-
 		default:
-			if err := reg.decodeValue(name, value, spc); err != nil {
+			if err := decodeValue(reg, name, value, spc); err != nil {
 				return err
 			}
 		}
@@ -315,7 +358,7 @@ func (reg *Registry[T]) decodeSpecs(data []byte) ([]*Spec, error) {
 
 // encodeTypes expects the provided value to be a slice of generic T instances
 // and encodes them as a JSON array as a slice of [json.RawMessage].
-func (reg *Registry[T]) encodeTypes(data any) (any, error) {
+func encodeTypes[T any](reg *Registry[T], data any) (any, error) {
 	tps, ok := data.([]T)
 	if !ok {
 		return nil, ErrInvArgType
@@ -344,34 +387,21 @@ func (reg *Registry[T]) encodeTypes(data any) (any, error) {
 // representations and decodes them into a slice of the generic type T using
 // registered [Builder] functions. On success, it sets it as [ArgTypes] key
 // in the [Spec.Args] map.
-func (reg *Registry[T]) decodeTypes(data []byte, spc *Spec) error {
+func decodeTypes[T any](reg *Registry[T], data []byte, spc *Spec) error {
 	sps, err := reg.decodeSpecs(data)
 	if err != nil {
-		format := "JSON to spec: spec %s, argument %s: %w"
-		return NewErrorf(format, spc.Name, ArgTypes, err)
+		return NewErrorf("argument %s: %w", ArgTypes, err)
 	}
 	var tps []T
 	for idx, s := range sps {
 		bld := reg.BuilderFor(s.Name)
 		if bld == nil {
-			return NewErrorf(
-				"JSON to spec: spec %s, argument %s[%d]: %w %s",
-				spc.Name,
-				ArgTypes,
-				idx,
-				ErrUnkBuilder,
-				s.Name,
-			)
+			format := "argument %s[%d]: %w %s"
+			return NewErrorf(format, ArgTypes, idx, ErrUnkBuilder, s.Name)
 		}
 		typ, err := bld(s)
 		if err != nil {
-			return NewErrorf(
-				"JSON to spec: spec %s, argument %s[%d]: %w",
-				spc.Name,
-				ArgTypes,
-				idx,
-				err,
-			)
+			return NewErrorf("argument %s[%d]: %w", ArgTypes, idx, err)
 		}
 		tps = append(tps, typ)
 	}
@@ -381,7 +411,7 @@ func (reg *Registry[T]) decodeTypes(data []byte, spc *Spec) error {
 
 // encodeSource encodes the given source value. The source must be registered
 // using the [Registry.SourceByValue] method beforehand.
-func (reg *Registry[T]) encodeSource(value any) (any, error) {
+func encodeSource[T any](reg *Registry[T], value any) (any, error) {
 	src := reg.SourceByValue(value)
 	if src.IsZero() {
 		return nil, ErrUnkSource
@@ -391,24 +421,24 @@ func (reg *Registry[T]) encodeSource(value any) (any, error) {
 
 // decodeSource decodes a JSON representation of a [Source]. On success, it
 // sets it as [ArgSrc] key in the [Spec.Args] map.
-func (reg *Registry[T]) decodeSource(data []byte, spc *Spec) error {
+func decodeSource[T any](reg *Registry[T], data []byte, spc *Spec) error {
 	src := Source{}
 	if err := json.Unmarshal(data, &src); err != nil {
-		format := "JSON to spec: spec %s, argument %s: %w"
-		return NewErrorf(format, spc.Name, ArgSrc, ErrInvArg)
+		format := "argument %s: %w"
+		return NewErrorf(format, ArgSrc, ErrInvArg)
 	}
 	if src.Name == "" {
-		format := "JSON to spec: spec %s, argument %s: %w"
-		return NewErrorf(format, spc.Name, ArgSrc, ErrInvSource)
+		format := "argument %s: %w"
+		return NewErrorf(format, ArgSrc, ErrInvSource)
 	}
 	if src.Lang != "go" {
-		format := "JSON to spec: spec %s, argument %s: %w"
-		return NewErrorf(format, spc.Name, ArgSrc, ErrInvSource)
+		format := "argument %s: %w"
+		return NewErrorf(format, ArgSrc, ErrInvSource)
 	}
 	src = reg.SourceByName(src.Name)
 	if src.IsZero() {
-		format := "JSON to spec: spec %s, argument %s: %w"
-		return NewErrorf(format, spc.Name, ArgSrc, ErrUnkSource)
+		format := "argument %s: %w"
+		return NewErrorf(format, ArgSrc, ErrUnkSource)
 	}
 	spc.SetArg(ArgSrc, src.Val())
 	return nil
@@ -416,7 +446,7 @@ func (reg *Registry[T]) decodeSource(data []byte, spc *Spec) error {
 
 // encodeValues expects the given value to be a `[]any` and encodes them as a
 // slice of [jsontype.Value] instances.
-func (reg *Registry[T]) encodeValues(value any) (any, error) {
+func encodeValues[T any](reg *Registry[T], value any) (any, error) {
 	vs, ok := value.([]any)
 	if !ok {
 		return nil, ErrInvArgType
@@ -434,24 +464,19 @@ func (reg *Registry[T]) encodeValues(value any) (any, error) {
 
 // decodeValues decodes a JSON array of [jsontype.Value] representations
 // into a `[]any` slice and sets it as [ArgValues] key in the [Spec.Args] map.
-func (reg *Registry[T]) decodeValues(data []byte, spc *Spec) error {
+func decodeValues[T any](reg *Registry[T], data []byte, spc *Spec) error {
 	var rv []json.RawMessage
 	if err := json.Unmarshal(data, &rv); err != nil {
-		format := "JSON to spec: spec %s, argument %s: %w"
-		return NewErrorf(format, spc.Name, ArgValues, ErrInvArg)
+		format := "argument %s: %w"
+		return NewErrorf(format, ArgValues, ErrInvArg)
 	}
 	var vs []any
 	for idx, v := range rv {
 		val := jsontype.Value{}
 		err := jsontype.Unmarshal(reg.jtr, v, &val)
 		if err != nil {
-			return NewErrorf(
-				"JSON to spec: spec %s, argument %s: index %d: %w",
-				spc.Name,
-				ArgValues,
-				idx,
-				ErrInvArg,
-			)
+			format := "argument %s: index %d: %w"
+			return NewErrorf(format, ArgValues, idx, ErrInvArg)
 		}
 		vs = append(vs, val.GoValue())
 	}
@@ -461,7 +486,8 @@ func (reg *Registry[T]) decodeValues(data []byte, spc *Spec) error {
 
 // decodeValue decodes a single JSON representation of [jsontype.Value] and
 // sets it with the given name in the [Spec.Args] map.
-func (reg *Registry[T]) decodeValue(
+func decodeValue[T any](
+	reg *Registry[T],
 	name string,
 	data []byte,
 	spc *Spec,
@@ -470,8 +496,8 @@ func (reg *Registry[T]) decodeValue(
 	val := jsontype.Value{}
 	err := jsontype.Unmarshal(reg.jtr, data, &val)
 	if err != nil {
-		format := "JSON to spec: spec %s, argument %s: %w"
-		return NewErrorf(format, spc.Name, ArgValue, ErrInvArg)
+		format := "argument %s: %w"
+		return NewErrorf(format, ArgValue, ErrInvArg)
 	}
 	spc.SetArg(name, val.GoValue())
 	return nil

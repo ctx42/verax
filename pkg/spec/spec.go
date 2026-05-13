@@ -65,6 +65,11 @@ var (
 
 // [Spec] argument names.
 const (
+	// ArgSpecs is a reserved [Spec] argument name that holds a list of
+	// [Spec] instances. It is the only argument for which neither an
+	// encoder nor a decoder can be registered.
+	ArgSpecs = "specs"
+
 	// ArgValue is a reserved [Spec] argument name holding a value.
 	//
 	// The value must be representable by [jsontype.Value].
@@ -91,10 +96,6 @@ const (
 	// representing the value. When decoding, this value must be replaced with
 	// the concrete value.
 	ArgSrc = "src_go"
-
-	// ArgSpecs is a reserved [Spec] argument name holding a list of [Spec]
-	// instances.
-	ArgSpecs = "specs"
 
 	// ArgTypes is a reserved [Spec] argument name holding a list of typed
 	// values. The [Registry] encodes and decodes this argument especially: on
