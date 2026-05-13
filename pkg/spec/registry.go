@@ -141,7 +141,8 @@ func (reg *Registry[T]) RegisterBuilder(
 // RegisterCodec registers custom encoder and decoder functions for the given
 // [Spec] argument name. When enc and dec are both nil, any existing codec for
 // the name is removed. Returns the previously registered encoder and decoder
-// (both nil if none existed). Panics if exactly one of enc or dec is nil.
+// (both nil if none existed). Returns an error if exactly one of enc or dec
+// is nil.
 func (reg *Registry[T]) RegisterCodec(
 	name string,
 	enc ArgEncoder[T],
