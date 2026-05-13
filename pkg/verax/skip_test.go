@@ -4,6 +4,7 @@
 package verax
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
@@ -63,16 +64,31 @@ func Test_SkipRule_When(t *testing.T) {
 }
 
 func Test_SkipRule_Spec(t *testing.T) {
-	// --- Given ---
-	r := Skip
+	t.Run("Skip", func(t *testing.T) {
+		// --- Given ---
+		r := Skip
 
-	// --- When ---
-	have, err := r.Spec()
+		// --- When ---
+		have, err := r.Spec()
 
-	// --- Then ---
-	assert.NoError(t, err)
-	assert.Equal(t, SkipRuleName, have.Name)
-	assert.Nil(t, have.Args)
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, SkipRuleName, have.Name)
+		assert.Nil(t, have.Args)
+	})
+
+	t.Run("Skip - JSON representation", func(t *testing.T) {
+		// --- When ---
+		have, err := Skip.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		data := must.Value(json.Marshal(have))
+		want := `{
+			"name": "skip-rule"
+		}`
+		assert.JSON(t, want, data)
+	})
 }
 
 func Test_SkipRuleFromSpec(t *testing.T) {

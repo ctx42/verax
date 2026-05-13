@@ -4,6 +4,7 @@
 package verax
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
@@ -366,6 +367,23 @@ func Test_InRule_Spec(t *testing.T) {
 			ArgErrMsg:      "test err",
 		}
 		assert.Equal(t, wArgs, have.Args)
+	})
+
+	t.Run("In - JSON representation", func(t *testing.T) {
+		// --- When ---
+		have, err := In("a", "b", "c").Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		data := must.Value(json.Marshal(have))
+		want := `{
+			"name": "in-rule",
+			"args": {
+				"mode": "in",
+				"values": ["a", "b", "c"]
+			}
+		}`
+		assert.JSON(t, want, data)
 	})
 }
 

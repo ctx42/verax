@@ -4,6 +4,7 @@
 package verax
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
@@ -181,6 +182,23 @@ func Test_FailRule_Spec(t *testing.T) {
 		assert.Equal(t, FailRuleName, have.Name)
 		wArgs := map[string]any{ArgErrMsg: "test err"}
 		assert.Equal(t, wArgs, have.Args)
+	})
+
+	t.Run("Fail - JSON representation", func(t *testing.T) {
+		// --- When ---
+		have, err := Fail("test error message", "ECTst").Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		data := must.Value(json.Marshal(have))
+		want := `{
+			"name": "fail-rule",
+			"args": {
+				"err_code": "ECTst",
+				"err_msg": "test error message"
+			}
+		}`
+		assert.JSON(t, want, data)
 	})
 }
 

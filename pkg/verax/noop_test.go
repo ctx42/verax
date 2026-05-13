@@ -4,6 +4,7 @@
 package verax
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
@@ -33,16 +34,31 @@ func Test_NoopRule_Validate(t *testing.T) {
 }
 
 func Test_Noop_Spec(t *testing.T) {
-	// --- Given ---
-	r := NoopRule{}
+	t.Run("Noop", func(t *testing.T) {
+		// --- Given ---
+		r := NoopRule{}
 
-	// --- When ---
-	have, err := r.Spec()
+		// --- When ---
+		have, err := r.Spec()
 
-	// --- Then ---
-	assert.NoError(t, err)
-	assert.Equal(t, NoopRuleName, have.Name)
-	assert.Nil(t, have.Args)
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, NoopRuleName, have.Name)
+		assert.Nil(t, have.Args)
+	})
+
+	t.Run("Noop - JSON representation", func(t *testing.T) {
+		// --- When ---
+		have, err := Noop.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		data := must.Value(json.Marshal(have))
+		want := `{
+			"name": "noop-rule"
+		}`
+		assert.JSON(t, want, data)
+	})
 }
 
 func Test_NoopRuleFromSpec(t *testing.T) {

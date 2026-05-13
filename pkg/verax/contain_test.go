@@ -4,6 +4,7 @@
 package verax
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
@@ -253,6 +254,23 @@ func Test_ContainRule_Spec(t *testing.T) {
 		assert.ErrorEqual(t, "equal-rule(equal): template render error", err)
 		xrrtest.AssertCode(t, ECInternal, err)
 		assert.Nil(t, have)
+	})
+
+	t.Run("Contain - JSON representation", func(t *testing.T) {
+		// --- When ---
+		have, err := Contain(Equal("foo")).Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		data := must.Value(json.Marshal(have))
+		want := `{
+			"name": "contain-rule",
+			"args": {
+				"mode": "equal",
+				"value": "foo"
+			}
+		}`
+		assert.JSON(t, want, data)
 	})
 }
 

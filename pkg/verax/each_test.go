@@ -321,6 +321,24 @@ func Test_EachRule_Spec(t *testing.T) {
 		assert.Equal(t, wArgs, have.Args)
 		assert.NotSame(t, rules, have.Args[spec.ArgTypes])
 	})
+
+	t.Run("Each - JSON representation", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		spc := must.Value(Each(Noop).Spec())
+
+		// --- When ---
+		data := must.Value(reg.EncodeSpec(spc))
+
+		// --- Then ---
+		want := `{
+			"name": "each-rule",
+			"args": {
+				"types": [{"name": "noop-rule"}]
+			}
+		}`
+		assert.JSON(t, want, data)
+	})
 }
 
 func Test_EachRuleFromSpec(t *testing.T) {

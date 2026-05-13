@@ -4,6 +4,7 @@
 package verax
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -270,6 +271,21 @@ func Test_AbsentRule_Spec(t *testing.T) {
 		assert.ErrorEqual(t, `absent-rule: invalid rule mode: "bad-mode"`, err)
 		xrrtest.AssertCode(t, ECInvRuleMode, err)
 		assert.Nil(t, have)
+	})
+
+	t.Run("Nil - JSON representation", func(t *testing.T) {
+		// --- When ---
+		have, err := Nil.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+
+		data := must.Value(json.Marshal(have))
+		want := `{
+			"name": "absent-rule",
+			"args": {"mode": "nil"}
+		}`
+		assert.JSON(t, want, data)
 	})
 }
 

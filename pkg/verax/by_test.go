@@ -251,6 +251,32 @@ func Test_ByRule_Spec(t *testing.T) {
 		}
 		assert.Equal(t, wArgs, have.Args)
 	})
+
+	t.Run("By - JSON representation", func(t *testing.T) {
+		// --- Given ---
+		fn := RuleFunc(func(_ any) error { return nil })
+		src := must.Value(spec.NewSource("isPositive", fn))
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterSource(src)
+		r := By(fn)
+		spc := must.Value(r.Spec())
+
+		// --- When ---
+		data := must.Value(reg.EncodeSpec(spc))
+
+		// --- Then ---
+		want := `{
+			"name": "by-rule",
+			"args": {
+				"src_go": {
+					"lang": "go",
+					"name": "isPositive",
+					"src": "github.com/ctx42/verax/pkg/verax.RuleFunc"
+				}
+			}
+		}`
+		assert.JSON(t, want, data)
+	})
 }
 
 func Test_ByRuleFromSpec(t *testing.T) {

@@ -4,6 +4,7 @@
 package verax
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -777,6 +778,23 @@ func Test_EqualRule_Spec(t *testing.T) {
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, ECInvRuleMode, err)
 		assert.Nil(t, have)
+	})
+
+	t.Run("Equal - JSON representation", func(t *testing.T) {
+		// --- When ---
+		have, err := Equal("foo").Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		data := must.Value(json.Marshal(have))
+		want := `{
+			"name": "equal-rule",
+			"args": {
+				"mode": "equal",
+				"value": "foo"
+			}
+		}`
+		assert.JSON(t, want, data)
 	})
 }
 

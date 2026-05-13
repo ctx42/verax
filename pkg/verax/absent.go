@@ -123,7 +123,6 @@ func (r AbsentRule) Spec() (*spec.Spec, error) {
 // AbsentRuleFromSpec creates an instance of [AbsentRule] from the [spec.Spec].
 func AbsentRuleFromSpec(spc *spec.Spec) (AbsentRule, error) {
 	if spc.Name != AbsentRuleName {
-		// TODO(rz): code style.
 		return AbsentRule{}, NewInternalErrorf(
 			"%s: invalid spec name: %q",
 			AbsentRuleName,
