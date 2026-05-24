@@ -1,3 +1,7 @@
+## v0.10.0 (Sun, 24 May 2026 19:51:39 UTC)
+- test: add JSON decode tests for all Specable rules.
+- doc: Update Readme.md file.
+
 ## v0.9.0 (Tue, 19 May 2026 20:26:50 UTC)
 - test: add JSON representation tests for Specable rules.
 - test: use reg.EncodeSpec in JSON representation tests.
