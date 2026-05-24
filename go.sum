@@ -1,7 +1,11 @@
 github.com/ctx42/convert v0.9.0 h1:cyA1vbZy68uNhiVqhKz5q0ojkyB8dfG5lpX/ZKyA9Fg=
 github.com/ctx42/convert v0.9.0/go.mod h1:orG3sW6NnO9Qse1foCqTRdcZS2zTrBr6ja+ktE9/kWM=
+github.com/ctx42/convert v0.9.1 h1:fjqEzRPYm+K71+afWoteD91HcKPg9UOK/rqlKOzGy7Q=
+github.com/ctx42/convert v0.9.1/go.mod h1:5t5xwBMzOxKDL5sA0Bud4ExZgASSqR0zDaEazd15o1E=
 github.com/ctx42/jsontype v0.7.0 h1:x1dl41DzXmJg3FOqrYraab1mfaTLNz0/6mLwlpFO+PQ=
 github.com/ctx42/jsontype v0.7.0/go.mod h1:UEiQGu6Mun2q3t6wJEES8eidYwSUX22RVGKOzKYIuy8=
+github.com/ctx42/jsontype v0.8.0 h1:asJn1nycQXbH8nbq94xNTr66Wgzdcam6aGOtVm2SHe0=
+github.com/ctx42/jsontype v0.8.0/go.mod h1:H/NFFGfMjT4cV7tuQe1c9v8DrUtHcm+vLFJ5eTQo4og=
 github.com/ctx42/mirror v0.4.0 h1:P2cyL9uaxFMpGLpqKEsyBjvVzPgn8ucvwPsNzDIN2g4=
 github.com/ctx42/mirror v0.4.0/go.mod h1:XA/k5mXMe+mAIV4x3P77oUokBVl7sAvk+FsJeBAnHUo=
 github.com/ctx42/testing v0.47.0 h1:uJy2R7yrBdBEjYL1RGq0hIHMPGXZV0D+5GcgJsUBkJU=

@@ -483,8 +483,8 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 				"args": {
 					"values": [
 						{"type": "int", "value": 1},
-						{"type": "float64", "value": 2.6},
-						{"type": "nil", "value": null}
+						2.6,
+						null
 					]
 				}
 			}`
@@ -501,7 +501,7 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "spec my-spec to JSON: unsupported type: func()"
+		wMsg := "spec my-spec to JSON: jsontype: unsupported type: func()"
 		assert.ErrorEqual(t, wMsg, err)
 		assert.Nil(t, have)
 	})
@@ -526,8 +526,8 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 				"args": {
 					"int": {"type": "int", "value": 1},
 					"uint": {"type": "uint", "value": 2},
-					"float": {"type": "float64", "value": 3},
-					"bool": {"type": "bool", "value": true},
+					"float": 3,
+					"bool": true,
 					"time": {"type": "time.Time", "value": "2000-01-02T03:04:05Z"}
 				}
 			}`
@@ -559,7 +559,7 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
 		wMsg := "spec to JSON: spec my-spec, argument specs: " +
-			"index 0: spec sub to JSON: unsupported type: func()"
+			"index 0: spec sub to JSON: jsontype: unsupported type: func()"
 		assert.ErrorEqual(t, wMsg, err)
 		assert.Nil(t, have)
 	})
@@ -607,7 +607,7 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
 		wMsg := "spec to JSON: spec my-spec, argument values: " +
-			"index 0: unsupported type: func()"
+			"index 0: jsontype: unsupported type: func()"
 		assert.ErrorEqual(t, wMsg, err)
 		assert.Nil(t, have)
 	})
@@ -1006,7 +1006,8 @@ func Test_Registry_encodeSpecs(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "index 1: spec my-spec1 to JSON: unsupported type: func()"
+		wMsg := "index 1: spec my-spec1 to JSON: jsontype: " +
+			"unsupported type: func()"
 		assert.ErrorEqual(t, wMsg, err)
 		assert.Nil(t, have)
 	})
@@ -1151,7 +1152,7 @@ func Test_Registry_encodeTypes(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "index 0: spec name to JSON: unsupported type: func()"
+		wMsg := "index 0: spec name to JSON: jsontype: unsupported type: func()"
 		assert.ErrorEqual(t, wMsg, err)
 		assert.Nil(t, have)
 	})
@@ -1408,7 +1409,7 @@ func Test_Registry_encodeValues(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "index 1: unsupported type: func()"
+		wMsg := "index 1: jsontype: unsupported type: func()"
 		assert.ErrorEqual(t, wMsg, err)
 		assert.Nil(t, have)
 	})

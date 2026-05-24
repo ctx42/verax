@@ -255,7 +255,7 @@ func Test_ContainRule_Spec(t *testing.T) {
 		assert.Nil(t, have)
 	})
 
-	t.Run("Contain - JSON representation", func(t *testing.T) {
+	t.Run("Contain - JSON encode", func(t *testing.T) {
 		// --- Contain ---
 		reg := spec.NewRegistry[Rule]()
 
@@ -268,11 +268,31 @@ func Test_ContainRule_Spec(t *testing.T) {
 		want := `{
 			"name": "contain-rule",
 			"args": {
-				"mode":{"type": "string", "value": "equal"},
-				"value": {"type": "string", "value": "foo"}
+				"mode": "equal",
+				"value": "foo"
 			}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Contain - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "contain-rule",
+			"args": {
+				"mode": "equal",
+				"value": "foo"
+			}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Contain(Equal("foo")), have)
 	})
 }
 

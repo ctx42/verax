@@ -272,7 +272,7 @@ func Test_AbsentRule_Spec(t *testing.T) {
 		assert.Nil(t, have)
 	})
 
-	t.Run("Nil - JSON representation", func(t *testing.T) {
+	t.Run("Nil - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 
@@ -284,11 +284,26 @@ func Test_AbsentRule_Spec(t *testing.T) {
 		data := must.Value(reg.EncodeSpec(spc))
 		want := `{
 			"name": "absent-rule",
-			"args": {
-				"mode": {"type": "string", "value": "nil"}
-			}
+			"args": {"mode": "nil"}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Nil - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "absent-rule",
+			"args": {"mode": "nil"}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Nil, have)
 	})
 }
 

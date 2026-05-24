@@ -415,7 +415,7 @@ func Test_Set_Spec(t *testing.T) {
 		assert.NotSame(t, rules, have.Args[spec.ArgTypes])
 	})
 
-	t.Run("Set - JSON representation", func(t *testing.T) {
+	t.Run("Set - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 		spc := must.Value(Set{Required}.Spec())
@@ -430,14 +430,36 @@ func Test_Set_Spec(t *testing.T) {
 				"types": [
 					{
 						"name": "required-rule",
-						"args": {
-							"mode": {"type": "string", "value": "required"}
-						}
+						"args": {"mode": "required"}
 					}
 				]
 			}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Set - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "set-rule",
+			"args": {
+				"types": [
+					{
+						"name": "required-rule",
+						"args": {"mode": "required"}
+					}
+				]
+			}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Set{Required}, have)
 	})
 }
 

@@ -183,7 +183,7 @@ func Test_FailRule_Spec(t *testing.T) {
 		assert.Equal(t, wArgs, have.Args)
 	})
 
-	t.Run("Fail - JSON representation", func(t *testing.T) {
+	t.Run("Fail - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 
@@ -196,11 +196,31 @@ func Test_FailRule_Spec(t *testing.T) {
 		want := `{
 			"name": "fail-rule",
 			"args": {
-				"err_code": {"type": "string", "value": "ECTst"},
-				"err_msg": {"type": "string", "value": "test error message"}
+				"err_code": "ECTst",
+				"err_msg": "test error message"
 			}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Fail - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "fail-rule",
+			"args": {
+				"err_code": "ECTst",
+				"err_msg": "test error message"
+			}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Fail("test error message", "ECTst"), have)
 	})
 }
 

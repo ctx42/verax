@@ -322,7 +322,7 @@ func Test_EachRule_Spec(t *testing.T) {
 		assert.NotSame(t, rules, have.Args[spec.ArgTypes])
 	})
 
-	t.Run("Each - JSON representation", func(t *testing.T) {
+	t.Run("Each - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 		spc := must.Value(Each(Noop).Spec())
@@ -338,6 +338,25 @@ func Test_EachRule_Spec(t *testing.T) {
 			}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Each - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "each-rule",
+			"args": {
+				"types": [{"name": "noop-rule"}]
+			}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Each(Noop), have)
 	})
 }
 

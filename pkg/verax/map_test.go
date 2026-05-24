@@ -508,7 +508,7 @@ func Test_MapRule_Spec(t *testing.T) {
 		assert.Equal(t, wRules, hRules)
 	})
 
-	t.Run("Map - JSON representation", func(t *testing.T) {
+	t.Run("Map - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 		spc := must.Value(Map(Key("name", Required)).Spec())
@@ -524,16 +524,11 @@ func Test_MapRule_Spec(t *testing.T) {
 					{
 						"name": "map-key",
 						"args": {
-							"value": {"type": "string", "value": "name"},
+							"value": "name",
 							"types": [
 								{
 									"name": "required-rule",
-									"args": {
-										"mode": {
-											"type": "string", 
-											"value": "required"
-										}
-									}
+									"args": {"mode": "required"}
 								}
 							]
 						}
@@ -542,6 +537,38 @@ func Test_MapRule_Spec(t *testing.T) {
 			}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Map - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "map-rule",
+			"args": {
+				"specs": [
+					{
+						"name": "map-key",
+						"args": {
+							"value": "name",
+							"types": [
+								{
+									"name": "required-rule",
+									"args": {"mode": "required"}
+								}
+							]
+						}
+					}
+				]
+			}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Map(Key("name", Required)), have)
 	})
 }
 
@@ -809,7 +836,7 @@ func Test_MapKey_Spec(t *testing.T) {
 		assert.HasKeyValue(t, ArgOptional, true, have.Args)
 	})
 
-	t.Run("MapKey - JSON representation", func(t *testing.T) {
+	t.Run("MapKey - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 		spc := must.Value(Key("name", Required).Spec())
@@ -821,18 +848,48 @@ func Test_MapKey_Spec(t *testing.T) {
 		want := `{
 			"name": "map-key",
 			"args": {
-				"value": {"type": "string", "value": "name"},
+				"value": "name",
 				"types": [
 					{
 						"name": "required-rule",
 						"args": {
-							"mode": {"type": "string", "value": "required"}
+							"mode": "required"
 						}
 					}
 				]
 			}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("MapKey - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "map-key",
+			"args": {
+				"value": "name",
+				"types": [
+					{
+						"name": "required-rule",
+						"args": {
+							"mode": "required"
+						}
+					}
+				]
+			}
+		}`)
+
+		// --- When ---
+		spc := &spec.Spec{}
+		err := reg.DecodeSpec(data, spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		have, err := MapKeyFromSpec(spc)
+		assert.NoError(t, err)
+		assert.Equal(t, Key("name", Required), have)
 	})
 }
 

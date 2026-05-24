@@ -531,7 +531,7 @@ func ExampleBuilders_encode() {
 
 	fmt.Println(string(data))
 	// Output:
-	// {"name":"range-rule","args":{"mode":{"type":"string","value":"min"},"value":{"type":"int","value":18}}}
+	// {"name":"range-rule","args":{"mode":"min","value":{"type":"int","value":18}}}
 }
 
 func ExampleBuilders_decode() {

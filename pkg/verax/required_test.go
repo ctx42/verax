@@ -361,7 +361,7 @@ func Test_RequiredRule_Spec(t *testing.T) {
 		assert.Equal(t, wArgs, have.Args)
 	})
 
-	t.Run("Required - JSON representation", func(t *testing.T) {
+	t.Run("Required - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 
@@ -373,11 +373,26 @@ func Test_RequiredRule_Spec(t *testing.T) {
 		data := must.Value(reg.EncodeSpec(spc))
 		want := `{
 			"name": "required-rule",
-			"args": {
-				"mode": {"type": "string", "value": "required"}
-			}
+			"args": {"mode": "required"}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Required - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "required-rule",
+			"args": {"mode": "required"}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Required, have)
 	})
 }
 

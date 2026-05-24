@@ -76,7 +76,7 @@ func Test_SkipRule_Spec(t *testing.T) {
 		assert.Nil(t, have.Args)
 	})
 
-	t.Run("Skip - JSON representation", func(t *testing.T) {
+	t.Run("Skip - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 
@@ -88,6 +88,20 @@ func Test_SkipRule_Spec(t *testing.T) {
 		data := must.Value(reg.EncodeSpec(spc))
 		want := `{"name": "skip-rule"}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Skip - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{"name": "skip-rule"}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Skip, have)
 	})
 }
 

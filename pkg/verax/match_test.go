@@ -270,7 +270,7 @@ func Test_MatchRule_Spec(t *testing.T) {
 		assert.Equal(t, wArgs, have.Args)
 	})
 
-	t.Run("Match - JSON representation", func(t *testing.T) {
+	t.Run("Match - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 
@@ -283,10 +283,29 @@ func Test_MatchRule_Spec(t *testing.T) {
 		want := `{
 			"name": "match-rule",
 			"args": {
-				"value": {"type": "string", "value": "\\d+"}
+				"value": "\\d+"
 			}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Match - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "match-rule",
+			"args": {
+				"value": "\\d+"
+			}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Match(regexp.MustCompile(`\d+`)), have)
 	})
 }
 

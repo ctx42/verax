@@ -46,7 +46,7 @@ func Test_Noop_Spec(t *testing.T) {
 		assert.Nil(t, have.Args)
 	})
 
-	t.Run("Noop - JSON representation", func(t *testing.T) {
+	t.Run("Noop - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 
@@ -58,6 +58,20 @@ func Test_Noop_Spec(t *testing.T) {
 		data := must.Value(reg.EncodeSpec(spc))
 		want := `{"name": "noop-rule"}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Noop - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{"name": "noop-rule"}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Noop, have)
 	})
 }
 

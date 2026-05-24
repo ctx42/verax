@@ -725,7 +725,7 @@ func Test_RangeRule_Spec(t *testing.T) {
 		assert.Equal(t, wArgs, have.Args)
 	})
 
-	t.Run("Min - JSON representation", func(t *testing.T) {
+	t.Run("Min - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 
@@ -738,11 +738,31 @@ func Test_RangeRule_Spec(t *testing.T) {
 		want := `{
 			"name": "range-rule",
 			"args": {
-				"mode": {"type": "string", "value": "min"},
+				"mode": "min",
 				"value": {"type": "int", "value": 18}
 			}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Min - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "range-rule",
+			"args": {
+				"mode": "min",
+				"value": {"type": "int", "value": 18}
+			}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Min(18), have)
 	})
 }
 

@@ -368,7 +368,7 @@ func Test_InRule_Spec(t *testing.T) {
 		assert.Equal(t, wArgs, have.Args)
 	})
 
-	t.Run("In - JSON representation", func(t *testing.T) {
+	t.Run("In - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 
@@ -381,15 +381,31 @@ func Test_InRule_Spec(t *testing.T) {
 		want := `{
 			"name": "in-rule",
 			"args": {
-				"mode": {"type": "string", "value": "in"},
-				"values": [
-					{"type": "string", "value": "a"},
-					{"type": "string", "value": "b"},
-					{"type": "string", "value": "c"}
-				]
+				"mode": "in",
+				"values": ["a", "b", "c"]
 			}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("In - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "in-rule",
+			"args": {
+				"mode": "in",
+				"values": ["a", "b", "c"]
+			}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, In("a", "b", "c"), have)
 	})
 }
 

@@ -547,7 +547,7 @@ func Test_LengthRule_Spec(t *testing.T) {
 		assert.Equal(t, wArgs, have.Args)
 	})
 
-	t.Run("Length - JSON representation", func(t *testing.T) {
+	t.Run("Length - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 
@@ -560,12 +560,33 @@ func Test_LengthRule_Spec(t *testing.T) {
 		want := `{
 			"name": "length-rule",
 			"args": {
-				"mode": {"type": "string", "value": "length"},
+				"mode": "length",
 				"min": {"type": "int", "value": 3},
 				"max": {"type": "int", "value": 10}
 			}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Length - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "length-rule",
+			"args": {
+				"mode": "length",
+				"min": {"type": "int", "value": 3},
+				"max": {"type": "int", "value": 10}
+			}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Length(3, 10), have)
 	})
 }
 

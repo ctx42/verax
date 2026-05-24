@@ -779,7 +779,7 @@ func Test_EqualRule_Spec(t *testing.T) {
 		assert.Nil(t, have)
 	})
 
-	t.Run("Equal - JSON representation", func(t *testing.T) {
+	t.Run("Equal - JSON encode", func(t *testing.T) {
 		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 
@@ -792,11 +792,31 @@ func Test_EqualRule_Spec(t *testing.T) {
 		want := `{
 			"name": "equal-rule",
 			"args": {
-				"mode": {"type": "string", "value": "equal"},
-				"value": {"type": "string", "value": "foo"}
+				"mode": "equal",
+				"value": "foo"
 			}
 		}`
 		assert.JSON(t, want, data)
+	})
+
+	t.Run("Equal - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "equal-rule",
+			"args": {
+				"mode": "equal",
+				"value": "foo"
+			}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Equal("foo"), have)
 	})
 }
 
