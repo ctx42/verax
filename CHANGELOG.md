@@ -1,3 +1,6 @@
+## v0.11.0 (Mon, 25 May 2026 08:13:06 UTC)
+- perf: eliminate hot-path allocations in core validation.
+
 ## v0.10.0 (Sun, 24 May 2026 19:51:39 UTC)
 - test: add JSON decode tests for all Specable rules.
 - doc: Update Readme.md file.
