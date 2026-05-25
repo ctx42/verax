@@ -89,6 +89,38 @@ func IsEmpty(v any) bool {
 	return isEmptyValue(v)
 }
 func isEmptyValue(v any) bool {
+	// Fast path: handle common scalar types without reflection.
+	switch v := v.(type) {
+	case string:
+		return len(v) == 0
+	case bool:
+		return false
+	case int:
+		return v == 0
+	case int8:
+		return v == 0
+	case int16:
+		return v == 0
+	case int32:
+		return v == 0
+	case int64:
+		return v == 0
+	case uint:
+		return v == 0
+	case uint8:
+		return v == 0
+	case uint16:
+		return v == 0
+	case uint32:
+		return v == 0
+	case uint64:
+		return v == 0
+	case float32:
+		return v == 0
+	case float64:
+		return v == 0
+	}
+
 	if z, ok := v.(interface{ IsZero() bool }); ok {
 		return z.IsZero()
 	}

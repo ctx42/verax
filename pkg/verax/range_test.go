@@ -1343,7 +1343,7 @@ func Test_compareFloat(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := "range-rule: cannot convert complex128 to float64"
+		wMsg := "range-rule: cannot convert int to float64"
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, ECInvType, err)
 		assert.Equal(t, 0, have)

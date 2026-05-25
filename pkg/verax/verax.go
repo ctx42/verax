@@ -246,6 +246,16 @@ func Validate(v any, rules ...Rule) error {
 		}
 	}
 
+	// Fast path: primitive built-in types can never implement Validator or
+	// require composite-type traversal.
+	switch v.(type) {
+	case string, bool,
+		int, int8, int16, int32, int64,
+		uint, uint8, uint16, uint32, uint64, uintptr,
+		float32, float64:
+		return nil
+	}
+
 	rv := reflect.ValueOf(v)
 	if (rv.Kind() == reflect.Pointer || rv.Kind() == reflect.Interface) &&
 		rv.IsNil() {

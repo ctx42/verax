@@ -92,12 +92,11 @@ func (r InRule) Validate(have any) error {
 
 	v := Indirect(have)
 	for _, e := range r.want {
-		err := e.Validate(v)
-		if r.mode == "in" && err == nil {
-			// We've found a value in the set so we can return with success.
-			return nil
-		}
-		if r.mode == "not-in" && err == nil {
+		if e.fn(e.want, v) == nil {
+			if r.mode == "in" {
+				// We've found a value in the set so we can return with success.
+				return nil
+			}
 			// We've found value that should not be valid.
 			return NewError(r.msg, r.code)
 		}

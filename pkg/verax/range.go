@@ -11,7 +11,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/ctx42/convert/pkg/convert"
 	"github.com/ctx42/xrr/pkg/xrr"
 
 	"github.com/ctx42/verax/pkg/spec"
@@ -388,12 +387,37 @@ func rangeOutcome(mode string, result int) bool {
 
 // compareInt matches [CompareFunc] signature and compares two signed integers.
 func compareInt(want, have any) (int, error) {
-	w, err := convert.AnyToInt64(want)
-	if err != nil {
+	var w, h int64
+	switch v := want.(type) {
+	case int:
+		w = int64(v)
+	case int8:
+		w = int64(v)
+	case int16:
+		w = int64(v)
+	case int32:
+		w = int64(v)
+	case int64:
+		w = v
+	case time.Duration:
+		w = int64(v)
+	default:
 		return 0, errConvert(RangeRuleName, want, int64(0))
 	}
-	h, err := convert.AnyToInt64(have)
-	if err != nil {
+	switch v := have.(type) {
+	case int:
+		h = int64(v)
+	case int8:
+		h = int64(v)
+	case int16:
+		h = int64(v)
+	case int32:
+		h = int64(v)
+	case int64:
+		h = v
+	case time.Duration:
+		h = int64(v)
+	default:
 		return 0, errConvert(RangeRuleName, have, int64(0))
 	}
 	return cmp.Compare(w, h), nil
@@ -402,12 +426,37 @@ func compareInt(want, have any) (int, error) {
 // compareUInt matches [CompareFunc] signature and compares two unsigned
 // integers.
 func compareUInt(want, have any) (int, error) {
-	w, err := convert.AnyToUint64(want)
-	if err != nil {
+	var w, h uint64
+	switch v := want.(type) {
+	case uint:
+		w = uint64(v)
+	case uint8:
+		w = uint64(v)
+	case uint16:
+		w = uint64(v)
+	case uint32:
+		w = uint64(v)
+	case uint64:
+		w = v
+	case uintptr:
+		w = uint64(v)
+	default:
 		return 0, errConvert(RangeRuleName, want, uint64(0))
 	}
-	h, err := convert.AnyToUint64(have)
-	if err != nil {
+	switch v := have.(type) {
+	case uint:
+		h = uint64(v)
+	case uint8:
+		h = uint64(v)
+	case uint16:
+		h = uint64(v)
+	case uint32:
+		h = uint64(v)
+	case uint64:
+		h = v
+	case uintptr:
+		h = uint64(v)
+	default:
 		return 0, errConvert(RangeRuleName, have, uint64(0))
 	}
 	return cmp.Compare(w, h), nil
@@ -415,12 +464,21 @@ func compareUInt(want, have any) (int, error) {
 
 // compareFloat matches [CompareFunc] signature and compares two float numbers.
 func compareFloat(want, have any) (int, error) {
-	w, err := convert.AnyToFloat64(want)
-	if err != nil {
+	var w, h float64
+	switch v := want.(type) {
+	case float32:
+		w = float64(v)
+	case float64:
+		w = v
+	default:
 		return 0, errConvert(RangeRuleName, want, 0.0)
 	}
-	h, err := convert.AnyToFloat64(have)
-	if err != nil {
+	switch v := have.(type) {
+	case float32:
+		h = float64(v)
+	case float64:
+		h = v
+	default:
 		return 0, errConvert(RangeRuleName, have, 0.0)
 	}
 	return cmp.Compare(w, h), nil

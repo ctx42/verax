@@ -86,15 +86,23 @@ func NotEqualField(want any, field string) EqualRule {
 	return NotEqual(want).Message(msg)
 }
 
+// errNotEqual signals inequality from the built-in equal function. It is
+// a package-level singleton to avoid per-call allocation; EqualRule.Validate
+// discards it (flgCustomFn == 0 branch) and returns its own pre-rendered error.
+var errNotEqual = NewError("equal error", ECNotEqual)
+
+// errEqual signals equality from the built-in notEqual function. It is
+// a package-level singleton to avoid per-call allocation; EqualRule.Validate
+// discards it (flgCustomFn == 0 branch) and returns its own pre-rendered error.
+var errEqual = NewError("not equal error", ECEqual)
+
 // equal matches [EqualFunc] signature and conditions both arguments are equal
 // using [reflect.DeepEqual] function.
 func equal(want, have any) error {
 	if reflect.DeepEqual(want, have) {
 		return nil
 	}
-	// This error is ignored inside [EqualRule.Validate] because it is not
-	// treated as coming from a custom function.
-	return NewError("equal error", ECNotEqual)
+	return errNotEqual
 }
 
 // notEqual matches [EqualFunc] signature and conditions both arguments are not
@@ -103,9 +111,7 @@ func notEqual(want, have any) error {
 	if !reflect.DeepEqual(want, have) {
 		return nil
 	}
-	// This error is ignored inside [EqualRule.Validate] because it is not
-	// treated as coming from a custom function.
-	return NewError("not equal error", ECEqual)
+	return errEqual
 }
 
 // Compile time conditions.

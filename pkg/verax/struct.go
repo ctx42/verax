@@ -130,15 +130,15 @@ func ValidateStruct(v any, fields ...FieldRule) error {
 // If found, the field info will be returned. Otherwise, nil will be returned.
 func findStructField(s, f reflect.Value) *reflect.StructField {
 	ptr := f.Pointer()
+	rt := mirror.ReflectType(s.Type())
 	for i := s.NumField() - 1; i >= 0; i-- {
-		sf := mirror.ReflectType(s.Type()).FieldByIndex(i)
+		sf := rt.FieldByIndex(i)
 		if ptr == s.Field(i).UnsafeAddr() {
 			// Do additional type comparison because it's possible that
 			// the address of an embedded struct is the same as the first
 			// field of the embedded struct.
 			if sf.Type() == f.Elem().Type() {
-				sf := sf.StructField()
-				return &sf
+				return new(sf.StructField())
 			}
 		}
 		if sf.IsAnonymous() {
