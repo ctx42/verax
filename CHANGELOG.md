@@ -1,3 +1,7 @@
+## v0.12.0 (Mon, 01 Jun 2026 21:25:42 UTC)
+- doc: update dependencies, add AGENTS.md with project guidelines and update .editorconfig.
+- chore: improve documentation, publishing hygiene, and spec safety.
+
 ## v0.11.0 (Mon, 25 May 2026 08:13:06 UTC)
 - perf: eliminate hot-path allocations in core validation.
 
