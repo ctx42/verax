@@ -85,6 +85,10 @@ type Rule interface {
 	//   calling [SetCode] on it.
 	// - If neither is overridden: return the error from the validation
 	//   function unchanged.
+	//
+	// Callers implementing custom validation via [RuleFunc], [EqualFunc],
+	// [CompareFunc], [Validator], etc. are responsible for returning a verax
+	// domain error (or nil). The library does not wrap foreign errors for now.
 	Validate(have any) error
 }
 

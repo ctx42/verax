@@ -20,13 +20,13 @@ const ECInvMatch = "ECInvMatch"
 // [MatchRule] rule error messages.
 var (
 	// msgInvMatch is the error message when a value does not match the regexp.
-	msgInvMatch = "must be in a valid format value"
+	msgInvMatch = "must match a valid format"
 )
 
 // Match returns a validation rule that conditions if a value matches the specified
 // regular expression. This rule should only be used for validating strings and
 // byte slices, or a validation error will be reported. An empty value is
-// considered valid. Use the Required rule to make sure a value is not empty.
+// considered valid. Use the [Required] rule to make sure a value is not empty.
 func Match(want *regexp.Regexp) MatchRule {
 	r := MatchRule{
 		want:      want,

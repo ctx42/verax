@@ -12,7 +12,10 @@ import (
 // ByRuleName represents [ByRule] name.
 const ByRuleName = "by-rule"
 
-// By validates a value using [RuleFunc].
+// By validates a value using the provided [RuleFunc]. This is the primary
+// escape hatch for custom validation logic. The function receives the value
+// and should return nil on success or a verax domain error on failure
+// (see [Rule]). Use [Check] for the simple func(bool) case.
 func By(fn RuleFunc) ByRule { return ByRule{fn: fn, condition: true} }
 
 // Compile time conditions.

@@ -94,12 +94,23 @@ represent a Go type across language boundaries.
 
 ### Error Return Invariant
 
-Every validation function in this package must return one of the three verax
-domain error types — `*Error`, `*InternalError`, or `*FieldsError` — or nil.
+Code **inside** this package (the built-in rules, `Validate`, `ValidateStruct`,
+`Field`, `When`, `Each`, `Map`, etc.) must only ever return one of the three
+verax domain error types (`*Error`, `*InternalError`, or `*FieldErrors`) or nil.
 Never return a raw `errors.New`, `fmt.Errorf`, or other non-domain error from
-a public API. This invariant ensures callers can rely on `IsVeraxError`,
-`IsValidationError`, and `IsInternalError` for classification and on
-`json.Marshal` for serialization.
+public API functions.
+
+User-provided extension points (`Validator`, `WithValidator`, `RuleFunc`,
+`EqualFunc`, `CompareFunc`, and custom rules) are currently the **caller's
+responsibility**. Callers should return proper verax domain errors from these
+hooks. For now the library does **not** automatically wrap foreign errors
+returned from user callbacks.
+
+This distinction exists because many callers want to return their own error
+types (or errors from other libraries) from custom validation logic. The
+strong invariant above applies to the library's own implementation and the
+errors that ultimately come out of `Validate*` when only built-in rules are
+used.
 
 ## Code Style Notes
 

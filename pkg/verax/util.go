@@ -80,8 +80,7 @@ func checkNilAndEmpty(v any) (isNil, isEmpty bool) {
 //   - interface, pointer: nil or the referenced value is empty
 //   - other: IsZero() == true
 //
-// If the value implements [driver.Valuer], it returns the result of calling
-// its Value method. If the input is nil, it returns true.
+// If the input is nil, it returns true.
 func IsEmpty(v any) bool {
 	if isNil := IsNil(v); isNil {
 		return true
@@ -155,8 +154,6 @@ func isEmptyValue(v any) bool {
 
 // IsNil checks whether the provided value is actual nil or wrapped nil.
 // Actual nil means the interface itself has no type or value (have == nil).
-//
-//   - isNil: true if the interface is actual nil.
 func IsNil(v any) bool {
 	if v == nil {
 		return true

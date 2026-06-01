@@ -25,7 +25,7 @@ const (
 	ECNoGoSource = "ECNoGoSource"
 
 	// ECInvSpecArg is the error code used when a [Spec] argument is invalid.
-	ECInvSpecArg = "ECECInvSpecArg"
+	ECInvSpecArg = "ECInvSpecArg"
 
 	// ECInvSpecArgType is the error code used when a [Spec] argument has an
 	// invalid type.

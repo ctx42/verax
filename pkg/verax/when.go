@@ -8,7 +8,9 @@ import (
 )
 
 // When returns a validation rule that executes the given list of rules when
-// the condition is true.
+// the condition is true. Use [WhenRule.Else] to specify rules for the false
+// case. Empty values are not short-circuited (use [Skip] or [When] with
+// [IsEmpty] for that).
 func When(condition bool, rules ...Rule) WhenRule {
 	return WhenRule{
 		condition: condition,

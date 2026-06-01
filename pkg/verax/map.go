@@ -258,6 +258,8 @@ func MapRuleFromSpec(spc *spec.Spec) (MapRule, error) {
 }
 
 // Key specifies a map key and the corresponding validation rules.
+// Use with [Map] to validate specific entries (supports [Optional],
+// [When], chaining, and [Specable] roundtrips).
 func Key(key any, rules ...Rule) MapKey {
 	return MapKey{
 		key:   key,

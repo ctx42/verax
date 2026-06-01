@@ -151,8 +151,21 @@ func (reg *Registry[T]) Build(spc *Spec) (T, error) {
 }
 
 // EncodeSpec encodes the given [Spec] to JSON.
+//
+// NOTE: The input spc is never mutated. EncodeSpec works on an internal
+// copy so callers can safely reuse the same *Spec across multiple
+// Encode / Build / roundtrip operations.
 func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
-	for name, value := range spc.Args {
+	// Work on a copy so the caller's Spec is never mutated.
+	work := &Spec{
+		Name: spc.Name,
+		Args: make(map[string]any, len(spc.Args)),
+	}
+	for k, v := range spc.Args {
+		work.Args[k] = v
+	}
+
+	for name, value := range work.Args {
 		switch name {
 		case ArgSpecs:
 			specs, err := reg.encodeSpecs(value)
@@ -160,7 +173,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 				format := "spec to JSON: spec %s, argument %s: %w"
 				return nil, NewErrorf(format, spc.Name, name, err)
 			}
-			spc.SetArg(name, specs)
+			work.Args[name] = specs
 
 		case ArgTypes:
 			tps, err := reg.encodeTypes(value)
@@ -168,7 +181,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 				format := "spec to JSON: spec %s, argument %s: %w"
 				return nil, NewErrorf(format, spc.Name, name, err)
 			}
-			spc.SetArg(name, tps)
+			work.Args[name] = tps
 
 		case ArgSrc:
 			src, err := reg.encodeSource(value)
@@ -176,7 +189,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 				format := "spec to JSON: spec %s, argument %s: %w"
 				return nil, NewErrorf(format, spc.Name, name, err)
 			}
-			spc.SetArg(name, src)
+			work.Args[name] = src
 
 		case ArgValues:
 			values, err := reg.encodeValues(value)
@@ -184,7 +197,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 				format := "spec to JSON: spec %s, argument %s: %w"
 				return nil, NewErrorf(format, spc.Name, name, err)
 			}
-			spc.SetArg(name, values)
+			work.Args[name] = values
 
 		default:
 			val, err := jsontype.NewValue(value)
@@ -192,11 +205,11 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 				format := "spec %s to JSON: %w"
 				return nil, NewErrorf(format, spc.Name, err)
 			}
-			spc.SetArg(name, val)
+			work.Args[name] = val
 		}
 	}
 
-	data, err := json.Marshal(spc)
+	data, err := json.Marshal(work)
 	if err != nil {
 		return nil, NewErrorf("spec to JSON: spec %s: %w", spc.Name, err)
 	}
