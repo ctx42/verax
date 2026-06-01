@@ -1,8 +1,25 @@
-\.idea
-tmp
-\.golangci.yml
-go_test_coverage.log
-go_test_run.log
-../../vr/skw/go/skw-raven/go.work
+# Editor / IDE
+.idea/
+.vscode/
+
+# Go build / test artifacts
+*.test
+*.test.*
+*.out
+*.html
+coverage.*
+
+# Project temp / build / release
+tmp/
+dist/
+bin/
+
+# Go workspace (not used by this module)
+go.work
 go.work.sum
-/CLAUDE.md
+
+# OS / editor noise
+.DS_Store
+*~
+*.swp
+*.swo
