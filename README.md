@@ -67,7 +67,7 @@ PrintJSON(err)
 // ERROR:
 //
 // - age: must be greater or equal to 18
-// - email: must be in a valid format value
+// - email: must match a valid format
 // - name: the length must be between 2 and 50
 //
 // JSON:
@@ -78,7 +78,7 @@ PrintJSON(err)
 //     },
 //     "email": {
 //         "code": "ECInvMatch",
-//         "error": "must be in a valid format value"
+//         "error": "must match a valid format"
 //     },
 //     "name": {
 //         "code": "ECInvLength",

@@ -630,10 +630,10 @@ func Test_findStructField_found_tabular(t *testing.T) {
 			f := reflect.ValueOf(tc.field)
 
 			// --- When ---
-			have := findStructField(s, f)
+			_, ok := findStructField(s, f)
 
 			// --- Then ---
-			assert.NotNil(t, have)
+			assert.True(t, ok)
 		})
 	}
 }
@@ -659,10 +659,10 @@ func Test_findStructField_not_found_tabular(t *testing.T) {
 			f := reflect.ValueOf(tc.field)
 
 			// --- When ---
-			have := findStructField(s, f)
+			_, ok := findStructField(s, f)
 
 			// --- Then ---
-			assert.Nil(t, have)
+			assert.False(t, ok)
 		})
 	}
 }
@@ -734,10 +734,10 @@ func Test_getErrorFieldName_tabular(t *testing.T) {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- Given ---
 			elem := reflect.ValueOf(tc.sp).Elem()
-			sf := findStructField(elem, reflect.ValueOf(tc.field))
+			sf, _ := findStructField(elem, reflect.ValueOf(tc.field))
 
 			// --- When ---
-			have := getErrorFieldName(tc.tag, sf)
+			have := getErrorFieldName(tc.tag, &sf)
 
 			// --- Then ---
 			assert.Equal(t, tc.name, have)

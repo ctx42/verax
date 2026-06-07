@@ -87,8 +87,8 @@ func ValidateStruct(v any, fields ...FieldRule) error {
 			)
 		}
 
-		sf := findStructField(val, fv)
-		if sf == nil {
+		sf, ok := findStructField(val, fv)
+		if !ok {
 			return NewInternalErrorf(
 				"the field #%v cannot be found in the struct",
 				i,
@@ -101,7 +101,7 @@ func ValidateStruct(v any, fields ...FieldRule) error {
 			if xrr.GetCode(err) == ECInternal {
 				return NewInternalErrorf(
 					"%s: %s",
-					getErrorFieldName(fr.tag, sf),
+					getErrorFieldName(fr.tag, &sf),
 					err,
 					xrr.WithCode(ECInternal),
 				)
@@ -116,7 +116,7 @@ func ValidateStruct(v any, fields ...FieldRule) error {
 					continue
 				}
 			}
-			ers.Set(getErrorFieldName(fr.tag, sf), err)
+			ers.Set(getErrorFieldName(fr.tag, &sf), err)
 		}
 	}
 	if ers != nil {
@@ -127,8 +127,8 @@ func ValidateStruct(v any, fields ...FieldRule) error {
 
 // findStructField looks for a field in the given struct.
 // The field being looked for should be a pointer to the actual struct field.
-// If found, the field info will be returned. Otherwise, nil will be returned.
-func findStructField(s, f reflect.Value) *reflect.StructField {
+// If found, the field info and true are returned. Otherwise, false is returned.
+func findStructField(s, f reflect.Value) (reflect.StructField, bool) {
 	ptr := f.Pointer()
 	rt := mirror.ReflectType(s.Type())
 	for i := s.NumField() - 1; i >= 0; i-- {
@@ -138,7 +138,7 @@ func findStructField(s, f reflect.Value) *reflect.StructField {
 			// the address of an embedded struct is the same as the first
 			// field of the embedded struct.
 			if sf.Type() == f.Elem().Type() {
-				return new(sf.StructField())
+				return sf.StructField(), true
 			}
 		}
 		if sf.IsAnonymous() {
@@ -148,13 +148,13 @@ func findStructField(s, f reflect.Value) *reflect.StructField {
 				fi = fi.Elem()
 			}
 			if fi.Kind() == reflect.Struct {
-				if f := findStructField(fi, f); f != nil {
-					return f
+				if rsf, ok := findStructField(fi, f); ok {
+					return rsf, true
 				}
 			}
 		}
 	}
-	return nil
+	return reflect.StructField{}, false
 }
 
 // getErrorFieldName returns the name that should be used to represent the
