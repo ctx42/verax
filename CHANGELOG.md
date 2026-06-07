@@ -1,3 +1,7 @@
+## v0.13.0 (Sun, 07 Jun 2026 16:11:48 UTC)
+- perf: return findStructField by value to eliminate heap allocation.
+- chore: Update dependencies.
+
 ## v0.12.0 (Mon, 01 Jun 2026 21:25:42 UTC)
 - doc: update dependencies, add AGENTS.md with project guidelines and update .editorconfig.
 - chore: improve documentation, publishing hygiene, and spec safety.
