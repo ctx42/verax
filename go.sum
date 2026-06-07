@@ -6,5 +6,7 @@ github.com/ctx42/mirror v0.4.0 h1:P2cyL9uaxFMpGLpqKEsyBjvVzPgn8ucvwPsNzDIN2g4=
 github.com/ctx42/mirror v0.4.0/go.mod h1:XA/k5mXMe+mAIV4x3P77oUokBVl7sAvk+FsJeBAnHUo=
 github.com/ctx42/testing v0.49.0 h1:ZCwu06Au1Il1HAGifsEoTr6IB4Zh7SwwpnfmZKJmia8=
 github.com/ctx42/testing v0.49.0/go.mod h1:wRBqNRtlxDZnXIjgCX3zr05Acl6JC1D6cSBN2IpaMIs=
+github.com/ctx42/testing v0.50.0 h1:wtsznTZopxNqcnLwb6yG9SD3oxWePrKdH3xhQBy+QYY=
+github.com/ctx42/testing v0.50.0/go.mod h1:wRBqNRtlxDZnXIjgCX3zr05Acl6JC1D6cSBN2IpaMIs=
 github.com/ctx42/xrr v0.17.0 h1:cWea0X/WIfCBa+ID5p+IOjvjL7zOzdjWlkMkTXYHWpA=
 github.com/ctx42/xrr v0.17.0/go.mod h1:4T6JM0G3zuoKiKgFTZ2o5APCfpIx7QRJN+/Uq7WUaWk=
