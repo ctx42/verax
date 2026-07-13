@@ -14,6 +14,174 @@ import (
 	"github.com/ctx42/verax/pkg/spec"
 )
 
+func Test_Set(t *testing.T) {
+	t.Run("valid", func(t *testing.T) {
+		// --- Given ---
+		r := Set{
+			Min(40),
+			Max(45),
+		}
+
+		// --- When ---
+		err := r.Validate(42)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		// --- Given ---
+		r := Set{
+			Min(40),
+			Max(45),
+		}
+
+		// --- When ---
+		err := r.Validate(39)
+
+		// --- Then ---
+		assert.ErrorEqual(t, "must be greater or equal to 40", err)
+		xrrtest.AssertCode(t, ECInvRange, err)
+	})
+}
+
+func Test_Set_Spec(t *testing.T) {
+	t.Run("no rules", func(t *testing.T) {
+		// --- Given ---
+		r := Set{}
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, SetRuleName, have.Name)
+		assert.Equal(t, map[string]any{}, have.Args)
+	})
+
+	t.Run("with rules", func(t *testing.T) {
+		// --- Given ---
+		rules := []Rule{Min(42), Max(44)}
+		r := Set(rules)
+
+		// --- When ---
+		have, err := r.Spec()
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, SetRuleName, have.Name)
+		wArgs := map[string]any{spec.ArgTypes: rules}
+		assert.Equal(t, wArgs, have.Args)
+		assert.NotSame(t, rules, have.Args[spec.ArgTypes])
+	})
+
+	t.Run("Set - JSON encode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		spc := must.Value(Set{Required}.Spec())
+
+		// --- When ---
+		data := must.Value(reg.EncodeSpec(spc))
+
+		// --- Then ---
+		want := `{
+			"name": "set-rule",
+			"args": {
+				"types": [
+					{
+						"name": "required-rule",
+						"args": {"mode": "required"}
+					}
+				]
+			}
+		}`
+		assert.JSON(t, want, data)
+	})
+
+	t.Run("Set - JSON decode", func(t *testing.T) {
+		// --- Given ---
+		reg := spec.NewRegistry[Rule]()
+		reg.RegisterBuilders(Builders())
+		data := []byte(`{
+			"name": "set-rule",
+			"args": {
+				"types": [
+					{
+						"name": "required-rule",
+						"args": {"mode": "required"}
+					}
+				]
+			}
+		}`)
+
+		// --- When ---
+		have, err := reg.DecodeAndBuild(data)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Set{Required}, have)
+	})
+}
+
+func Test_SetRuleFromSpec(t *testing.T) {
+	t.Run("error - wrong spec name", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec("bad-name")
+
+		// --- When ---
+		have, err := SetRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, `set-rule: invalid spec name: "bad-name"`, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Nil(t, have)
+	})
+
+	t.Run("error - missing types argument", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(SetRuleName)
+
+		// --- When ---
+		have, err := SetRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := "set-rule: spec missing required argument: types"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.Nil(t, have)
+	})
+
+	t.Run("success - with rules", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(SetRuleName).
+			SetArg(spec.ArgTypes, []Rule{Min(42), Max(44)})
+
+		// --- When ---
+		have, err := SetRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Set{Min(42), Max(44)}, have)
+	})
+}
+
+func Test_Set_Spec_SetRuleFromSpec_round_trip(t *testing.T) {
+	t.Run("round trip", func(t *testing.T) {
+		// --- Given ---
+		want := Set{Min(42), Required}
+		spc := must.Value(want.Spec())
+
+		// --- When ---
+		have, err := SetRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
+	})
+}
+
 func Test_Check(t *testing.T) {
 	t.Run("the adapted function is called", func(t *testing.T) {
 		// --- Given ---
@@ -351,174 +519,6 @@ func Test_ValidateNamed(t *testing.T) {
 		// --- Then ---
 		wMsg := "field: must be equal to '42' (ECNotEqual)"
 		xrrtest.AssertEqual(t, wMsg, err)
-	})
-}
-
-func Test_Set(t *testing.T) {
-	t.Run("valid", func(t *testing.T) {
-		// --- Given ---
-		r := Set{
-			Min(40),
-			Max(45),
-		}
-
-		// --- When ---
-		err := r.Validate(42)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("invalid", func(t *testing.T) {
-		// --- Given ---
-		r := Set{
-			Min(40),
-			Max(45),
-		}
-
-		// --- When ---
-		err := r.Validate(39)
-
-		// --- Then ---
-		assert.ErrorEqual(t, "must be greater or equal to 40", err)
-		xrrtest.AssertCode(t, ECInvRange, err)
-	})
-}
-
-func Test_Set_Spec(t *testing.T) {
-	t.Run("no rules", func(t *testing.T) {
-		// --- Given ---
-		r := Set{}
-
-		// --- When ---
-		have, err := r.Spec()
-
-		// --- Then ---
-		assert.NoError(t, err)
-		assert.Equal(t, SetRuleName, have.Name)
-		assert.Equal(t, map[string]any{}, have.Args)
-	})
-
-	t.Run("with rules", func(t *testing.T) {
-		// --- Given ---
-		rules := []Rule{Min(42), Max(44)}
-		r := Set(rules)
-
-		// --- When ---
-		have, err := r.Spec()
-
-		// --- Then ---
-		assert.NoError(t, err)
-		assert.Equal(t, SetRuleName, have.Name)
-		wArgs := map[string]any{spec.ArgTypes: rules}
-		assert.Equal(t, wArgs, have.Args)
-		assert.NotSame(t, rules, have.Args[spec.ArgTypes])
-	})
-
-	t.Run("Set - JSON encode", func(t *testing.T) {
-		// --- Given ---
-		reg := spec.NewRegistry[Rule]()
-		spc := must.Value(Set{Required}.Spec())
-
-		// --- When ---
-		data := must.Value(reg.EncodeSpec(spc))
-
-		// --- Then ---
-		want := `{
-			"name": "set-rule",
-			"args": {
-				"types": [
-					{
-						"name": "required-rule",
-						"args": {"mode": "required"}
-					}
-				]
-			}
-		}`
-		assert.JSON(t, want, data)
-	})
-
-	t.Run("Set - JSON decode", func(t *testing.T) {
-		// --- Given ---
-		reg := spec.NewRegistry[Rule]()
-		reg.RegisterBuilders(Builders())
-		data := []byte(`{
-			"name": "set-rule",
-			"args": {
-				"types": [
-					{
-						"name": "required-rule",
-						"args": {"mode": "required"}
-					}
-				]
-			}
-		}`)
-
-		// --- When ---
-		have, err := reg.DecodeAndBuild(data)
-
-		// --- Then ---
-		assert.NoError(t, err)
-		assert.Equal(t, Set{Required}, have)
-	})
-}
-
-func Test_SetRuleFromSpec(t *testing.T) {
-	t.Run("error - wrong spec name", func(t *testing.T) {
-		// --- Given ---
-		spc := spec.NewSpec("bad-name")
-
-		// --- When ---
-		have, err := SetRuleFromSpec(spc)
-
-		// --- Then ---
-		assert.SameType(t, &InternalError{}, err)
-		assert.ErrorEqual(t, `set-rule: invalid spec name: "bad-name"`, err)
-		xrrtest.AssertCode(t, spec.ECInvSpec, err)
-		assert.Nil(t, have)
-	})
-
-	t.Run("error - missing types argument", func(t *testing.T) {
-		// --- Given ---
-		spc := spec.NewSpec(SetRuleName)
-
-		// --- When ---
-		have, err := SetRuleFromSpec(spc)
-
-		// --- Then ---
-		assert.SameType(t, &InternalError{}, err)
-		wMsg := "set-rule: spec missing required argument: types"
-		assert.ErrorEqual(t, wMsg, err)
-		xrrtest.AssertCode(t, spec.ECInvSpec, err)
-		assert.Nil(t, have)
-	})
-
-	t.Run("success - with rules", func(t *testing.T) {
-		// --- Given ---
-		spc := spec.NewSpec(SetRuleName).
-			SetArg(spec.ArgTypes, []Rule{Min(42), Max(44)})
-
-		// --- When ---
-		have, err := SetRuleFromSpec(spc)
-
-		// --- Then ---
-		assert.NoError(t, err)
-		assert.Equal(t, Set{Min(42), Max(44)}, have)
-	})
-}
-
-func Test_Set_Spec_SetRuleFromSpec_round_trip(t *testing.T) {
-	t.Run("round trip", func(t *testing.T) {
-		// --- Given ---
-		want := Set{Min(42), Required}
-		spc := must.Value(want.Spec())
-
-		// --- When ---
-		have, err := SetRuleFromSpec(spc)
-
-		// --- Then ---
-		assert.NoError(t, err)
-		assert.Equal(t, want, have)
 	})
 }
 

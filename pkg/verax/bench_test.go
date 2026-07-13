@@ -13,7 +13,6 @@ import (
 var (
 	sinkErr  error
 	sinkBool bool
-	sinkInt  int
 	sinkAny  any
 )
 
