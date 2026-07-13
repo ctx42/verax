@@ -1,3 +1,17 @@
+## v0.14.0 (Mon, 13 Jul 2026 21:12:12 UTC)
+- chore: update AGENTS.md file.
+- fix(rule): match punycode TLDs in domain validation.
+- fix(verax): honor Contain().When(false) on empty collections.
+- fix(spec): guard EncodeSpec against a nil Spec.
+- fix(spec): report the real argument name on decode failure.
+- docs(spec): add README and runnable example.
+- refactor(verax): apply review cleanups.
+- refactor(rule)!: rename IsSemver to IsSemVer.
+- chore: update mirror and testing dependencies.
+- test(spec): assert the missing signed-int converters.
+- test(verax): drop unused sink var and reorder Set tests.
+- test(rule): name domain and semver cases descriptively.
+
 ## v0.13.0 (Sun, 07 Jun 2026 16:11:48 UTC)
 - perf: return findStructField by value to eliminate heap allocation.
 - chore: Update dependencies.
