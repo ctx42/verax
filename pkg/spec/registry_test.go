@@ -897,7 +897,7 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "JSON to spec: spec my-spec, argument value: " +
+		wMsg := "JSON to spec: spec my-spec, argument arg: " +
 			"invalid spec argument"
 		assert.ErrorEqual(t, wMsg, err)
 	})
@@ -1511,7 +1511,7 @@ func Test_Registry_decodeValue(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "JSON to spec: spec my-spec, argument value: " +
+		wMsg := "JSON to spec: spec my-spec, argument arg-name: " +
 			"invalid spec argument"
 		assert.ErrorEqual(t, wMsg, err)
 	})

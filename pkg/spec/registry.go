@@ -487,7 +487,7 @@ func (reg *Registry[T]) decodeValue(
 	err := jsontype.Unmarshal(reg.jtr, data, &val)
 	if err != nil {
 		format := "JSON to spec: spec %s, argument %s: %w"
-		return NewErrorf(format, spc.Name, ArgValue, ErrInvArg)
+		return NewErrorf(format, spc.Name, name, ErrInvArg)
 	}
 	spc.SetArg(name, val.GoValue())
 	return nil
