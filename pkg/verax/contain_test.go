@@ -36,6 +36,17 @@ func Test_ContainRule_Validate(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("skip validation when the condition is false and empty", func(t *testing.T) {
+		// --- Given ---
+		r := Contain(Equal(42)).When(false)
+
+		// --- When ---
+		err := r.Validate([]int{})
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
 	t.Run("error - not iterable value", func(t *testing.T) {
 		// --- Given ---
 		r := Contain(Equal(42))

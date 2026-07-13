@@ -16,7 +16,9 @@ const ContainRuleName = "contain-rule"
 
 // Contain returns a validation rule that loops through iterable (map, slice,
 // or array) and validates it contains at least one given value.
-func Contain(rule EqualRule) ContainRule { return ContainRule{rule: rule} }
+func Contain(rule EqualRule) ContainRule {
+	return ContainRule{rule: rule, condition: true}
+}
 
 // Compile time checks.
 var (
@@ -28,10 +30,14 @@ var (
 // ContainRule is a validation rule that validates there is at least one
 // element in a map/slice/array using the specified [EqualRule].
 type ContainRule struct {
-	rule EqualRule // Equality rule used to match elements.
+	rule      EqualRule // Equality rule used to match elements.
+	condition bool      // Run validation only when true.
 }
 
 func (r ContainRule) Validate(have any) error {
+	if !r.condition {
+		return nil
+	}
 	vo := reflect.ValueOf(have)
 
 	var success bool
@@ -65,6 +71,7 @@ func (r ContainRule) Validate(have any) error {
 }
 
 func (r ContainRule) When(condition bool) ContainRule {
+	r.condition = condition
 	r.rule = r.rule.When(condition)
 	return r
 }
