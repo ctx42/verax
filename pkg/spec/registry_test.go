@@ -330,6 +330,19 @@ func Test_Registry_Build(t *testing.T) {
 }
 
 func Test_Registry_EncodeSpec(t *testing.T) {
+	t.Run("error - nil spec", func(t *testing.T) {
+		// --- Given ---
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.EncodeSpec(nil)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrInvSpec, err)
+		assert.ErrorEqual(t, "invalid spec", err)
+		assert.Nil(t, have)
+	})
+
 	t.Run("error - specs argument", func(t *testing.T) {
 		// --- Given ---
 		spc := NewSpec("my-spec").SetArg(ArgSpecs, true)

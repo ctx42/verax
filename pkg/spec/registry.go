@@ -156,6 +156,9 @@ func (reg *Registry[T]) Build(spc *Spec) (T, error) {
 // copy so callers can safely reuse the same *Spec across multiple
 // Encode / Build / roundtrip operations.
 func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
+	if spc == nil {
+		return nil, ErrInvSpec
+	}
 	// Work on a copy so the caller's Spec is never mutated.
 	work := &Spec{
 		Name: spc.Name,
