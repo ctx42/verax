@@ -430,7 +430,7 @@ func Test_EachRuleFromSpec(t *testing.T) {
 	})
 }
 
-func Test_EachRule_Spec_ContainRuleFromSpec_round_trip(t *testing.T) {
+func Test_EachRule_Spec_EachRuleFromSpec_round_trip(t *testing.T) {
 	t.Run("round trip", func(t *testing.T) {
 		// --- Given ---
 		want := Each(Min(42), Required)

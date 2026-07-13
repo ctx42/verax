@@ -335,7 +335,7 @@ func Test_Validate(t *testing.T) {
 	})
 }
 
-func Test_ValidateName(t *testing.T) {
+func Test_ValidateNamed(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// --- When ---
 		err := ValidateNamed("field", 42, Equal(42))

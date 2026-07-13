@@ -47,8 +47,7 @@ func (r WhenRule) Validate(have any) error {
 		customMsg := r.flags&flgCustomMsg != 0
 		customCode := r.flags&flgCustomCode != 0
 
-		// If no custom function is set, uses the current message and code.
-		// Also applies when both the custom message and code are provided.
+		// Both a custom message and code are set.
 		if customMsg && customCode {
 			return NewError(r.msg, r.code)
 		}

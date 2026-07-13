@@ -59,7 +59,7 @@ func (r EachRule) Validate(have any) error {
 		}
 
 	case reflect.Slice, reflect.Array:
-		for i := 0; i < vo.Len(); i++ {
+		for i := range vo.Len() {
 			val := getInterface(vo.Index(i))
 			if err := Validate(val, r.rules...); err != nil {
 				if ers == nil {

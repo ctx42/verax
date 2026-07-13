@@ -40,30 +40,25 @@ func (r ContainRule) Validate(have any) error {
 	}
 	vo := reflect.ValueOf(have)
 
-	var success bool
 	switch vo.Kind() {
 	case reflect.Map:
 		for _, k := range vo.MapKeys() {
 			val := getInterface(vo.MapIndex(k))
 			if err := Validate(val, r.rule); err == nil {
-				success = true
+				return nil
 			}
 		}
 
 	case reflect.Slice, reflect.Array:
-		for i := 0; i < vo.Len(); i++ {
+		for i := range vo.Len() {
 			val := getInterface(vo.Index(i))
 			if err := Validate(val, r.rule); err == nil {
-				success = true
+				return nil
 			}
 		}
 
 	default:
 		return NewInternalErrorf("must be iterable", xrr.WithCode(ECInvType))
-	}
-
-	if success {
-		return nil
 	}
 
 	format := "must contain at least one '%v' value"

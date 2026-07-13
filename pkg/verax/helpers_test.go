@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+	"time"
 
 	"github.com/ctx42/testing/pkg/assert"
 	"github.com/ctx42/xrr/pkg/xrr/xrrtest"
@@ -128,6 +129,33 @@ func Test_mustTpl(t *testing.T) {
 		assert.ErrorContain(t, "template: name:", err)
 		assert.ErrorContain(t, `map has no entry for key "not_supported"`, err)
 	})
+}
+
+func Test_formatValue_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		value any
+		want  any
+	}{
+		{"nil", nil, "nil"},
+		{"int", 42, 42},
+		{
+			"time",
+			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
+			"2000-01-02T03:04:05Z",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			have := formatValue(tc.value)
+
+			// --- Then ---
+			assert.Equal(t, tc.want, have)
+		})
+	}
 }
 
 func Test_renderTpl(t *testing.T) {

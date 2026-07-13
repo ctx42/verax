@@ -16,6 +16,9 @@ const ByRuleName = "by-rule"
 // escape hatch for custom validation logic. The function receives the value
 // and should return nil on success or a verax domain error on failure
 // (see [Rule]). Use [Check] for the simple func(bool) case.
+//
+// An empty value is considered valid and the function is not called; use the
+// [Required] rule to reject empty values.
 func By(fn RuleFunc) ByRule { return ByRule{fn: fn, condition: true} }
 
 // Compile time conditions.

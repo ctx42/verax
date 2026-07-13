@@ -293,7 +293,7 @@ func Test_ValidateStruct(t *testing.T) {
 		xrrtest.AssertEqual(t, "FStr: cannot be blank (ECRequired)", err)
 	})
 
-	t.Run("invalid field with value struct", func(t *testing.T) {
+	t.Run("invalid field with fail rule", func(t *testing.T) {
 		// --- Given ---
 		s := Model{
 			ModelVal: ModelVal{"abc"},

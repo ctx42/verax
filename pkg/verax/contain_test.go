@@ -36,7 +36,7 @@ func Test_ContainRule_Validate(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("skip validation when the condition is false and empty", func(t *testing.T) {
+	t.Run("condition false and empty collection", func(t *testing.T) {
 		// --- Given ---
 		r := Contain(Equal(42)).When(false)
 
@@ -251,7 +251,7 @@ func Test_ContainRule_Spec(t *testing.T) {
 		assert.Equal(t, wArgs, have.Args)
 	})
 
-	t.Run("error - invalid mode", func(t *testing.T) {
+	t.Run("error - value cannot be rendered", func(t *testing.T) {
 		// --- Given ---
 		eq := Equal(func() {})
 		r := Contain(eq)
@@ -267,7 +267,7 @@ func Test_ContainRule_Spec(t *testing.T) {
 	})
 
 	t.Run("Contain - JSON encode", func(t *testing.T) {
-		// --- Contain ---
+		// --- Given ---
 		reg := spec.NewRegistry[Rule]()
 
 		// --- When ---

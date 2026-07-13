@@ -495,7 +495,7 @@ func compareTime(want, have any) (int, error) {
 	if !ok {
 		return 0, errConvert(RangeRuleName, have, time.Time{})
 	}
-	return cmp.Compare(w.UnixNano(), h.UnixNano()), nil
+	return w.Compare(h), nil
 }
 
 // compareFor returns a [CompareFunc] function for the given value. The

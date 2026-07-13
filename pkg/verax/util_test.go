@@ -467,30 +467,3 @@ func Test_mapErrKey_tabular(t *testing.T) {
 		})
 	}
 }
-
-func Test_formatValue_tabular(t *testing.T) {
-	tt := []struct {
-		testN string
-
-		value any
-		want  any
-	}{
-		{"nil", nil, "nil"},
-		{"int", 42, 42},
-		{
-			"time",
-			time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC),
-			"2000-01-02T03:04:05Z",
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- When ---
-			have := formatValue(tc.value)
-
-			// --- Then ---
-			assert.Equal(t, tc.want, have)
-		})
-	}
-}

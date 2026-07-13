@@ -79,7 +79,7 @@ type MapKey struct {
 //	    verax.Key("Value", verax.Required, verax.Length(5, 10)),
 //	)
 //
-// A nil value is considered valid. Use the [Required] rule to make sure a map
+// A nil map is considered valid. Use the [Required] rule to make sure a map
 // value is present.
 func Map(keys ...MapKey) MapRule { return MapRule{condition: true, keys: keys} }
 
@@ -172,7 +172,7 @@ func (r MapRule) Validate(have any) error {
 			if ers == nil {
 				ers = &FieldErrors{}
 			}
-			ers.Set(getErrorKeyName(key), ErrKeyUnexpected)
+			ers.Set(fmt.Sprintf("%v", key), ErrKeyUnexpected)
 		}
 	}
 
@@ -325,7 +325,3 @@ func MapKeyFromSpec(spc *spec.Spec) (MapKey, error) {
 	}
 	return rule, nil
 }
-
-// getErrorKeyName returns the name that should be used to represent
-// the validation error of a map key.
-func getErrorKeyName(key any) string { return fmt.Sprintf("%v", key) }
