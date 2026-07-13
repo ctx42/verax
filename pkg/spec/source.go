@@ -63,6 +63,7 @@ func (src Source) Val() any { return src.val }
 // Ptr retrieves the pointer to the value described by the source.
 func (src Source) Ptr() uintptr { return src.ptr }
 
+// IsZero reports whether the source is the zero value.
 func (src Source) IsZero() bool { return Source{} == src }
 
 // GetSrcPointer returns a pointer to the value. Returns zero for not supported

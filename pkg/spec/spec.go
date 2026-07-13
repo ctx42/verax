@@ -128,7 +128,7 @@ type Spec struct {
 // Use application-wide unique names.
 func NewSpec(name string) *Spec { return &Spec{Name: name} }
 
-// SetArg sets [Source] argument; when the argument with the same name exists,
+// SetArg sets a [Spec] argument; when an argument with the same name exists,
 // it will be overwritten.
 func (spc *Spec) SetArg(name string, val any) *Spec {
 	if spc.Args == nil {

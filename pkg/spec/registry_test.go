@@ -562,7 +562,8 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 	t.Run("error - nested sub-spec encode error", func(t *testing.T) {
 		// --- Given ---
-		sub := NewSpec("sub").SetArg("custom", TstFn0) // TstFn0 is func() — not serializable
+		// TstFn0 is func() — not serializable.
+		sub := NewSpec("sub").SetArg("custom", TstFn0)
 		spc := NewSpec("my-spec").SetArg(ArgSpecs, []*Spec{sub})
 		reg := NewRegistry[TstType]()
 
@@ -595,7 +596,8 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 	t.Run("error - types element Spec returns error", func(t *testing.T) {
 		// --- Given ---
-		spc := NewSpec("my-spec").SetArg(ArgTypes, []TstSpec{{name: "x", err: ErrTst}})
+		tps := []TstSpec{{name: "x", err: ErrTst}}
+		spc := NewSpec("my-spec").SetArg(ArgTypes, tps)
 		reg := NewRegistry[TstSpec]()
 
 		// --- When ---
@@ -1046,7 +1048,7 @@ func Test_Registry_encodeSpecs(t *testing.T) {
 }
 
 func Test_Registry_decodeSpecs(t *testing.T) {
-	t.Run("error - invalid JOSN type", func(t *testing.T) {
+	t.Run("error - invalid JSON type", func(t *testing.T) {
 		// --- Given ---
 		data := `42`
 		reg := NewRegistry[TstType]()
@@ -1074,7 +1076,7 @@ func Test_Registry_decodeSpecs(t *testing.T) {
 		assert.Nil(t, have)
 	})
 
-	t.Run("error - invalid specs type", func(t *testing.T) {
+	t.Run("error - invalid spec element", func(t *testing.T) {
 		// --- Given ---
 		data := `[ "wrong0", "wrong1" ]`
 		reg := NewRegistry[TstType]()
@@ -1194,7 +1196,7 @@ func Test_Registry_encodeTypes(t *testing.T) {
 }
 
 func Test_Registry_decodeTypes(t *testing.T) {
-	t.Run("error - invalid JOSN type", func(t *testing.T) {
+	t.Run("error - invalid JSON type", func(t *testing.T) {
 		// --- Given ---
 		data := `42`
 		reg := NewRegistry[TstType]()

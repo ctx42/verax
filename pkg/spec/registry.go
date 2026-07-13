@@ -6,6 +6,7 @@ package spec
 import (
 	"bytes"
 	"encoding/json"
+	"maps"
 	"reflect"
 	"sync"
 
@@ -164,9 +165,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 		Name: spc.Name,
 		Args: make(map[string]any, len(spc.Args)),
 	}
-	for k, v := range spc.Args {
-		work.Args[k] = v
-	}
+	maps.Copy(work.Args, spc.Args)
 
 	for name, value := range work.Args {
 		switch name {
@@ -477,12 +476,7 @@ func (reg *Registry[T]) decodeValues(data []byte, spc *Spec) error {
 
 // decodeValue decodes a single JSON representation of [jsontype.Value] and
 // sets it with the given name in the [Spec.Args] map.
-func (reg *Registry[T]) decodeValue(
-	name string,
-	data []byte,
-	spc *Spec,
-) error {
-
+func (reg *Registry[T]) decodeValue(name string, data []byte, spc *Spec) error {
 	val := jsontype.Value{}
 	err := jsontype.Unmarshal(reg.jtr, data, &val)
 	if err != nil {
