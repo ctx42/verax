@@ -21,7 +21,7 @@ var (
 	base64Rxc = regexp.MustCompile(base64Rx)
 )
 
-// ECBase64 represents error code for not nil value.
+// ECBase64 is the error code for an invalid base64 value.
 const ECBase64 = "ECBase64"
 
 // Validation error messages.

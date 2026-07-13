@@ -58,7 +58,7 @@ func Test_IP(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("error validation", func(t *testing.T) {
+	t.Run("error - validation", func(t *testing.T) {
 		// --- When ---
 		err := IP.Validate("256.0.0.0")
 
@@ -444,7 +444,7 @@ func Test_Domain(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("error - validate", func(t *testing.T) {
+	t.Run("error - validation", func(t *testing.T) {
 		// --- When ---
 		err := Domain.Validate("a.b..")
 
@@ -512,7 +512,7 @@ func Test_Host(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("error - validate", func(t *testing.T) {
+	t.Run("error - validation", func(t *testing.T) {
 		// --- When ---
 		err := Host.Validate("localhost/")
 

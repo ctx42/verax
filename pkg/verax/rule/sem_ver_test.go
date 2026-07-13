@@ -12,7 +12,7 @@ import (
 	"github.com/ctx42/verax/pkg/verax"
 )
 
-func Test_IsSemver_tabular(t *testing.T) {
+func Test_IsSemVer_tabular(t *testing.T) {
 	var tt = []struct {
 		testN string
 
@@ -45,12 +45,34 @@ func Test_IsSemver_tabular(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
-			have := IsSemver(tc.param)
+			have := IsSemVer(tc.param)
 
 			// --- Then ---
 			assert.Equal(t, tc.want, have)
 		})
 	}
+}
+
+func Test_SemVer(t *testing.T) {
+	t.Run("error - validation", func(t *testing.T) {
+		// --- When ---
+		err := SemVer.Validate("1.0.0-+beta")
+
+		// --- Then ---
+		assert.ErrorEqual(t, "must be a valid semantic version", err)
+		xrrtest.AssertCode(t, ECSemVer, err)
+	})
+
+	t.Run("error - invalid type", func(t *testing.T) {
+		// --- When ---
+		err := SemVer.Validate(42)
+
+		// --- Then ---
+		assert.SameType(t, &verax.InternalError{}, err)
+		wMsg := "must be a valid semantic version: expected string, got int"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, verax.ECInvType, err)
+	})
 }
 
 func Test_SemVer_tabular(t *testing.T) {
@@ -72,40 +94,4 @@ func Test_SemVer_tabular(t *testing.T) {
 			assert.NoError(t, err)
 		})
 	}
-}
-
-func Test_SemVer_errors_tabular(t *testing.T) {
-	tt := []struct {
-		testN string
-
-		semVer string
-		err    string
-		code   string
-	}{
-		{"1", "1.0.0-+beta", "must be a valid semantic version", ECSemVer},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- When ---
-			err := SemVer.Validate(tc.semVer)
-
-			// --- Then ---
-			assert.ErrorEqual(t, tc.err, err)
-			xrrtest.AssertCode(t, tc.code, err)
-		})
-	}
-}
-
-func Test_SemVer(t *testing.T) {
-	t.Run("error - invalid type", func(t *testing.T) {
-		// --- When ---
-		err := SemVer.Validate(42)
-
-		// --- Then ---
-		assert.SameType(t, &verax.InternalError{}, err)
-		wMsg := "must be a valid semantic version: expected string, got int"
-		assert.ErrorEqual(t, wMsg, err)
-		xrrtest.AssertCode(t, verax.ECInvType, err)
-	})
 }
