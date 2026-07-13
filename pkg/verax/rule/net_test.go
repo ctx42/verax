@@ -403,6 +403,7 @@ func Test_IsDomain_tabular(t *testing.T) {
 		{"21", "50.50.50.50", false},
 		{"22", "localhost.localdomain.intern:65535", false},
 		{"23", "漢字汉字", false},
+		{"24", "example.xn--p1ai", true},
 		{
 			"too long",
 			"www.jubfvq1v3p38i51622y0dvmdk1mymowjyeu26gbtw9andgyn" +
