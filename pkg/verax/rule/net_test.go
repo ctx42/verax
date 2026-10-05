@@ -96,6 +96,7 @@ func Test_IsIPv4_tabular(t *testing.T) {
 		{"IPv6 loopback", "::1", false},
 		{"IPv6", "1ce:c01d:bee2:15:a5:900d:a5:11fe", false},
 		{"IPv6 invalid", ":::1", false},
+		{"IPv4-mapped IPv6", "::ffff:1.2.3.4", false},
 	}
 
 	for _, tc := range tt {
@@ -163,6 +164,7 @@ func Test_IsIPv6_tabular(t *testing.T) {
 		{"IPv6 loopback", "::1", true},
 		{"IPv6", "1ce:c01d:bee2:15:a5:900d:a5:11fe", true},
 		{"IPv6 invalid", ":::1", false},
+		{"IPv4-mapped IPv6", "::ffff:1.2.3.4", true},
 	}
 
 	for _, tc := range tt {

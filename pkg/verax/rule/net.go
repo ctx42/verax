@@ -64,10 +64,11 @@ var CheckIP = verax.Check(IsIP, msgIP, ECIP)
 // IP validates if a string is a valid IPv4 or IPv6 address.
 var IP = verax.By(CheckIP)
 
-// IsIPv4 checks if the string is IP version 4.
+// IsIPv4 checks if the string is IP version 4 in dotted-decimal notation;
+// IPv4-mapped IPv6 addresses are rejected.
 func IsIPv4(str string) bool {
 	ip := net.ParseIP(str)
-	return ip != nil && strings.Contains(str, ".")
+	return ip != nil && !strings.Contains(str, ":")
 }
 
 // CheckIPv4 is a [verax.RuleFunc] that checks that a string is a valid IPv4
