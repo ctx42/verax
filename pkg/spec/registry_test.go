@@ -642,6 +642,19 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 		assert.ErrorEqual(t, "JSON to spec: invalid spec", err)
 	})
 
+	t.Run("error - nil spec", func(t *testing.T) {
+		// --- Given ---
+		data := `{"name": "my-spec", "args": {"arg": 1}}`
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		err := reg.DecodeSpec([]byte(data), nil)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrInvSpec, err)
+		assert.ErrorEqual(t, "JSON to spec: nil spec: invalid spec", err)
+	})
+
 	t.Run("without sources nor arguments", func(t *testing.T) {
 		// --- Given ---
 		data := `{"name":"my-spec"}`

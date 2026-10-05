@@ -221,8 +221,12 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 // jsNull represents the JSON null value.
 var jsNull = json.RawMessage(`null`)
 
-// DecodeSpec decodes JSON representation of [Spec].
+// DecodeSpec decodes JSON representation of [Spec]. Returns [ErrInvSpec] if
+// spc is nil.
 func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
+	if spc == nil {
+		return NewErrorf("JSON to spec: nil spec: %w", ErrInvSpec)
+	}
 	tmp := struct {
 		*Spec
 		Args map[string]json.RawMessage `json:"args"`
