@@ -219,7 +219,7 @@ func (r EqualRule) Message(tpl string) EqualRule {
 	}
 
 	buf := &bytes.Buffer{}
-	data := map[string]any{spec.ArgValue: r.want}
+	data := map[string]any{spec.ArgValue: formatValue(r.want)}
 	if err = parsed.Execute(buf, data); err != nil {
 		r.sticky = NewInternalErrorf(
 			"%s(%s): custom template render error",

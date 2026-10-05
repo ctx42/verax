@@ -251,7 +251,7 @@ func (r RangeRule) Message(tpl string) RangeRule {
 	}
 
 	buf := &bytes.Buffer{}
-	data := map[string]any{spec.ArgValue: r.threshold}
+	data := map[string]any{spec.ArgValue: formatValue(r.threshold)}
 	if err = parsed.Execute(buf, data); err != nil {
 		r.sticky = NewInternalErrorf(
 			"%s(%s): custom template render error",

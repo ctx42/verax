@@ -546,6 +546,19 @@ func Test_RangeRule_When(t *testing.T) {
 }
 
 func Test_RangeRule_Message(t *testing.T) {
+
+	t.Run("time value uses RFC3339", func(t *testing.T) {
+		// --- Given ---
+		r := Min(iTime)
+
+		// --- When ---
+		have := r.Message("after {{.value}}")
+
+		// --- Then ---
+		assert.NoError(t, have.sticky)
+		assert.Equal(t, "after 2022-02-25T21:13:00Z", have.msg)
+	})
+
 	t.Run("an empty string is a noop", func(t *testing.T) {
 		// --- Given ---
 		r := Max(42)
