@@ -73,20 +73,36 @@ func (reg *Registry[T]) SourceByName(name string) Source {
 }
 
 // SourceByValue retrieves an instance of [Source] representing a given value.
+//
+// Sources are matched by the function's code pointer, which closures created
+// by the same function literal, and method values of the same method, share.
+// When several registered sources match, the first registered one is
+// returned; encoding such a value returns [ErrInvSource].
 func (reg *Registry[T]) SourceByValue(value any) Source {
+	if srcs := reg.sourcesByValue(value); len(srcs) > 0 {
+		return srcs[0]
+	}
+	return Source{}
+}
+
+// sourcesByValue returns all registered sources matching the value's
+// function code pointer, in registration order.
+func (reg *Registry[T]) sourcesByValue(value any) []Source {
+	ptr := GetSrcPointer(reflect.ValueOf(value))
+	if ptr == 0 {
+		return nil
+	}
+
 	reg.mx.RLock()
 	defer reg.mx.RUnlock()
 
-	ptr := GetSrcPointer(reflect.ValueOf(value))
-	if ptr == 0 {
-		return Source{}
-	}
+	var srcs []Source
 	for _, src := range reg.sources {
 		if src.Ptr() == ptr {
-			return src
+			srcs = append(srcs, src)
 		}
 	}
-	return Source{}
+	return srcs
 }
 
 // RegisterBuilder registers or replaces a [Builder] for the given spec name.
@@ -435,10 +451,15 @@ func (reg *Registry[T]) decodeTypes(data []byte, spc *Spec) error {
 // encodeSource encodes the given source value. The source must be registered
 // using the [Registry.SourceByValue] method beforehand.
 func (reg *Registry[T]) encodeSource(value any) (any, error) {
-	src := reg.SourceByValue(value)
-	if src.IsZero() {
+	srcs := reg.sourcesByValue(value)
+	if len(srcs) == 0 {
 		return nil, ErrUnkSource
 	}
+	if len(srcs) > 1 {
+		format := "ambiguous source: value matches %s and %s: %w"
+		return nil, NewErrorf(format, srcs[0].Name, srcs[1].Name, ErrInvSource)
+	}
+	src := srcs[0]
 	if src.Lang != "go" {
 		format := "source %s: lang %s: %w"
 		return nil, NewErrorf(format, src.Name, src.Lang, ErrInvSource)

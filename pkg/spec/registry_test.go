@@ -1438,6 +1438,26 @@ func Test_Registry_encodeSource(t *testing.T) {
 		assert.Nil(t, have)
 	})
 
+	t.Run("error - ambiguous source", func(t *testing.T) {
+		// --- Given ---
+		var fns []func() int // Closures of one literal share a code pointer.
+		for i := range 2 {
+			fns = append(fns, func() int { return i })
+		}
+		reg := NewRegistry[TstType]()
+		reg.RegisterSource(must.Value(NewSource("src0", fns[0])))
+		reg.RegisterSource(must.Value(NewSource("src1", fns[1])))
+
+		// --- When ---
+		have, err := reg.encodeSource(fns[1])
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrInvSource, err)
+		wMsg := "ambiguous source: value matches src0 and src1: invalid source"
+		assert.ErrorEqual(t, wMsg, err)
+		assert.Nil(t, have)
+	})
+
 	t.Run("error - not go source", func(t *testing.T) {
 		// --- Given ---
 		src := must.Value(NewSource("my-src", TstFn0)).SetLang("js")
