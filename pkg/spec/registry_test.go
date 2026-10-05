@@ -67,7 +67,7 @@ func Test_Registry_RegisterSource(t *testing.T) {
 		srcNew := must.Value(NewSource("fn", fnNew))
 
 		reg := NewRegistry[TstType]()
-		reg.RegisterSource(srcOld)
+		_ = reg.RegisterSource(srcOld)
 
 		// --- When ---
 		have := reg.RegisterSource(srcNew)
@@ -98,8 +98,8 @@ func Test_Registry_SourceByName(t *testing.T) {
 		src1 := must.Value(NewSource("fn1", fn1))
 
 		reg := NewRegistry[TstType]()
-		reg.RegisterSource(src0)
-		reg.RegisterSource(src1)
+		_ = reg.RegisterSource(src0)
+		_ = reg.RegisterSource(src1)
 
 		// --- When ---
 		have := reg.SourceByName(src1.Name)
@@ -141,8 +141,8 @@ func Test_Registry_SourceByValue(t *testing.T) {
 		src1 := must.Value(NewSource("fn1", fn1))
 
 		reg := NewRegistry[TstType]()
-		reg.RegisterSource(src0)
-		reg.RegisterSource(src1)
+		_ = reg.RegisterSource(src0)
+		_ = reg.RegisterSource(src1)
 
 		// --- When ---
 		have := reg.SourceByValue(fn1)
@@ -170,8 +170,9 @@ func Test_Registry_RegisterBuilder(t *testing.T) {
 		// --- Given ---
 		fnOld := func(*Spec) (TstType, error) { return TstType{}, nil }
 		fnNew := func(*Spec) (TstType, error) { return TstType{}, nil }
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterBuilder("name", fnOld)
+		_ = reg.RegisterBuilder("name", fnOld)
 
 		// --- When ---
 		have := reg.RegisterBuilder("name", fnNew)
@@ -197,8 +198,9 @@ func Test_Registry_RegisterBuilder(t *testing.T) {
 	t.Run("remove builder", func(t *testing.T) {
 		// --- Given ---
 		fn := func(*Spec) (TstType, error) { return TstType{}, nil }
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterBuilder("name", fn)
+		_ = reg.RegisterBuilder("name", fn)
 
 		// --- When ---
 		have := reg.RegisterBuilder("name", nil)
@@ -230,8 +232,9 @@ func Test_Registry_RegisterBuilders(t *testing.T) {
 		b0 := func(*Spec) (TstType, error) { return TstType{}, nil }
 		b1 := func(*Spec) (TstType, error) { return TstType{}, nil }
 		bls := map[string]TstBuilder{"b0": b0, "b1": b1}
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterBuilder("b0", b0)
+		_ = reg.RegisterBuilder("b0", b0)
 
 		// --- When ---
 		have := reg.RegisterBuilders(bls)
@@ -246,8 +249,9 @@ func Test_Registry_RegisterBuilders(t *testing.T) {
 		b0 := func(*Spec) (TstType, error) { return TstType{}, nil }
 		b1 := func(*Spec) (TstType, error) { return TstType{}, nil }
 		bls := map[string]TstBuilder{"b0": nil, "b1": b1}
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterBuilder("b0", b0)
+		_ = reg.RegisterBuilder("b0", b0)
 
 		// --- When ---
 		have := reg.RegisterBuilders(bls)
@@ -273,8 +277,9 @@ func Test_Registry_BuilderFor(t *testing.T) {
 	t.Run("existing", func(t *testing.T) {
 		// --- Given ---
 		fn := func(*Spec) (TstType, error) { return TstType{}, nil }
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterBuilder("name", fn)
+		_ = reg.RegisterBuilder("name", fn)
 
 		// --- When ---
 		have := reg.BuilderFor("name")
@@ -311,10 +316,10 @@ func Test_Registry_Build(t *testing.T) {
 		assert.Zero(t, have)
 	})
 
-	t.Run("error - builder returns error", func(t *testing.T) {
+	t.Run("error - builder", func(t *testing.T) {
 		// --- Given ---
 		reg := NewRegistry[TstType]()
-		reg.RegisterBuilder("my-spec", func(*Spec) (TstType, error) {
+		_ = reg.RegisterBuilder("my-spec", func(*Spec) (TstType, error) {
 			return TstType{}, ErrTst
 		})
 
@@ -330,7 +335,7 @@ func Test_Registry_Build(t *testing.T) {
 	t.Run("builds value", func(t *testing.T) {
 		// --- Given ---
 		reg := NewRegistry[TstType]()
-		reg.RegisterBuilder("my-spec", func(*Spec) (TstType, error) {
+		_ = reg.RegisterBuilder("my-spec", func(*Spec) (TstType, error) {
 			return TstType{"built"}, nil
 		})
 
@@ -380,9 +385,9 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArgType, err)
-		wMsg := "spec to JSON: spec my-spec, argument specs: " +
+		want := "spec to JSON: spec my-spec, argument specs: " +
 			"invalid spec argument type"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
@@ -399,13 +404,13 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 		assert.NoError(t, err)
 		want := `{
 			"name": "my-spec",
-				"args": {
-					"specs": [
-						{"name": "s0"},
-						{"name": "s1"}
-					]
-				}
-			}`
+			"args": {
+				"specs": [
+					{"name": "s0"},
+					{"name": "s1"}
+				]
+			}
+		}`
 		assert.JSON(t, want, string(have))
 	})
 
@@ -419,9 +424,9 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArgType, err)
-		wMsg := "spec to JSON: spec my-spec, argument types: " +
+		want := "spec to JSON: spec my-spec, argument types: " +
 			"invalid spec argument type"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
@@ -461,8 +466,8 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrUnkSource, err)
-		wMsg := "spec to JSON: spec my-spec, argument src_go: unknown source"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "spec to JSON: spec my-spec, argument src_go: unknown source"
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
@@ -470,8 +475,9 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 		// --- Given ---
 		src := must.Value(NewSource("my-fn", TstFn0))
 		spc := NewSpec("my-spec").SetArg(ArgSrc, TstFn0)
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterSource(src)
+		_ = reg.RegisterSource(src)
 
 		// --- When ---
 		have, err := reg.EncodeSpec(spc)
@@ -501,16 +507,15 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArgType, err)
-		wMsg := "spec to JSON: spec my-spec, argument values: " +
+		want := "spec to JSON: spec my-spec, argument values: " +
 			"invalid spec argument type"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
 	t.Run("values argument", func(t *testing.T) {
 		// --- Given ---
-		spc := NewSpec("my-spec").
-			SetArg(ArgValues, []any{1, 2.6, nil})
+		spc := NewSpec("my-spec").SetArg(ArgValues, []any{1, 2.6, nil})
 		reg := NewRegistry[TstType]()
 
 		// --- When ---
@@ -519,15 +524,15 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 		// --- Then ---
 		assert.NoError(t, err)
 		want := `{
-				"name":"my-spec",
-				"args": {
-					"values": [
-						{"type": "int", "value": 1},
-						2.6,
-						null
-					]
-				}
-			}`
+			"name":"my-spec",
+			"args": {
+				"values": [
+					{"type": "int", "value": 1},
+					2.6,
+					null
+				]
+			}
+		}`
 		assert.JSON(t, want, string(have))
 	})
 
@@ -541,15 +546,16 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "spec to JSON: spec my-spec, argument custom: " +
+		want := "spec to JSON: spec my-spec, argument custom: " +
 			"jsontype: unsupported type: func()"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
 	t.Run("error - argument type not in registry", func(t *testing.T) {
 		// --- Given ---
 		spc := NewSpec("my-spec").SetArg("int", 1)
+
 		reg := NewRegistry[TstType]()
 		reg.jtr = jsontype.NewRegistry()
 
@@ -617,8 +623,9 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 			SetArg(ArgSpecs, []*Spec{NewSpec("sub").SetArg("int", 2)}).
 			SetArg(ArgSrc, TstFn0).
 			SetArg(ArgValues, []any{3})
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterSource(src)
+		_ = reg.RegisterSource(src)
 
 		// --- When ---
 		_, err := reg.EncodeSpec(spc)
@@ -664,10 +671,10 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "spec to JSON: spec my-spec, argument specs: " +
+		want := "spec to JSON: spec my-spec, argument specs: " +
 			"index 0: spec to JSON: spec sub, argument custom: " +
 			"jsontype: unsupported type: func()"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
@@ -683,10 +690,10 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSpec, err)
-		wMsg := "spec to JSON: spec my-spec, argument specs: index 0: " +
+		want := "spec to JSON: spec my-spec, argument specs: index 0: " +
 			"spec to JSON: spec sub, argument specs: index 0: " +
 			"spec to JSON: cyclic spec my-spec: invalid spec"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
@@ -718,13 +725,13 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrNotSpecable, err)
-		wMsg := "spec to JSON: spec my-spec, argument types: " +
+		want := "spec to JSON: spec my-spec, argument types: " +
 			"index 0: type not specable"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
-	t.Run("error - types element Spec returns error", func(t *testing.T) {
+	t.Run("error - types element Spec", func(t *testing.T) {
 		// --- Given ---
 		tps := []TstSpec{{name: "x", err: ErrTst}}
 		spc := NewSpec("my-spec").SetArg(ArgTypes, tps)
@@ -735,9 +742,9 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrTst, err)
-		wMsg := "spec to JSON: spec my-spec, argument types: " +
+		want := "spec to JSON: spec my-spec, argument types: " +
 			"index 0: test msg"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
@@ -751,9 +758,9 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "spec to JSON: spec my-spec, argument values: " +
+		want := "spec to JSON: spec my-spec, argument values: " +
 			"index 0: jsontype: unsupported type: func()"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 }
@@ -770,9 +777,9 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSpec, err)
-		wMsg := "JSON to spec: invalid spec: " +
+		want := "JSON to spec: invalid spec: " +
 			"invalid character '!' looking for beginning of object key string"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("error - nil spec", func(t *testing.T) {
@@ -799,8 +806,7 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		want := &Spec{Name: "my-spec", Args: nil}
-		assert.Equal(t, want, have)
+		assert.Equal(t, &Spec{Name: "my-spec"}, have)
 	})
 
 	t.Run("resets reused spec", func(t *testing.T) {
@@ -818,7 +824,7 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
-	t.Run("JSON null arguments are kept", func(t *testing.T) {
+	t.Run("null arguments kept", func(t *testing.T) {
 		// --- Given ---
 		data := `{
 			"name": "my-spec",
@@ -836,7 +842,7 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
-	t.Run("JSON null reserved arguments are ignored", func(t *testing.T) {
+	t.Run("null reserved arguments skipped", func(t *testing.T) {
 		// --- Given ---
 		data := `{
 			"name": "my-spec",
@@ -861,8 +867,8 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 	t.Run("round trip", func(t *testing.T) {
 		// --- Given ---
 		reg := NewRegistry[TstSpec]()
-		reg.RegisterSource(must.Value(NewSource("my-fn", TstFn0)))
-		reg.RegisterBuilder("name0", func(spc *Spec) (TstSpec, error) {
+		_ = reg.RegisterSource(must.Value(NewSource("my-fn", TstFn0)))
+		_ = reg.RegisterBuilder("name0", func(spc *Spec) (TstSpec, error) {
 			return TstSpec{name: spc.Name}, nil
 		})
 
@@ -932,9 +938,9 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSpec, err)
-		wMsg := "JSON to spec: spec my-spec, argument specs: " +
+		want := "JSON to spec: spec my-spec, argument specs: " +
 			"index 0: JSON to spec: empty name: invalid spec"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("error - specs argument", func(t *testing.T) {
@@ -951,11 +957,11 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "JSON to spec: spec my-spec, argument specs: " +
+		want := "JSON to spec: spec my-spec, argument specs: " +
 			"invalid spec argument: " +
 			"json: cannot unmarshal number " +
 			"into Go value of type []json.RawMessage"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("specs", func(t *testing.T) {
@@ -1005,11 +1011,11 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "JSON to spec: spec my-spec, argument types: " +
+		want := "JSON to spec: spec my-spec, argument types: " +
 			"invalid spec argument: " +
 			"json: cannot unmarshal number " +
 			"into Go value of type []json.RawMessage"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("types", func(t *testing.T) {
@@ -1023,13 +1029,15 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 				]
 			}
 		}`
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterBuilder("type0", func(s *Spec) (TstType, error) {
+		_ = reg.RegisterBuilder("type0", func(s *Spec) (TstType, error) {
 			return TstType{"type0"}, nil
 		})
-		reg.RegisterBuilder("type1", func(s *Spec) (TstType, error) {
+		_ = reg.RegisterBuilder("type1", func(s *Spec) (TstType, error) {
 			return TstType{"type1"}, nil
 		})
+
 		have := &Spec{}
 
 		// --- When ---
@@ -1065,10 +1073,10 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "JSON to spec: spec my-spec, argument src_go: " +
+		want := "JSON to spec: spec my-spec, argument src_go: " +
 			"invalid spec argument: " +
 			"json: cannot unmarshal number into Go value of type spec.Source"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("source", func(t *testing.T) {
@@ -1080,8 +1088,10 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 			}
 		}`
 		src := must.Value(NewSource("src0", TstFn0))
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterSource(src)
+		_ = reg.RegisterSource(src)
+
 		have := &Spec{}
 
 		// --- When ---
@@ -1114,11 +1124,11 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "JSON to spec: spec my-spec, argument values: " +
+		want := "JSON to spec: spec my-spec, argument values: " +
 			"invalid spec argument: " +
 			"json: cannot unmarshal number " +
 			"into Go value of type []json.RawMessage"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("values", func(t *testing.T) {
@@ -1183,10 +1193,10 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "JSON to spec: spec my-spec, argument arg: " +
+		want := "JSON to spec: spec my-spec, argument arg: " +
 			"invalid spec argument: jsontype: invalid type: " +
 			"expected float64 got string"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("not reserved argument names", func(t *testing.T) {
@@ -1233,9 +1243,9 @@ func Test_Registry_DecodeAndBuild(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSpec, err)
-		wMsg := "JSON to spec: invalid spec: " +
+		want := "JSON to spec: invalid spec: " +
 			"unexpected end of JSON input"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Zero(t, have)
 	})
 
@@ -1248,9 +1258,9 @@ func Test_Registry_DecodeAndBuild(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSpec, err)
-		wMsg := "JSON to spec: invalid spec: " +
+		want := "JSON to spec: invalid spec: " +
 			"invalid character '!' looking for beginning of object key string"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Zero(t, have)
 	})
 
@@ -1270,7 +1280,7 @@ func Test_Registry_DecodeAndBuild(t *testing.T) {
 	t.Run("builds value", func(t *testing.T) {
 		// --- Given ---
 		reg := NewRegistry[TstType]()
-		reg.RegisterBuilder("my-spec", func(*Spec) (TstType, error) {
+		_ = reg.RegisterBuilder("my-spec", func(*Spec) (TstType, error) {
 			return TstType{"built"}, nil
 		})
 
@@ -1293,8 +1303,8 @@ func Test_Registry_concurrent_use(t *testing.T) {
 	var wg sync.WaitGroup
 	for range 8 {
 		wg.Go(func() {
-			reg.RegisterBuilder("my-spec", bld)
-			reg.RegisterSource(must.Value(NewSource("fn", TstFn0)))
+			_ = reg.RegisterBuilder("my-spec", bld)
+			_ = reg.RegisterSource(must.Value(NewSource("fn", TstFn0)))
 			_, _ = reg.EncodeSpec(NewSpec("my-spec").SetArg(ArgSrc, TstFn0))
 			_, _ = reg.DecodeAndBuild(data)
 		})
@@ -1334,9 +1344,9 @@ func Test_Registry_encodeSpecs(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "index 1: spec to JSON: spec my-spec1, argument arg: " +
+		want := "index 1: spec to JSON: spec my-spec1, argument arg: " +
 			"jsontype: unsupported type: func()"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
@@ -1371,10 +1381,10 @@ func Test_Registry_decodeSpecs(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "invalid spec argument: " +
+		want := "invalid spec argument: " +
 			"json: cannot unmarshal number " +
 			"into Go value of type []json.RawMessage"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
@@ -1388,9 +1398,9 @@ func Test_Registry_decodeSpecs(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "invalid spec argument: json: cannot unmarshal string " +
+		want := "invalid spec argument: json: cannot unmarshal string " +
 			"into Go value of type []json.RawMessage"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
@@ -1404,9 +1414,9 @@ func Test_Registry_decodeSpecs(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSpec, err)
-		wMsg := "^index 0: JSON to spec: invalid spec: " +
+		want := "^index 0: JSON to spec: invalid spec: " +
 			"json: cannot unmarshal string into Go value"
-		assert.ErrorRegexp(t, wMsg, err)
+		assert.ErrorRegexp(t, want, err)
 		assert.Nil(t, have)
 	})
 
@@ -1487,9 +1497,9 @@ func Test_Registry_encodeTypes(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "index 0: spec to JSON: spec name, argument arg: " +
+		want := "index 0: spec to JSON: spec name, argument arg: " +
 			"jsontype: unsupported type: func()"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
@@ -1528,11 +1538,11 @@ func Test_Registry_decodeTypes(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "JSON to spec: spec my-spec, argument types: " +
+		want := "JSON to spec: spec my-spec, argument types: " +
 			"invalid spec argument: " +
 			"json: cannot unmarshal number " +
 			"into Go value of type []json.RawMessage"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("error - unregistered type", func(t *testing.T) {
@@ -1549,9 +1559,9 @@ func Test_Registry_decodeTypes(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrUnkBuilder, err)
-		wMsg := "JSON to spec: spec my-spec, argument types[0]: " +
+		want := "JSON to spec: spec my-spec, argument types[0]: " +
 			"unknown builder type0"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("error - building type", func(t *testing.T) {
@@ -1559,10 +1569,12 @@ func Test_Registry_decodeTypes(t *testing.T) {
 		data := `[
 			{"name": "type0"}
 		]`
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterBuilder("type0", func(s *Spec) (TstType, error) {
+		_ = reg.RegisterBuilder("type0", func(s *Spec) (TstType, error) {
 			return TstType{}, ErrTst
 		})
+
 		have := &Spec{Name: "my-spec"}
 
 		// --- When ---
@@ -1570,8 +1582,8 @@ func Test_Registry_decodeTypes(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrTst, err)
-		wMsg := "JSON to spec: spec my-spec, argument types[0]: test msg"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "JSON to spec: spec my-spec, argument types[0]: test msg"
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("types", func(t *testing.T) {
@@ -1580,13 +1592,15 @@ func Test_Registry_decodeTypes(t *testing.T) {
 			{"name": "type0"},
 			{"name": "type1"}
 		]`
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterBuilder("type0", func(s *Spec) (TstType, error) {
+		_ = reg.RegisterBuilder("type0", func(s *Spec) (TstType, error) {
 			return TstType{"type0"}, nil
 		})
-		reg.RegisterBuilder("type1", func(s *Spec) (TstType, error) {
+		_ = reg.RegisterBuilder("type1", func(s *Spec) (TstType, error) {
 			return TstType{"type1"}, nil
 		})
+
 		have := &Spec{Name: "my-spec"}
 
 		// --- When ---
@@ -1615,8 +1629,7 @@ func Test_Registry_encodeSource(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrUnkSource, err)
-		wMsg := "unknown source"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, "unknown source", err)
 		assert.Nil(t, have)
 	})
 
@@ -1626,25 +1639,27 @@ func Test_Registry_encodeSource(t *testing.T) {
 		for i := range 2 {
 			fns = append(fns, func() int { return i })
 		}
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterSource(must.Value(NewSource("src0", fns[0])))
-		reg.RegisterSource(must.Value(NewSource("src1", fns[1])))
+		_ = reg.RegisterSource(must.Value(NewSource("src0", fns[0])))
+		_ = reg.RegisterSource(must.Value(NewSource("src1", fns[1])))
 
 		// --- When ---
 		have, err := reg.encodeSource(fns[1])
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSource, err)
-		wMsg := "ambiguous source: value matches src0 and src1: invalid source"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "ambiguous source: value matches src0 and src1: invalid source"
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
 	t.Run("error - not go source", func(t *testing.T) {
 		// --- Given ---
 		src := must.Value(NewSource("my-src", TstFn0)).SetLang("js")
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterSource(src)
+		_ = reg.RegisterSource(src)
 
 		// --- When ---
 		have, err := reg.encodeSource(TstFn0)
@@ -1659,16 +1674,16 @@ func Test_Registry_encodeSource(t *testing.T) {
 		// --- Given ---
 		fn := func() {}
 		src := must.Value(NewSource("my-src", fn))
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterSource(src)
+		_ = reg.RegisterSource(src)
 
 		// --- When ---
 		have, err := reg.encodeSource(fn)
 
 		// --- Then ---
 		assert.NoError(t, err)
-		want := must.Value(NewSource("my-src", fn))
-		assert.Equal(t, want, have)
+		assert.Equal(t, must.Value(NewSource("my-src", fn)), have)
 	})
 }
 
@@ -1684,10 +1699,10 @@ func Test_Registry_decodeSource(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "JSON to spec: spec my-spec, argument src_go: " +
+		want := "JSON to spec: spec my-spec, argument src_go: " +
 			"invalid spec argument: " +
 			"invalid character '!' looking for beginning of object key string"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("error - name must not be empty", func(t *testing.T) {
@@ -1701,8 +1716,8 @@ func Test_Registry_decodeSource(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSource, err)
-		wMsg := "JSON to spec: spec my-spec, argument src_go: invalid source"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "JSON to spec: spec my-spec, argument src_go: invalid source"
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("error - field lang not equal to go", func(t *testing.T) {
@@ -1716,8 +1731,8 @@ func Test_Registry_decodeSource(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSource, err)
-		wMsg := "JSON to spec: spec my-spec, argument src_go: invalid source"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "JSON to spec: spec my-spec, argument src_go: invalid source"
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("error - not registered source", func(t *testing.T) {
@@ -1731,15 +1746,17 @@ func Test_Registry_decodeSource(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrUnkSource, err)
-		wMsg := "JSON to spec: spec my-spec, argument src_go: unknown source"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "JSON to spec: spec my-spec, argument src_go: unknown source"
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("source", func(t *testing.T) {
 		// --- Given ---
 		data := `{"name": "my-src", "lang": "go"}`
+
 		reg := NewRegistry[TstType]()
-		reg.RegisterSource(must.Value(NewSource("my-src", TstFn0)))
+		_ = reg.RegisterSource(must.Value(NewSource("my-src", TstFn0)))
+
 		have := &Spec{Name: "my-spec"}
 
 		// --- When ---
@@ -1768,8 +1785,7 @@ func Test_Registry_encodeValues(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArgType, err)
-		wMsg := "invalid spec argument type"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, "invalid spec argument type", err)
 		assert.Nil(t, have)
 	})
 
@@ -1783,8 +1799,8 @@ func Test_Registry_encodeValues(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "index 1: jsontype: unsupported type: func()"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "index 1: jsontype: unsupported type: func()"
+		assert.ErrorEqual(t, want, err)
 		assert.Nil(t, have)
 	})
 
@@ -1814,10 +1830,10 @@ func Test_Registry_decodeValues(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "JSON to spec: spec my-spec, argument values: " +
+		want := "JSON to spec: spec my-spec, argument values: " +
 			"invalid spec argument: " +
 			"invalid character '!' looking for beginning of value"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("error - invalid jsontype object", func(t *testing.T) {
@@ -1831,9 +1847,9 @@ func Test_Registry_decodeValues(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "JSON to spec: spec my-spec, argument values: index 0: " +
+		want := "JSON to spec: spec my-spec, argument values: index 0: " +
 			"invalid spec argument: jsontype: unsupported type: "
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 
 	t.Run("values", func(t *testing.T) {
@@ -1873,9 +1889,9 @@ func Test_Registry_decodeValue(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		wMsg := "JSON to spec: spec my-spec, argument arg-name: " +
+		want := "JSON to spec: spec my-spec, argument arg-name: " +
 			"invalid spec argument: jsontype: " +
 			"invalid character '!' looking for beginning of object key string"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, want, err)
 	})
 }

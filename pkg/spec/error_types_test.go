@@ -16,10 +16,10 @@ import (
 func Test_NewError(t *testing.T) {
 	t.Run("without options", func(t *testing.T) {
 		// --- When ---
-		err := NewError("msg", "ECTst")
+		have := NewError("msg", "ECTst")
 
 		// --- Then ---
-		e, _ := assert.SameType(t, &Error{}, err)
+		e, _ := assert.SameType(t, &Error{}, have)
 		assert.ErrorEqual(t, "msg", e)
 		xrrtest.AssertCode(t, "ECTst", e)
 	})
@@ -29,10 +29,10 @@ func Test_NewError(t *testing.T) {
 		meta := xrr.Meta().Str("key", "val").Option()
 
 		// --- When ---
-		err := NewError("msg", "ECTst", meta)
+		have := NewError("msg", "ECTst", meta)
 
 		// --- Then ---
-		e, _ := assert.SameType(t, &Error{}, err)
+		e, _ := assert.SameType(t, &Error{}, have)
 		assert.ErrorEqual(t, "msg", e)
 		xrrtest.AssertCode(t, "ECTst", e)
 		assert.Equal(t, map[string]any{"key": "val"}, e.MetaAll())
@@ -44,12 +44,12 @@ func Test_NewError(t *testing.T) {
 		e := NewError("msg", "ECTst", meta)
 
 		// --- When ---
-		data, err := json.Marshal(e)
+		have, err := json.Marshal(e)
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wData := `{"error":"msg", "code":"ECTst", "meta":{"k":"v"}}`
-		assert.JSON(t, wData, string(data))
+		want := `{"error":"msg", "code":"ECTst", "meta":{"k":"v"}}`
+		assert.JSON(t, want, string(have))
 	})
 
 	t.Run("unmarshals from JSON", func(t *testing.T) {
@@ -71,48 +71,48 @@ func Test_NewError(t *testing.T) {
 func Test_NewErrorf(t *testing.T) {
 	t.Run("plain format", func(t *testing.T) {
 		// --- When ---
-		err := NewErrorf("msg")
+		have := NewErrorf("msg")
 
 		// --- Then ---
-		e, _ := assert.SameType(t, &Error{}, err)
-		assert.ErrorEqual(t, "msg", err)
+		e, _ := assert.SameType(t, &Error{}, have)
+		assert.ErrorEqual(t, "msg", have)
 		xrrtest.AssertCode(t, xrr.ECGeneric, e)
 		assert.Nil(t, e.MetaAll())
 	})
 
 	t.Run("format with args", func(t *testing.T) {
 		// --- When ---
-		err := NewErrorf("value: %d", 42)
+		have := NewErrorf("value: %d", 42)
 
 		// --- Then ---
-		e, _ := assert.SameType(t, &Error{}, err)
-		assert.ErrorEqual(t, "value: 42", err)
+		e, _ := assert.SameType(t, &Error{}, have)
+		assert.ErrorEqual(t, "value: 42", have)
 		xrrtest.AssertCode(t, xrr.ECGeneric, e)
 		assert.Nil(t, e.MetaAll())
 	})
 
 	t.Run("with code", func(t *testing.T) {
 		// --- When ---
-		err := NewErrorf("msg %d", 42, xrr.WithCode("ECTst"))
+		have := NewErrorf("msg %d", 42, xrr.WithCode("ECTst"))
 
 		// --- Then ---
-		e, _ := assert.SameType(t, &Error{}, err)
-		assert.ErrorEqual(t, "msg 42", err)
+		e, _ := assert.SameType(t, &Error{}, have)
+		assert.ErrorEqual(t, "msg 42", have)
 		xrrtest.AssertCode(t, "ECTst", e)
 		assert.Nil(t, e.MetaAll())
 	})
 
-	t.Run("wraps error via %w", func(t *testing.T) {
+	t.Run("wraps error", func(t *testing.T) {
 		// --- Given ---
 		cause := errors.New("original")
 
 		// --- When ---
-		err := NewErrorf("connect failed: %w", cause)
+		have := NewErrorf("connect failed: %w", cause)
 
 		// --- Then ---
-		e, _ := assert.SameType(t, &Error{}, err)
-		assert.ErrorEqual(t, "connect failed: original", err)
-		assert.True(t, errors.Is(err, cause))
+		e, _ := assert.SameType(t, &Error{}, have)
+		assert.ErrorEqual(t, "connect failed: original", have)
+		assert.True(t, errors.Is(have, cause))
 		xrrtest.AssertCode(t, xrr.ECGeneric, e)
 		assert.Nil(t, e.MetaAll())
 	})
@@ -122,33 +122,33 @@ func Test_NewErrorf(t *testing.T) {
 		cause := errors.New("original")
 
 		// --- When ---
-		err := NewErrorf("connect failed: %w", cause, xrr.WithCode("ECTst"))
+		have := NewErrorf("connect failed: %w", cause, xrr.WithCode("ECTst"))
 
 		// --- Then ---
-		e, _ := assert.SameType(t, &Error{}, err)
-		assert.ErrorEqual(t, "connect failed: original", err)
-		assert.True(t, errors.Is(err, cause))
+		e, _ := assert.SameType(t, &Error{}, have)
+		assert.ErrorEqual(t, "connect failed: original", have)
+		assert.True(t, errors.Is(have, cause))
 		xrrtest.AssertCode(t, "ECTst", e)
 		assert.Nil(t, e.MetaAll())
 	})
 }
 
 func Test_NewFieldError(t *testing.T) {
-	t.Run("the error message includes the field name", func(t *testing.T) {
+	t.Run("message has field", func(t *testing.T) {
 		// --- Given ---
 		e := errors.New("msg")
 
 		// --- When ---
-		err := NewFieldError("field0", e)
+		have := NewFieldError("field0", e)
 
 		// --- Then ---
-		assert.ErrorEqual(t, "field0: msg", err)
-		xrrtest.AssertHasField(t, "field0", err)
+		assert.ErrorEqual(t, "field0: msg", have)
+		xrrtest.AssertHasField(t, "field0", have)
 	})
 
 	t.Run("nil error", func(t *testing.T) {
 		// --- When ---
-		var have error = NewFieldError("field0", nil)
+		have := NewFieldError("field0", nil)
 
 		// --- Then ---
 		assert.True(t, have == nil)
@@ -159,17 +159,17 @@ func Test_NewFieldError(t *testing.T) {
 		e := NewFieldError("field0", NewError("inner msg", "ECInner"))
 
 		// --- When ---
-		data, err := json.Marshal(e)
+		have, err := json.Marshal(e)
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wData := `{"field0":{"error":"inner msg","code":"ECInner"}}`
-		assert.JSON(t, wData, string(data))
+		want := `{"field0":{"error":"inner msg","code":"ECInner"}}`
+		assert.JSON(t, want, string(have))
 	})
 }
 
 func Test_NewFieldErrors(t *testing.T) {
-	t.Run("the error message includes all field names", func(t *testing.T) {
+	t.Run("message has all fields", func(t *testing.T) {
 		// --- Given ---
 		fields := map[string]error{
 			"field0": errors.New("msg0"),
@@ -177,15 +177,15 @@ func Test_NewFieldErrors(t *testing.T) {
 		}
 
 		// --- When ---
-		err := NewFieldErrors(fields)
+		have := NewFieldErrors(fields)
 
 		// --- Then ---
-		assert.ErrorEqual(t, "field0: msg0; field1: msg1", err)
-		xrrtest.AssertHasField(t, "field0", err)
-		xrrtest.AssertHasField(t, "field1", err)
+		assert.ErrorEqual(t, "field0: msg0; field1: msg1", have)
+		xrrtest.AssertHasField(t, "field0", have)
+		xrrtest.AssertHasField(t, "field1", have)
 	})
 
-	t.Run("stores the map directly without copying", func(t *testing.T) {
+	t.Run("map not copied", func(t *testing.T) {
 		// --- Given ---
 		fields := map[string]error{"field0": errors.New("msg0")}
 		err := NewFieldErrors(fields)
@@ -204,12 +204,12 @@ func Test_NewFieldErrors(t *testing.T) {
 		})
 
 		// --- When ---
-		data, err := json.Marshal(e)
+		have, err := json.Marshal(e)
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wData := `{"field0":{"error":"inner msg","code":"ECInner"}}`
-		assert.JSON(t, wData, string(data))
+		want := `{"field0":{"error":"inner msg","code":"ECInner"}}`
+		assert.JSON(t, want, string(have))
 	})
 }
 
@@ -236,7 +236,7 @@ func Test_IsSpecError(t *testing.T) {
 		assert.True(t, have)
 	})
 
-	t.Run("false for errors not from this domain", func(t *testing.T) {
+	t.Run("false for other domain", func(t *testing.T) {
 		// --- Given ---
 		err := errors.New("test message")
 

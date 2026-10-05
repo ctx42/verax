@@ -16,22 +16,23 @@ type TstType struct{ name string }
 // TstBuilder is a builder type for TstType.
 type TstBuilder = Builder[TstType]
 
-// TstSpec is a test type implementing [Specable] interface.
+// TstSpec is a test type implementing the [Specable] interface.
 type TstSpec struct {
 	name string
 	err  error
 	args map[string]any
 }
 
-func (s TstSpec) Spec() (*Spec, error) {
-	if s.err != nil {
-		return nil, s.err
+func (tst TstSpec) Spec() (*Spec, error) {
+	if tst.err != nil {
+		return nil, tst.err
 	}
-	spc := NewSpec(s.name)
-	if s.args != nil {
-		spc.Args = maps.Clone(s.args)
+	spc := NewSpec(tst.name)
+	if tst.args != nil {
+		spc.Args = maps.Clone(tst.args)
 	}
 	return spc, nil
 }
 
-func TstFn0() {} // Test function instance.
+// TstFn0 is a test function instance.
+func TstFn0() {}

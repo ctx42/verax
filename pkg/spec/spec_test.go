@@ -10,15 +10,6 @@ import (
 	"github.com/ctx42/testing/pkg/assert"
 )
 
-func Test_NewSpec(t *testing.T) {
-	// --- When ---
-	have := NewSpec("my-spec")
-
-	// --- Then ---
-	want := &Spec{Name: "my-spec"}
-	assert.Equal(t, want, have)
-}
-
 func Test_Spec(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		// --- Given ---
@@ -29,8 +20,7 @@ func Test_Spec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		want := `{"name":"name"}`
-		assert.JSON(t, want, string(have))
+		assert.JSON(t, `{"name":"name"}`, string(have))
 	})
 
 	t.Run("with args", func(t *testing.T) {
@@ -45,9 +35,16 @@ func Test_Spec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		want := `{"name":"name", "args":{ "k0":0, "k1":1}}`
-		assert.JSON(t, want, string(have))
+		assert.JSON(t, `{"name":"name", "args":{"k0":0, "k1":1}}`, string(have))
 	})
+}
+
+func Test_NewSpec(t *testing.T) {
+	// --- When ---
+	have := NewSpec("my-spec")
+
+	// --- Then ---
+	assert.Equal(t, &Spec{Name: "my-spec"}, have)
 }
 
 func Test_Spec_SetArg(t *testing.T) {

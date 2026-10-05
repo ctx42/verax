@@ -15,9 +15,8 @@ type greeting struct {
 	Name string
 }
 
-// Spec implements [spec.Specable].
-func (g greeting) Spec() (*spec.Spec, error) {
-	return spec.NewSpec("greeting").SetArg(spec.ArgValue, g.Name), nil
+func (grt greeting) Spec() (*spec.Spec, error) {
+	return spec.NewSpec("greeting").SetArg(spec.ArgValue, grt.Name), nil
 }
 
 // newGreeting is a [spec.Builder] that rebuilds a greeting from its spec.
@@ -28,7 +27,7 @@ func newGreeting(spc *spec.Spec) (greeting, error) {
 
 func ExampleRegistry() {
 	reg := spec.NewRegistry[greeting]()
-	reg.RegisterBuilder("greeting", newGreeting)
+	_ = reg.RegisterBuilder("greeting", newGreeting)
 
 	// Describe a value as a spec and encode the spec to JSON.
 	spc, _ := greeting{Name: "World"}.Spec()
