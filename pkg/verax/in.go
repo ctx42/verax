@@ -16,7 +16,7 @@ const InRuleName = "in-rule"
 const ECInvIn = "ECInvIn"
 
 // [InRule] rule error messages.
-var (
+const (
 	// msgIn is the error message when a value is not on the list of valid
 	// values.
 	msgIn = "must be in the list"

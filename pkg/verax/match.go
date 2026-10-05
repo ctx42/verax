@@ -18,7 +18,7 @@ const MatchRuleName = "match-rule"
 const ECInvMatch = "ECInvMatch"
 
 // [MatchRule] rule error messages.
-var (
+const (
 	// msgInvMatch is the error message when a value does not match the regexp.
 	msgInvMatch = "must match a valid format"
 )

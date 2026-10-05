@@ -27,18 +27,19 @@ const (
 )
 
 // Error message templates for [RangeRule].
-var (
+const (
 	msgGreaterOrEqual = "must be greater or equal to {{.value}}"
+	msgGreaterThan    = "must be greater than {{.value}}"
+	msgLessOrEqual    = "must be less or equal to {{.value}}"
+	msgLessThan       = "must be less than {{.value}}"
+)
+
+// Parsed error message templates for [RangeRule].
+var (
 	tplGreaterOrEqual = mustTpl(RangeRuleName, msgGreaterOrEqual)
-
-	msgGreaterThan = "must be greater than {{.value}}"
-	tplGreaterThan = mustTpl(RangeRuleName, msgGreaterThan)
-
-	msgLessOrEqual = "must be less or equal to {{.value}}"
-	tplLessOrEqual = mustTpl(RangeRuleName, msgLessOrEqual)
-
-	msgLessThan = "must be less than {{.value}}"
-	tplLessThan = mustTpl(RangeRuleName, msgLessThan)
+	tplGreaterThan    = mustTpl(RangeRuleName, msgGreaterThan)
+	tplLessOrEqual    = mustTpl(RangeRuleName, msgLessOrEqual)
+	tplLessThan       = mustTpl(RangeRuleName, msgLessThan)
 )
 
 // Min creates a validation rule that conditions if a value is greater than or

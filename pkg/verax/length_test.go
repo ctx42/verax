@@ -894,28 +894,6 @@ func Test_buildLengthRuleMsg(t *testing.T) {
 		assert.Empty(t, hTpl)
 		assert.Empty(t, hMsg)
 	})
-
-	t.Run("error - execute template", func(t *testing.T) {
-		// --- Given ---
-		orig := tplLengthOutOfRange
-		tplLengthOutOfRange = mustTpl("test tpl", "tpl {{.other}}")
-		t.Cleanup(func() { tplLengthOutOfRange = orig })
-
-		// --- When ---
-		hMsg, hTpl, err := buildLengthRuleMsg(1, 2, "mode")
-
-		// --- Then ---
-		assert.SameType(t, &InternalError{}, err)
-		wMsg := "" +
-			`length-rule(mode): custom template render error: template: test ` +
-			`tpl:1:6: executing "test tpl" at <.other>: map has no entry for ` +
-			`key "other"`
-		assert.ErrorEqual(t, wMsg, err)
-		xrrtest.AssertCode(t, ECInternal, err)
-		assert.NotNil(t, errors.Unwrap(err))
-		assert.Empty(t, hTpl)
-		assert.Empty(t, hMsg)
-	})
 }
 
 func Test_LengthRule_Spec_LengthRuleFromSpec_round_trip(t *testing.T) {
@@ -943,5 +921,35 @@ func Test_LengthRule_Spec_LengthRuleFromSpec_round_trip(t *testing.T) {
 		// --- Then ---
 		assert.NoError(t, err)
 		assert.Equal(t, want, have)
+	})
+}
+
+func Test_renderLengthMsg(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		// --- When ---
+		have, err := renderLengthMsg(tplLengthOutOfRange, 1, 2, "mode")
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, "the length must be between 1 and 2", have)
+	})
+
+	t.Run("error - execute template", func(t *testing.T) {
+		// --- Given ---
+		tpl := mustTpl("test tpl", "tpl {{.other}}")
+
+		// --- When ---
+		have, err := renderLengthMsg(tpl, 1, 2, "mode")
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := "" +
+			`length-rule(mode): custom template render error: template: test ` +
+			`tpl:1:6: executing "test tpl" at <.other>: map has no entry for ` +
+			`key "other"`
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, ECInternal, err)
+		assert.NotNil(t, errors.Unwrap(err))
+		assert.Empty(t, have)
 	})
 }

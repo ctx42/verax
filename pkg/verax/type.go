@@ -8,7 +8,7 @@ import (
 )
 
 // msgInvType represents an error message for an unexpected type.
-var msgInvType = "not expected value type"
+const msgInvType = "not expected value type"
 
 // Compile time conditions.
 var (

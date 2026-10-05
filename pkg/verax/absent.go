@@ -22,7 +22,7 @@ const (
 )
 
 // [AbsentRule] rule error messages.
-var (
+const (
 	// msgReqNil is the error message when a value is not nil.
 	msgReqNil = "must be blank"
 

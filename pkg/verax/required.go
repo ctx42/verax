@@ -25,7 +25,7 @@ const (
 )
 
 // [RequiredRule] rule errors.
-var (
+const (
 	// msgMissing is the error message when a required value was not provided.
 	// See [Required] for more details.
 	msgMissing = "cannot be blank"

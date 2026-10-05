@@ -20,35 +20,38 @@ const LengthRuleName = "length-rule"
 const ECInvLength = "ECInvLength"
 
 // [LengthRule] rule error messages.
-var (
+const (
 	// msgLengthTooLong is the error message template for length too long.
 	msgLengthTooLong = "the length must be no more than {{.max}}"
-
-	// tplLengthTooLong is a parsed msgLengthTooLong template.
-	tplLengthTooLong = mustTpl(LengthRuleName, msgLengthTooLong)
 
 	// msgLengthTooShort is the error message template for length too short.
 	msgLengthTooShort = "the length must be no less than {{.min}}"
 
-	// tplLengthTooShort is a parsed msgLengthTooShort template.
-	tplLengthTooShort = mustTpl(LengthRuleName, msgLengthTooShort)
-
 	// msgLengthInvalid is the error message template for an invalid length.
 	msgLengthInvalid = "the length must be exactly {{.min}}"
-
-	// tplLengthInvalid is a parsed msgLengthInvalid template.
-	tplLengthInvalid = mustTpl(LengthRuleName, msgLengthInvalid)
 
 	// msgLengthOutOfRange is the error message template for out-of-range
 	// length.
 	msgLengthOutOfRange = "the length must be between {{.min}} and {{.max}}"
 
-	// tplLengthOutOfRange is a parsed msgLengthOutOfRange template.
-	tplLengthOutOfRange = mustTpl(LengthRuleName, msgLengthOutOfRange)
-
 	// msgLengthReqEmpty is the error message for non-empty value when both min
 	// and max lengths are zero.
 	msgLengthReqEmpty = "the value must be empty"
+)
+
+// Parsed message templates.
+var (
+	// tplLengthTooLong is a parsed msgLengthTooLong template.
+	tplLengthTooLong = mustTpl(LengthRuleName, msgLengthTooLong)
+
+	// tplLengthTooShort is a parsed msgLengthTooShort template.
+	tplLengthTooShort = mustTpl(LengthRuleName, msgLengthTooShort)
+
+	// tplLengthInvalid is a parsed msgLengthInvalid template.
+	tplLengthInvalid = mustTpl(LengthRuleName, msgLengthInvalid)
+
+	// tplLengthOutOfRange is a parsed msgLengthOutOfRange template.
+	tplLengthOutOfRange = mustTpl(LengthRuleName, msgLengthOutOfRange)
 
 	// tplLengthReqEmpty is a parsed msgLengthReqEmpty template.
 	tplLengthReqEmpty = mustTpl(LengthRuleName, msgLengthReqEmpty)
@@ -321,7 +324,7 @@ func pickLengthRuleMsg(minimum, maximum int) (string, *template.Template) {
 }
 
 // buildLengthRuleMsg constructs the [LengthRule] error message based on wanted
-// minimum nad maximum values. Returns the error message and its corresponding
+// minimum and maximum values. Returns the error message and its corresponding
 // template.
 func buildLengthRuleMsg(
 	minimum int,
@@ -340,11 +343,26 @@ func buildLengthRuleMsg(
 			xrr.WithCode(ECInternal),
 		)
 	}
+	msg, err := renderLengthMsg(parsed, minimum, maximum, mode)
+	if err != nil {
+		return "", "", err
+	}
+	return msg, tpl, nil
+}
+
+// renderLengthMsg renders the parsed [LengthRule] message template with the
+// minimum and maximum values.
+func renderLengthMsg(
+	parsed *template.Template,
+	minimum int,
+	maximum int,
+	mode string,
+) (string, error) {
 
 	buf := bytes.Buffer{}
 	err := parsed.Execute(&buf, map[string]any{"min": minimum, "max": maximum})
 	if err != nil {
-		return "", "", NewInternalErrorf(
+		return "", NewInternalErrorf(
 			"%s(%s): custom template render error",
 			LengthRuleName,
 			mode,
@@ -352,5 +370,5 @@ func buildLengthRuleMsg(
 			xrr.WithCause(err),
 		)
 	}
-	return buf.String(), tpl, nil
+	return buf.String(), nil
 }

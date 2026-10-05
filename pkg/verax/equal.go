@@ -27,15 +27,18 @@ const (
 )
 
 // [EqualRule] rule error messages.
-var (
+const (
 	// msgEqual is the error message template for not matching values.
 	msgEqual = "must be equal to '{{.value}}'"
 
-	// tplEqual is parsed msgEqual template.
-	tplEqual = mustTpl(EqualRuleName, msgEqual)
-
 	// msgNotEqual is the error message template for matching values.
 	msgNotEqual = "must not be equal to '{{.value}}'"
+)
+
+// Parsed message templates.
+var (
+	// tplEqual is parsed msgEqual template.
+	tplEqual = mustTpl(EqualRuleName, msgEqual)
 
 	// tplNotEqual is parsed msgNotEqual template.
 	tplNotEqual = mustTpl(EqualRuleName, msgNotEqual)
