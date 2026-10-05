@@ -163,6 +163,9 @@ func SetRuleFromSpec(spc *spec.Spec) (Set, error) {
 			xrr.WithCode(spec.ECInvSpec),
 		)
 	}
+	if !spc.ArgExist(spec.ArgTypes) {
+		return Set{}, nil
+	}
 	rs, err := getArg[[]Rule](spc.Args, spec.ArgTypes, SetRuleName)
 	if err != nil {
 		return nil, err

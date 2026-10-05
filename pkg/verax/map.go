@@ -312,9 +312,12 @@ func MapKeyFromSpec(spc *spec.Spec) (MapKey, error) {
 	if err != nil {
 		return MapKey{}, err
 	}
-	rs, err := getArg[[]Rule](spc.Args, spec.ArgTypes, MapKeyName)
-	if err != nil {
-		return MapKey{}, err
+	var rs []Rule
+	if spc.ArgExist(spec.ArgTypes) {
+		rs, err = getArg[[]Rule](spc.Args, spec.ArgTypes, MapKeyName)
+		if err != nil {
+			return MapKey{}, err
+		}
 	}
 	rule := Key(key, rs...)
 

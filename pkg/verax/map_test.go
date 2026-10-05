@@ -953,7 +953,7 @@ func Test_MapKeyFromSpec(t *testing.T) {
 		assert.Zero(t, have)
 	})
 
-	t.Run("error - types argument is required", func(t *testing.T) {
+	t.Run("without types argument", func(t *testing.T) {
 		// --- Given ---
 		spc := spec.NewSpec(MapKeyName).SetArg(spec.ArgValue, 1)
 
@@ -961,8 +961,22 @@ func Test_MapKeyFromSpec(t *testing.T) {
 		have, err := MapKeyFromSpec(spc)
 
 		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Key(1), have)
+	})
+
+	t.Run("error - types argument not rules", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(MapKeyName).
+			SetArg(spec.ArgValue, 1).
+			SetArg(spec.ArgTypes, 1)
+
+		// --- When ---
+		have, err := MapKeyFromSpec(spc)
+
+		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := "map-key: spec missing required argument: types"
+		wMsg := `map-key: spec argument "types" must be []verax.Rule, got int`
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, spec.ECInvSpec, err)
 		assert.Zero(t, have)
@@ -1037,17 +1051,30 @@ func Test_MapKeyFromSpec(t *testing.T) {
 }
 
 func Test_MapRule_Spec_MapRuleFromSpec_round_trip(t *testing.T) {
-	// --- Given ---
-	fn := RuleFunc(func(v any) error { return nil })
-	want := Map(
-		Key("A", Min(42), Required, By(fn)),
-	)
-	spc := must.Value(want.Spec())
+	t.Run("key with rules", func(t *testing.T) {
+		// --- Given ---
+		fn := RuleFunc(func(v any) error { return nil })
+		want := Map(Key("A", Min(42), Required, By(fn)))
+		spc := must.Value(want.Spec())
 
-	// --- When ---
-	have, err := MapRuleFromSpec(spc)
+		// --- When ---
+		have, err := MapRuleFromSpec(spc)
 
-	// --- Then ---
-	assert.NoError(t, err)
-	assert.Equal(t, want, have)
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
+	})
+
+	t.Run("key without rules", func(t *testing.T) {
+		// --- Given ---
+		want := Map(Key("A"))
+		spc := must.Value(want.Spec())
+
+		// --- When ---
+		have, err := MapRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
+	})
 }

@@ -102,6 +102,9 @@ func EachRuleFromSpec(spc *spec.Spec) (EachRule, error) {
 			xrr.WithCode(spec.ECInvSpec),
 		)
 	}
+	if !spc.ArgExist(spec.ArgTypes) {
+		return Each(), nil
+	}
 	rs, err := getArg[[]Rule](spc.Args, spec.ArgTypes, EachRuleName)
 	if err != nil {
 		return EachRule{}, err

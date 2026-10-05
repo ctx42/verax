@@ -383,7 +383,7 @@ func Test_EachRuleFromSpec(t *testing.T) {
 		assert.Zero(t, have)
 	})
 
-	t.Run("error - missing rules argument", func(t *testing.T) {
+	t.Run("without types argument", func(t *testing.T) {
 		// --- Given ---
 		spc := spec.NewSpec(EachRuleName)
 
@@ -391,8 +391,20 @@ func Test_EachRuleFromSpec(t *testing.T) {
 		have, err := EachRuleFromSpec(spc)
 
 		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Each(), have)
+	})
+
+	t.Run("error - types argument not rules", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(EachRuleName).SetArg(spec.ArgTypes, 1)
+
+		// --- When ---
+		have, err := EachRuleFromSpec(spc)
+
+		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := "each-rule: spec missing required argument: types"
+		wMsg := `each-rule: spec argument "types" must be []verax.Rule, got int`
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, spec.ECInvSpec, err)
 		assert.Zero(t, have)
@@ -442,6 +454,19 @@ func Test_EachRule_Spec_EachRuleFromSpec_round_trip(t *testing.T) {
 	t.Run("round trip", func(t *testing.T) {
 		// --- Given ---
 		want := Each(Min(42), Required)
+		spc := must.Value(want.Spec())
+
+		// --- When ---
+		have, err := EachRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
+	})
+
+	t.Run("no rules", func(t *testing.T) {
+		// --- Given ---
+		want := Each()
 		spc := must.Value(want.Spec())
 
 		// --- When ---

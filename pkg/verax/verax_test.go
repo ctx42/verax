@@ -138,7 +138,7 @@ func Test_SetRuleFromSpec(t *testing.T) {
 		assert.Nil(t, have)
 	})
 
-	t.Run("error - missing types argument", func(t *testing.T) {
+	t.Run("without types argument", func(t *testing.T) {
 		// --- Given ---
 		spc := spec.NewSpec(SetRuleName)
 
@@ -146,8 +146,20 @@ func Test_SetRuleFromSpec(t *testing.T) {
 		have, err := SetRuleFromSpec(spc)
 
 		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, Set{}, have)
+	})
+
+	t.Run("error - types argument not rules", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(SetRuleName).SetArg(spec.ArgTypes, 1)
+
+		// --- When ---
+		have, err := SetRuleFromSpec(spc)
+
+		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := "set-rule: spec missing required argument: types"
+		wMsg := `set-rule: spec argument "types" must be []verax.Rule, got int`
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, spec.ECInvSpec, err)
 		assert.Nil(t, have)
@@ -171,6 +183,19 @@ func Test_Set_Spec_SetRuleFromSpec_round_trip(t *testing.T) {
 	t.Run("round trip", func(t *testing.T) {
 		// --- Given ---
 		want := Set{Min(42), Required}
+		spc := must.Value(want.Spec())
+
+		// --- When ---
+		have, err := SetRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
+	})
+
+	t.Run("no rules", func(t *testing.T) {
+		// --- Given ---
+		want := Set{}
 		spc := must.Value(want.Spec())
 
 		// --- When ---
