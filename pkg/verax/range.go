@@ -120,7 +120,7 @@ type RangeRule struct {
 // value is strictly less than the range. The value and range must be of the
 // same type.
 //
-// It must be called before [RangeRule.Code] or [RangeRule.Message].
+// A custom message set with [RangeRule.Message] is kept.
 //
 // Example:
 //
@@ -130,22 +130,26 @@ func (r RangeRule) Exclusive() RangeRule {
 	if r.sticky != nil {
 		return r
 	}
+	var msg string
+	var tpl *template.Template
 	switch r.mode {
 	case "max":
 		r.mode = "max-exclusive"
-		r.tpl = msgLessThan
-		prefix := fmt.Sprintf("%s(max-exclusive)", RangeRuleName)
-		r.msg, r.sticky = renderTpl(tplLessThan, r.threshold, prefix)
+		msg, tpl = msgLessThan, tplLessThan
 
 	case "min":
 		r.mode = "min-exclusive"
-		r.tpl = msgGreaterThan
-		prefix := fmt.Sprintf("%s(min-exclusive)", RangeRuleName)
-		r.msg, r.sticky = renderTpl(tplGreaterThan, r.threshold, prefix)
+		msg, tpl = msgGreaterThan, tplGreaterThan
 
 	default:
-		// NOOP: already exclusive.
+		return r // Already exclusive.
 	}
+	if r.flags&flgCustomMsg != 0 {
+		return r
+	}
+	r.tpl = msg
+	prefix := fmt.Sprintf("%s(%s)", RangeRuleName, r.mode)
+	r.msg, r.sticky = renderTpl(tpl, r.threshold, prefix)
 	return r
 }
 

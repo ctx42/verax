@@ -167,6 +167,20 @@ func Test_RangeRule_Exclusive_tabular(t *testing.T) {
 }
 
 func Test_RangeRule_Exclusive(t *testing.T) {
+	t.Run("keeps custom message", func(t *testing.T) {
+		// --- Given ---
+		r := Min(1).Message("custom {{.value}}")
+
+		// --- When ---
+		have := r.Exclusive()
+
+		// --- Then ---
+		assert.Equal(t, "min-exclusive", have.mode)
+		assert.Equal(t, "custom {{.value}}", have.tpl)
+		assert.Equal(t, "custom 1", have.msg)
+		assert.Equal(t, flgCustomMsg, have.flags)
+	})
+
 	t.Run("when the sticky error is not nil", func(t *testing.T) {
 		// --- Given ---
 		r := Max(42)
