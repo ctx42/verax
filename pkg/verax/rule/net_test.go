@@ -73,8 +73,8 @@ func Test_IP(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &verax.InternalError{}, err)
-		wMsg := "must be a valid IP address: expected string, got int"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "must be a valid IP address: expected string, got int"
+		assert.ErrorEqual(t, want, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
@@ -140,8 +140,8 @@ func Test_IPv4(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &verax.InternalError{}, err)
-		wMsg := "must be a valid IPv4 address: expected string, got int"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "must be a valid IPv4 address: expected string, got int"
+		assert.ErrorEqual(t, want, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
@@ -207,8 +207,8 @@ func Test_IPv6(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &verax.InternalError{}, err)
-		wMsg := "must be a valid IPv6 address: expected string, got int"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "must be a valid IPv6 address: expected string, got int"
+		assert.ErrorEqual(t, want, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
@@ -272,8 +272,8 @@ func Test_Port(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &verax.InternalError{}, err)
-		wMsg := "must be a valid network port: expected string, got int"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "must be a valid network port: expected string, got int"
+		assert.ErrorEqual(t, want, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
@@ -296,15 +296,11 @@ func Test_IsDNSName_tabular(t *testing.T) {
 		{"five labels", "ru.link.n.svpncloud.com", true},
 		{"leading hyphen", "-localhost", false},
 		{"label starts with hyphen", "localhost.-localdomain", false},
-		{
-			"the last label starts with hyphen",
-			"localhost.localdomain.-int",
-			false,
-		},
+		{"last label starts with hyphen", "localhost.localdomain.-int", false},
 		{"leading underscore", "_localhost", true},
 		{"label starts with underscore", "localhost._localdomain", true},
 		{
-			"the last label starts with an underscore",
+			"last label starts with underscore",
 			"localhost.localdomain._int",
 			true,
 		},
@@ -373,8 +369,8 @@ func Test_DNSName(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &verax.InternalError{}, err)
-		wMsg := "must be a valid DNS name: expected string, got int"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "must be a valid DNS name: expected string, got int"
+		assert.ErrorEqual(t, want, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
@@ -400,7 +396,11 @@ func Test_IsDomain_tabular(t *testing.T) {
 		{"last label starts with hyphen", "localhost.localdomain.-int", false},
 		{"leading underscore", "_localhost", false},
 		{"label starts with underscore", "localhost._localdomain", false},
-		{"last label starts with underscore", "localhost.localdomain._int", false},
+		{
+			"last label starts with underscore",
+			"localhost.localdomain._int",
+			false,
+		},
 		{"non-ascii first label", "lÖcalhost", false},
 		{"non-ascii middle label", "localhost.lÖcaldomain", false},
 		{"non-ascii last label", "localhost.localdomain.üntern", false},
@@ -467,8 +467,8 @@ func Test_Domain(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &verax.InternalError{}, err)
-		wMsg := "must be a valid domain: expected string, got int"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "must be a valid domain: expected string, got int"
+		assert.ErrorEqual(t, want, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
@@ -535,8 +535,8 @@ func Test_Host(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &verax.InternalError{}, err)
-		wMsg := "must be a valid network hostname: expected string, got int"
-		assert.ErrorEqual(t, wMsg, err)
+		want := "must be a valid network hostname: expected string, got int"
+		assert.ErrorEqual(t, want, err)
 		xrrtest.AssertCode(t, verax.ECInvType, err)
 	})
 }
