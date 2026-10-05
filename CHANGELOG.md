@@ -1,3 +1,6 @@
+## v0.15.1 (Mon, 05 Oct 2026 20:40:15 UTC)
+- style(verax): resolve golangci-lint findings.
+
 ## v0.15.0 (Mon, 05 Oct 2026 20:23:24 UTC)
 - build(deps): update ctx42 dependencies to latest releases.
 - fix(spec)!: return untyped nil from NewFieldError for nil error.
