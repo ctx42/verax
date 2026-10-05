@@ -25,12 +25,12 @@ var Noop = NoopRule{}
 // NoopRule is a special validation rule that always passes.
 type NoopRule struct{}
 
-func (r NoopRule) Validate(_ any) error      { return nil }
-func (r NoopRule) When(_ bool) NoopRule      { return r }
-func (r NoopRule) Code(_ string) NoopRule    { return r }
-func (r NoopRule) Message(_ string) NoopRule { return r }
+func (nop NoopRule) Validate(_ any) error      { return nil }
+func (nop NoopRule) When(_ bool) NoopRule      { return nop }
+func (nop NoopRule) Code(_ string) NoopRule    { return nop }
+func (nop NoopRule) Message(_ string) NoopRule { return nop }
 
-func (r NoopRule) Spec() (*spec.Spec, error) {
+func (nop NoopRule) Spec() (*spec.Spec, error) {
 	return spec.NewSpec(NoopRuleName), nil
 }
 

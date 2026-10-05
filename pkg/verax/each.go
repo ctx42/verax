@@ -40,8 +40,8 @@ type EachRule struct {
 	rules     []Rule // Rules to apply to every iterable element.
 }
 
-func (r EachRule) Validate(have any) error {
-	if !r.condition || have == nil {
+func (ech EachRule) Validate(have any) error {
+	if !ech.condition || have == nil {
 		return nil
 	}
 	var ers *FieldErrors
@@ -50,7 +50,7 @@ func (r EachRule) Validate(have any) error {
 	case reflect.Map:
 		for _, k := range vo.MapKeys() {
 			val := getInterface(vo.MapIndex(k))
-			if err := Validate(val, r.rules...); err != nil {
+			if err := Validate(val, ech.rules...); err != nil {
 				if ers == nil {
 					ers = &FieldErrors{}
 				}
@@ -61,7 +61,7 @@ func (r EachRule) Validate(have any) error {
 	case reflect.Slice, reflect.Array:
 		for i := range vo.Len() {
 			val := getInterface(vo.Index(i))
-			if err := Validate(val, r.rules...); err != nil {
+			if err := Validate(val, ech.rules...); err != nil {
 				if ers == nil {
 					ers = &FieldErrors{}
 				}
@@ -79,15 +79,15 @@ func (r EachRule) Validate(have any) error {
 	return nil
 }
 
-func (r EachRule) When(condition bool) EachRule {
-	r.condition = condition
-	return r
+func (ech EachRule) When(condition bool) EachRule {
+	ech.condition = condition
+	return ech
 }
 
-func (r EachRule) Spec() (*spec.Spec, error) {
+func (ech EachRule) Spec() (*spec.Spec, error) {
 	spc := spec.NewSpec(EachRuleName)
-	if len(r.rules) > 0 {
-		spc.SetArg(spec.ArgTypes, slices.Clone(r.rules))
+	if len(ech.rules) > 0 {
+		spc.SetArg(spec.ArgTypes, slices.Clone(ech.rules))
 	}
 	return spc, nil
 }

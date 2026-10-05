@@ -25,12 +25,12 @@ var (
 // SkipRule represents a validation rule that skips later rules.
 type SkipRule bool
 
-func (_ SkipRule) Validate(_ any) error         { return nil }
-func (_ SkipRule) When(condition bool) SkipRule { return SkipRule(condition) }
+func (skp SkipRule) Validate(_ any) error         { return nil }
+func (skp SkipRule) When(condition bool) SkipRule { return SkipRule(condition) }
 
-func (s SkipRule) Spec() (*spec.Spec, error) {
+func (skp SkipRule) Spec() (*spec.Spec, error) {
 	spc := spec.NewSpec(SkipRuleName)
-	if !s {
+	if !skp {
 		spc.SetArg(spec.ArgValue, false)
 	}
 	return spc, nil

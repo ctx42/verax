@@ -71,7 +71,7 @@ func NewTwoStr() *TwoStr {
 	return &TwoStr{FStr: "FStr", FStrPtr: &p}
 }
 
-func (t *TwoStr) String() string { return t.FStr + " " + *t.FStrPtr }
+func (two *TwoStr) String() string { return two.FStr + " " + *two.FStrPtr }
 
 // EmbeddedPtr is a struct with TwoStr pointer embedded not implementing
 // Validator interface.
@@ -179,40 +179,40 @@ type ModelVal struct {
 	FStr string
 }
 
-func (m ModelVal) Validate() error {
-	return ValidateStruct(&m, Field(&m.FStr, Required, Equal("abc")))
+func (mdl ModelVal) Validate() error {
+	return ValidateStruct(&mdl, Field(&mdl.FStr, Required, Equal("abc")))
 }
 
-func (m ModelVal) String() string { return m.FStr }
+func (mdl ModelVal) String() string { return mdl.FStr }
 
 // ModelPtr implements [Validator] interface with a pointer receiver.
 type ModelPtr struct {
 	FStr string
 }
 
-func (m *ModelPtr) Validate() error {
-	return ValidateStruct(m, Field(&m.FStr, Required, Equal("abc")))
+func (mdl *ModelPtr) Validate() error {
+	return ValidateStruct(mdl, Field(&mdl.FStr, Required, Equal("abc")))
 }
 
-func (m *ModelPtr) String() string { return m.FStr }
+func (mdl *ModelPtr) String() string { return mdl.FStr }
 
 // ModelVW implements [WithValidator] interface.
 type ModelVW struct {
 	value string
 }
 
-func (m *ModelVW) ValidateWith(rule Rule) error {
-	if m.value == "too_long" {
+func (mvw *ModelVW) ValidateWith(rule Rule) error {
+	if mvw.value == "too_long" {
 		return ErrTst
 	}
-	return rule.Validate(m.value)
+	return rule.Validate(mvw.value)
 }
 
 // TstRule is a test structure implementing [Rule] interface.
 type TstRule struct{ want string }
 
 // Validate returns error unless v is 42 or "abc".
-func (t TstRule) Validate(have any) error {
+func (tst TstRule) Validate(have any) error {
 	switch val := have.(type) {
 	case int:
 		if val == 42 {

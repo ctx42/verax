@@ -26,11 +26,11 @@ type CreateUserRequest struct {
 	Age   int    `json:"age"`
 }
 
-func (r *CreateUserRequest) Validate() error {
-	return verax.ValidateStruct(r,
-		verax.Field(&r.Name, verax.Required, verax.Length(2, 50)),
-		verax.Field(&r.Email, verax.Required, verax.Match(emailRx)),
-		verax.Field(&r.Age, verax.Required, verax.Min(18), verax.Max(120)),
+func (req *CreateUserRequest) Validate() error {
+	return verax.ValidateStruct(req,
+		verax.Field(&req.Name, verax.Required, verax.Length(2, 50)),
+		verax.Field(&req.Email, verax.Required, verax.Match(emailRx)),
+		verax.Field(&req.Age, verax.Required, verax.Min(18), verax.Max(120)),
 	)
 }
 

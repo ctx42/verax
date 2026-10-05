@@ -139,125 +139,125 @@ type EqualRule struct {
 	flags     uint8     // Customizations.
 }
 
-func (r EqualRule) Validate(have any) error {
-	if r.sticky != nil {
-		return r.sticky
+func (eql EqualRule) Validate(have any) error {
+	if eql.sticky != nil {
+		return eql.sticky
 	}
-	if !r.condition {
+	if !eql.condition {
 		return nil
 	}
 	if IsEmpty(have) {
 		return nil
 	}
-	if err := r.fn(r.want, have); err != nil {
-		customMsg := r.flags&flgCustomMsg != 0
-		customCode := r.flags&flgCustomCode != 0
+	if err := eql.fn(eql.want, have); err != nil {
+		customMsg := eql.flags&flgCustomMsg != 0
+		customCode := eql.flags&flgCustomCode != 0
 
 		// If no custom function is set, uses the current message and code.
 		// Also applies when both the custom message and code are provided.
-		if r.flags&flgCustomFn == 0 || (customMsg && customCode) {
-			return NewError(r.msg, r.code)
+		if eql.flags&flgCustomFn == 0 || (customMsg && customCode) {
+			return NewError(eql.msg, eql.code)
 		}
 
 		if customMsg {
-			return NewError(r.msg, xrr.GetCode(err))
+			return NewError(eql.msg, xrr.GetCode(err))
 		}
 		if customCode {
-			return xrr.SetCode[edError](err, r.code)
+			return xrr.SetCode[edError](err, eql.code)
 		}
 		return err
 	}
 	return nil
 }
 
-func (r EqualRule) When(condition bool) EqualRule {
-	r.condition = condition
-	return r
+func (eql EqualRule) When(condition bool) EqualRule {
+	eql.condition = condition
+	return eql
 }
 
 // With sets a custom equality function for an [EqualRule], overriding the
 // default comparison behavior. The function, of type [EqualFunc], defines
 // how the value is compared. This is useful for types not supported natively.
-func (r EqualRule) With(fn EqualFunc) EqualRule {
-	if r.sticky != nil {
-		return r
+func (eql EqualRule) With(fn EqualFunc) EqualRule {
+	if eql.sticky != nil {
+		return eql
 	}
-	switch r.mode {
+	switch eql.mode {
 	case "equal", "equal-by":
-		r.mode = "equal-by"
+		eql.mode = "equal-by"
 
 	case "not-equal", "not-equal-by":
-		r.mode = "not-equal-by"
+		eql.mode = "not-equal-by"
 
 	default:
-		r.sticky = NewInternalErrorf(
+		eql.sticky = NewInternalErrorf(
 			"%s: invalid rule mode: %q",
 			EqualRuleName,
-			r.mode,
+			eql.mode,
 			xrr.WithCode(ECInvRuleMode),
 		)
-		return r
+		return eql
 	}
-	r.fn = fn
-	r.flags |= flgCustomFn
-	return r
+	eql.fn = fn
+	eql.flags |= flgCustomFn
+	return eql
 }
 
-func (r EqualRule) Message(tpl string) EqualRule {
-	if r.sticky != nil || tpl == "" {
-		return r
+func (eql EqualRule) Message(tpl string) EqualRule {
+	if eql.sticky != nil || tpl == "" {
+		return eql
 	}
 	parsed, err := template.New(EqualRuleName).
 		Option("missingkey=error").
 		Parse(tpl)
 	if err != nil {
-		r.sticky = NewInternalErrorf(
+		eql.sticky = NewInternalErrorf(
 			"%s(%s): custom template parse error",
 			EqualRuleName,
-			r.mode,
+			eql.mode,
 			xrr.WithCode(ECInternal),
 			xrr.WithCause(err),
 		)
-		return r
+		return eql
 	}
 
 	buf := &bytes.Buffer{}
-	data := map[string]any{spec.ArgValue: formatValue(r.want)}
+	data := map[string]any{spec.ArgValue: formatValue(eql.want)}
 	if err = parsed.Execute(buf, data); err != nil {
-		r.sticky = NewInternalErrorf(
+		eql.sticky = NewInternalErrorf(
 			"%s(%s): custom template render error",
 			EqualRuleName,
-			r.mode,
+			eql.mode,
 			xrr.WithCode(ECInternal),
 			xrr.WithCause(err),
 		)
-		return r
+		return eql
 	}
 
-	r.tpl = tpl
-	r.msg = buf.String()
-	r.flags |= flgCustomMsg
-	return r
+	eql.tpl = tpl
+	eql.msg = buf.String()
+	eql.flags |= flgCustomMsg
+	return eql
 }
 
-func (r EqualRule) Code(code string) EqualRule {
+func (eql EqualRule) Code(code string) EqualRule {
 	if code != "" {
-		r.code = code
-		r.flags |= flgCustomCode
+		eql.code = code
+		eql.flags |= flgCustomCode
 	}
-	return r
+	return eql
 }
 
-func (r EqualRule) Spec() (*spec.Spec, error) {
-	return r.spec(EqualRuleName)
+func (eql EqualRule) Spec() (*spec.Spec, error) {
+	return eql.spec(EqualRuleName)
 }
-func (r EqualRule) spec(name string) (*spec.Spec, error) {
-	if r.sticky != nil {
-		return nil, r.sticky
+func (eql EqualRule) spec(name string) (*spec.Spec, error) {
+	if eql.sticky != nil {
+		return nil, eql.sticky
 	}
 
 	spc := spec.NewSpec(name)
-	switch r.mode {
+	switch eql.mode {
 	case "equal", "not-equal", "equal-by", "not-equal-by":
 		// Valid mode.
 
@@ -265,21 +265,21 @@ func (r EqualRule) spec(name string) (*spec.Spec, error) {
 		return nil, NewInternalErrorf(
 			"%s: invalid rule mode: %q",
 			name,
-			r.mode,
+			eql.mode,
 			xrr.WithCode(ECInvRuleMode),
 		)
 	}
-	spc.SetArg(ArgMode, r.mode)
-	spc.SetArg(spec.ArgValue, r.want)
+	spc.SetArg(ArgMode, eql.mode)
+	spc.SetArg(spec.ArgValue, eql.want)
 
-	if r.flags&flgCustomMsg != 0 {
-		spc.SetArg(ArgErrMsg, r.tpl)
+	if eql.flags&flgCustomMsg != 0 {
+		spc.SetArg(ArgErrMsg, eql.tpl)
 	}
-	if r.flags&flgCustomCode != 0 {
-		spc.SetArg(ArgErrCode, r.code)
+	if eql.flags&flgCustomCode != 0 {
+		spc.SetArg(ArgErrCode, eql.code)
 	}
-	if r.flags&flgCustomFn != 0 {
-		spc.SetArg(spec.ArgSrc, r.fn)
+	if eql.flags&flgCustomFn != 0 {
+		spc.SetArg(spec.ArgSrc, eql.fn)
 	}
 
 	return spc, nil

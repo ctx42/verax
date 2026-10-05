@@ -34,36 +34,36 @@ type TypeRule struct {
 	flags     uint8        // Customizations.
 }
 
-func (r TypeRule) Validate(have any) error {
-	if !r.condition {
+func (tpr TypeRule) Validate(have any) error {
+	if !tpr.condition {
 		return nil
 	}
 	if have == nil {
 		return nil
 	}
-	if r.typ != reflect.TypeOf(have) {
-		return NewError(r.msg, r.code)
+	if tpr.typ != reflect.TypeOf(have) {
+		return NewError(tpr.msg, tpr.code)
 	}
 	return nil
 }
 
-func (r TypeRule) When(condition bool) TypeRule {
-	r.condition = condition
-	return r
+func (tpr TypeRule) When(condition bool) TypeRule {
+	tpr.condition = condition
+	return tpr
 }
 
-func (r TypeRule) Message(msg string) TypeRule {
+func (tpr TypeRule) Message(msg string) TypeRule {
 	if msg != "" {
-		r.msg = msg
-		r.flags |= flgCustomMsg
+		tpr.msg = msg
+		tpr.flags |= flgCustomMsg
 	}
-	return r
+	return tpr
 }
 
-func (r TypeRule) Code(code string) TypeRule {
+func (tpr TypeRule) Code(code string) TypeRule {
 	if code != "" {
-		r.code = code
-		r.flags |= flgCustomCode
+		tpr.code = code
+		tpr.flags |= flgCustomCode
 	}
-	return r
+	return tpr
 }

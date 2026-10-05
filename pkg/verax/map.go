@@ -87,15 +87,15 @@ type MapKey struct {
 func Map(keys ...MapKey) MapRule { return MapRule{condition: true, keys: keys} }
 
 // AllowUnknown configures the rule to ignore unknown keys.
-func (r MapRule) AllowUnknown() MapRule {
-	r.allowUnknown = true
-	return r
+func (mpr MapRule) AllowUnknown() MapRule {
+	mpr.allowUnknown = true
+	return mpr
 }
 
 // IsOptional returns true if the given map key is optional. It will return
 // true for keys that are not defined in the map.
-func (r MapRule) IsOptional(key any) bool {
-	for _, mk := range r.keys {
+func (mpr MapRule) IsOptional(key any) bool {
+	for _, mk := range mpr.keys {
 		if mk.key == key {
 			return mk.optional
 		}
@@ -104,8 +104,8 @@ func (r MapRule) IsOptional(key any) bool {
 }
 
 // IsDefined returns true if the given map key is defined.
-func (r MapRule) IsDefined(key any) bool {
-	for _, mk := range r.keys {
+func (mpr MapRule) IsDefined(key any) bool {
+	for _, mk := range mpr.keys {
 		if mk.key == key {
 			return true
 		}
@@ -117,8 +117,8 @@ func (r MapRule) IsDefined(key any) bool {
 // a validation error if it fails.
 //
 //nolint:cyclop,gocognit
-func (r MapRule) Validate(have any) error {
-	if !r.condition {
+func (mpr MapRule) Validate(have any) error {
+	if !mpr.condition {
 		return nil
 	}
 	val := reflect.ValueOf(have)
@@ -139,7 +139,7 @@ func (r MapRule) Validate(have any) error {
 	kt := val.Type().Key()
 
 	var extraKeys map[any]bool
-	if !r.allowUnknown {
+	if !mpr.allowUnknown {
 		extraKeys = make(map[any]bool, val.Len())
 		iter := val.MapRange()
 		for iter.Next() {
@@ -147,7 +147,7 @@ func (r MapRule) Validate(have any) error {
 		}
 	}
 
-	for _, kr := range r.keys {
+	for _, kr := range mpr.keys {
 		var err error
 		kv := reflect.ValueOf(kr.key)
 		if !kv.IsValid() || !kv.Type().AssignableTo(kt) {
@@ -169,12 +169,12 @@ func (r MapRule) Validate(have any) error {
 			}
 			ers.Set(kr.KeyString(), err)
 		}
-		if !r.allowUnknown {
+		if !mpr.allowUnknown {
 			delete(extraKeys, kr.key)
 		}
 	}
 
-	if !r.allowUnknown {
+	if !mpr.allowUnknown {
 		for key := range extraKeys {
 			if ers == nil {
 				ers = &FieldErrors{}
@@ -189,14 +189,14 @@ func (r MapRule) Validate(have any) error {
 	return nil
 }
 
-func (r MapRule) When(condition bool) MapRule {
-	r.condition = condition
-	return r
+func (mpr MapRule) When(condition bool) MapRule {
+	mpr.condition = condition
+	return mpr
 }
 
-func (r MapRule) Spec() (*spec.Spec, error) {
+func (mpr MapRule) Spec() (*spec.Spec, error) {
 	var sps []*spec.Spec
-	for _, key := range r.keys {
+	for _, key := range mpr.keys {
 		spc, err := key.Spec()
 		if err != nil {
 			return nil, NewInternalErrorf(
@@ -211,7 +211,7 @@ func (r MapRule) Spec() (*spec.Spec, error) {
 	}
 
 	spc := spec.NewSpec(MapRuleName)
-	if r.allowUnknown {
+	if mpr.allowUnknown {
 		spc.SetArg(ArgAllowUnk, true)
 	}
 	if len(sps) > 0 {

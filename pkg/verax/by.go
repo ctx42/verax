@@ -37,62 +37,62 @@ type ByRule struct {
 	flags     uint8    // Customizations.
 }
 
-func (r ByRule) Validate(have any) error {
-	if !r.condition {
+func (byr ByRule) Validate(have any) error {
+	if !byr.condition {
 		return nil
 	}
 	if IsEmpty(have) {
 		return nil
 	}
-	if err := r.fn(have); err != nil {
-		customMsg := r.flags&flgCustomMsg != 0
-		customCode := r.flags&flgCustomCode != 0
+	if err := byr.fn(have); err != nil {
+		customMsg := byr.flags&flgCustomMsg != 0
+		customCode := byr.flags&flgCustomCode != 0
 
 		// Both custom message and code are set.
 		if customMsg && customCode {
-			return NewError(r.msg, r.code)
+			return NewError(byr.msg, byr.code)
 		}
 
 		if customMsg {
-			return NewError(r.msg, xrr.GetCode(err))
+			return NewError(byr.msg, xrr.GetCode(err))
 		}
 		if customCode {
-			return xrr.SetCode[edError](err, r.code)
+			return xrr.SetCode[edError](err, byr.code)
 		}
 		return err
 	}
 	return nil
 }
 
-func (r ByRule) When(condition bool) ByRule {
-	r.condition = condition
-	return r
+func (byr ByRule) When(condition bool) ByRule {
+	byr.condition = condition
+	return byr
 }
 
-func (r ByRule) Message(msg string) ByRule {
+func (byr ByRule) Message(msg string) ByRule {
 	if msg != "" {
-		r.msg = msg
-		r.flags |= flgCustomMsg
+		byr.msg = msg
+		byr.flags |= flgCustomMsg
 	}
-	return r
+	return byr
 }
 
-func (r ByRule) Code(code string) ByRule {
+func (byr ByRule) Code(code string) ByRule {
 	if code != "" {
-		r.code = code
-		r.flags |= flgCustomCode
+		byr.code = code
+		byr.flags |= flgCustomCode
 	}
-	return r
+	return byr
 }
 
-func (r ByRule) Spec() (*spec.Spec, error) {
-	spc := spec.NewSpec(ByRuleName).SetArg(spec.ArgSrc, r.fn)
+func (byr ByRule) Spec() (*spec.Spec, error) {
+	spc := spec.NewSpec(ByRuleName).SetArg(spec.ArgSrc, byr.fn)
 
-	if r.flags&flgCustomMsg != 0 {
-		spc.SetArg(ArgErrMsg, r.msg)
+	if byr.flags&flgCustomMsg != 0 {
+		spc.SetArg(ArgErrMsg, byr.msg)
 	}
-	if r.flags&flgCustomCode != 0 {
-		spc.SetArg(ArgErrCode, r.code)
+	if byr.flags&flgCustomCode != 0 {
+		spc.SetArg(ArgErrCode, byr.code)
 	}
 	return spc, nil
 }

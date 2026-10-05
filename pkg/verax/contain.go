@@ -34,11 +34,11 @@ type ContainRule struct {
 	condition bool      // Run validation only when true.
 }
 
-func (r ContainRule) Validate(have any) error {
-	if r.rule.sticky != nil {
-		return r.rule.sticky
+func (con ContainRule) Validate(have any) error {
+	if con.rule.sticky != nil {
+		return con.rule.sticky
 	}
-	if !r.condition {
+	if !con.condition {
 		return nil
 	}
 	vo := reflect.ValueOf(have)
@@ -50,7 +50,7 @@ func (r ContainRule) Validate(have any) error {
 	case reflect.Map:
 		for _, k := range vo.MapKeys() {
 			val := getInterface(vo.MapIndex(k))
-			if r.rule.fn(r.rule.want, val) == nil {
+			if con.rule.fn(con.rule.want, val) == nil {
 				return nil
 			}
 		}
@@ -58,7 +58,7 @@ func (r ContainRule) Validate(have any) error {
 	case reflect.Slice, reflect.Array:
 		for i := range vo.Len() {
 			val := getInterface(vo.Index(i))
-			if r.rule.fn(r.rule.want, val) == nil {
+			if con.rule.fn(con.rule.want, val) == nil {
 				return nil
 			}
 		}
@@ -68,34 +68,34 @@ func (r ContainRule) Validate(have any) error {
 	}
 
 	code := ECNotEqual
-	if r.rule.flags&flgCustomCode != 0 {
-		code = r.rule.code
+	if con.rule.flags&flgCustomCode != 0 {
+		code = con.rule.code
 	}
-	if r.rule.flags&flgCustomMsg != 0 {
-		return NewError(r.rule.msg, code)
+	if con.rule.flags&flgCustomMsg != 0 {
+		return NewError(con.rule.msg, code)
 	}
 	format := "must contain at least one '%v' value"
-	return NewErrorf(format, r.rule.want, xrr.WithCode(code))
+	return NewErrorf(format, con.rule.want, xrr.WithCode(code))
 }
 
-func (r ContainRule) When(condition bool) ContainRule {
-	r.condition = condition
-	r.rule = r.rule.When(condition)
-	return r
+func (con ContainRule) When(condition bool) ContainRule {
+	con.condition = condition
+	con.rule = con.rule.When(condition)
+	return con
 }
 
-func (r ContainRule) Code(code string) ContainRule {
-	r.rule = r.rule.Code(code)
-	return r
+func (con ContainRule) Code(code string) ContainRule {
+	con.rule = con.rule.Code(code)
+	return con
 }
 
-func (r ContainRule) Message(msg string) ContainRule {
-	r.rule = r.rule.Message(msg)
-	return r
+func (con ContainRule) Message(msg string) ContainRule {
+	con.rule = con.rule.Message(msg)
+	return con
 }
 
-func (r ContainRule) Spec() (*spec.Spec, error) {
-	spc, err := r.rule.spec(ContainRuleName)
+func (con ContainRule) Spec() (*spec.Spec, error) {
+	spc, err := con.rule.spec(ContainRuleName)
 	if err != nil {
 		return nil, err
 	}

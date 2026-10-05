@@ -35,27 +35,27 @@ type WhenRule struct {
 	flags     uint8  // Customizations.
 }
 
-func (r WhenRule) Validate(have any) error {
+func (whn WhenRule) Validate(have any) error {
 	var err error
-	if r.condition {
-		err = Validate(have, r.rules...)
+	if whn.condition {
+		err = Validate(have, whn.rules...)
 	} else {
-		err = Validate(have, r.elseRules...)
+		err = Validate(have, whn.elseRules...)
 	}
 	if err != nil {
-		customMsg := r.flags&flgCustomMsg != 0
-		customCode := r.flags&flgCustomCode != 0
+		customMsg := whn.flags&flgCustomMsg != 0
+		customCode := whn.flags&flgCustomCode != 0
 
 		// Both a custom message and code are set.
 		if customMsg && customCode {
-			return NewError(r.msg, r.code)
+			return NewError(whn.msg, whn.code)
 		}
 
 		if customMsg {
-			return NewError(r.msg, xrr.GetCode(err))
+			return NewError(whn.msg, xrr.GetCode(err))
 		}
 		if customCode {
-			return xrr.SetCode[edError](err, r.code)
+			return xrr.SetCode[edError](err, whn.code)
 		}
 		return err
 	}
@@ -64,23 +64,23 @@ func (r WhenRule) Validate(have any) error {
 
 // Else returns a validation rule that executes the given list of rules when
 // the condition passed to [When] constructor function is false.
-func (r WhenRule) Else(rules ...Rule) WhenRule {
-	r.elseRules = rules
-	return r
+func (whn WhenRule) Else(rules ...Rule) WhenRule {
+	whn.elseRules = rules
+	return whn
 }
 
-func (r WhenRule) Message(msg string) WhenRule {
+func (whn WhenRule) Message(msg string) WhenRule {
 	if msg != "" {
-		r.msg = msg
-		r.flags |= flgCustomMsg
+		whn.msg = msg
+		whn.flags |= flgCustomMsg
 	}
-	return r
+	return whn
 }
 
-func (r WhenRule) Code(code string) WhenRule {
+func (whn WhenRule) Code(code string) WhenRule {
 	if code != "" {
-		r.code = code
-		r.flags |= flgCustomCode
+		whn.code = code
+		whn.flags |= flgCustomCode
 	}
-	return r
+	return whn
 }

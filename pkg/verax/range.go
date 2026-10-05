@@ -128,31 +128,31 @@ type RangeRule struct {
 //
 //	ruleMin := Min(10).Exclusive()  // Value must be > 10
 //	ruleMax := Max(100).Exclusive() // Value must be < 100
-func (r RangeRule) Exclusive() RangeRule {
-	if r.sticky != nil {
-		return r
+func (rng RangeRule) Exclusive() RangeRule {
+	if rng.sticky != nil {
+		return rng
 	}
 	var msg string
 	var tpl *template.Template
-	switch r.mode {
+	switch rng.mode {
 	case "max":
-		r.mode = "max-exclusive"
+		rng.mode = "max-exclusive"
 		msg, tpl = msgLessThan, tplLessThan
 
 	case "min":
-		r.mode = "min-exclusive"
+		rng.mode = "min-exclusive"
 		msg, tpl = msgGreaterThan, tplGreaterThan
 
 	default:
-		return r // Already exclusive.
+		return rng // Already exclusive.
 	}
-	if r.flags&flgCustomMsg != 0 {
-		return r
+	if rng.flags&flgCustomMsg != 0 {
+		return rng
 	}
-	r.tpl = msg
-	prefix := fmt.Sprintf("%s(%s)", RangeRuleName, r.mode)
-	r.msg, r.sticky = renderTpl(tpl, r.threshold, prefix)
-	return r
+	rng.tpl = msg
+	prefix := fmt.Sprintf("%s(%s)", RangeRuleName, rng.mode)
+	rng.msg, rng.sticky = renderTpl(tpl, rng.threshold, prefix)
+	return rng
 }
 
 // With sets a custom comparison function for a [RangeRule], overriding the
@@ -166,124 +166,124 @@ func (r RangeRule) Exclusive() RangeRule {
 //
 //	cmpMyType := func(a, b any) int { ... }
 //	rule := Min(myTypeValue).With(cmpMyType)
-func (r RangeRule) With(fn CompareFunc) RangeRule {
-	if r.sticky != nil {
+func (rng RangeRule) With(fn CompareFunc) RangeRule {
+	if rng.sticky != nil {
 		// Allow overriding when sticky is ECInvType: the custom function may
 		// support a type that the built-in comparison does not.
-		if xrr.GetCode(r.sticky) != ECInvType {
-			return r
+		if xrr.GetCode(rng.sticky) != ECInvType {
+			return rng
 		}
 		tpl := tplGreaterOrEqual
-		if r.mode == "max" {
+		if rng.mode == "max" {
 			tpl = tplLessOrEqual
 		}
-		prefix := fmt.Sprintf("%s(%s)", RangeRuleName, r.mode)
-		r.msg, r.sticky = renderTpl(tpl, r.threshold, prefix)
-		if r.sticky != nil {
-			return r
+		prefix := fmt.Sprintf("%s(%s)", RangeRuleName, rng.mode)
+		rng.msg, rng.sticky = renderTpl(tpl, rng.threshold, prefix)
+		if rng.sticky != nil {
+			return rng
 		}
 	}
-	r.fn = fn
-	r.flags |= flgCustomFn
-	return r
+	rng.fn = fn
+	rng.flags |= flgCustomFn
+	return rng
 }
 
-func (r RangeRule) Validate(have any) error {
-	if r.sticky != nil {
-		return r.sticky
+func (rng RangeRule) Validate(have any) error {
+	if rng.sticky != nil {
+		return rng.sticky
 	}
-	if !r.condition {
+	if !rng.condition {
 		return nil
 	}
 	if IsEmpty(have) {
 		return nil
 	}
 
-	res, err := r.fn(r.threshold, have)
+	res, err := rng.fn(rng.threshold, have)
 	if err != nil {
 		if e, ok := errors.AsType[*InternalError](err); ok {
 			return e
 		}
-		customMsg := r.flags&flgCustomMsg != 0
-		customCode := r.flags&flgCustomCode != 0
+		customMsg := rng.flags&flgCustomMsg != 0
+		customCode := rng.flags&flgCustomCode != 0
 
 		// If no custom function is set, uses the current message and code.
 		// Also applies when both the custom message and code are provided.
-		if r.flags&flgCustomFn == 0 || (customMsg && customCode) {
-			return NewError(r.msg, r.code)
+		if rng.flags&flgCustomFn == 0 || (customMsg && customCode) {
+			return NewError(rng.msg, rng.code)
 		}
 
 		if customMsg {
-			return NewError(r.msg, xrr.GetCode(err))
+			return NewError(rng.msg, xrr.GetCode(err))
 		}
 		if customCode {
-			return xrr.SetCode[edError](err, r.code)
+			return xrr.SetCode[edError](err, rng.code)
 		}
 		return err
 	}
 
-	if !rangeOutcome(r.mode, res) {
-		return NewError(r.msg, r.code)
+	if !rangeOutcome(rng.mode, res) {
+		return NewError(rng.msg, rng.code)
 	}
 	return nil
 }
 
-func (r RangeRule) When(condition bool) RangeRule {
-	r.condition = condition
-	return r
+func (rng RangeRule) When(condition bool) RangeRule {
+	rng.condition = condition
+	return rng
 }
 
-func (r RangeRule) Message(tpl string) RangeRule {
-	if r.sticky != nil || tpl == "" {
-		return r
+func (rng RangeRule) Message(tpl string) RangeRule {
+	if rng.sticky != nil || tpl == "" {
+		return rng
 	}
 	parsed, err := template.New(RangeRuleName).
 		Option("missingkey=error").
 		Parse(tpl)
 	if err != nil {
-		r.sticky = NewInternalErrorf(
+		rng.sticky = NewInternalErrorf(
 			"%s(%s): custom template parse error",
 			RangeRuleName,
-			r.mode,
+			rng.mode,
 			xrr.WithCode(ECInternal),
 			xrr.WithCause(err),
 		)
-		return r
+		return rng
 	}
 
 	buf := &bytes.Buffer{}
-	data := map[string]any{spec.ArgValue: formatValue(r.threshold)}
+	data := map[string]any{spec.ArgValue: formatValue(rng.threshold)}
 	if err = parsed.Execute(buf, data); err != nil {
-		r.sticky = NewInternalErrorf(
+		rng.sticky = NewInternalErrorf(
 			"%s(%s): custom template render error",
 			RangeRuleName,
-			r.mode,
+			rng.mode,
 			xrr.WithCode(ECInternal),
 			xrr.WithCause(err),
 		)
-		return r
+		return rng
 	}
-	r.tpl = tpl
-	r.msg = buf.String()
-	r.flags |= flgCustomMsg
-	return r
+	rng.tpl = tpl
+	rng.msg = buf.String()
+	rng.flags |= flgCustomMsg
+	return rng
 }
 
-func (r RangeRule) Code(code string) RangeRule {
+func (rng RangeRule) Code(code string) RangeRule {
 	if code != "" {
-		r.code = code
-		r.flags |= flgCustomCode
+		rng.code = code
+		rng.flags |= flgCustomCode
 	}
-	return r
+	return rng
 }
 
-func (r RangeRule) Spec() (*spec.Spec, error) {
-	if r.sticky != nil {
-		return nil, r.sticky
+func (rng RangeRule) Spec() (*spec.Spec, error) {
+	if rng.sticky != nil {
+		return nil, rng.sticky
 	}
 
 	spc := spec.NewSpec(RangeRuleName)
-	switch r.mode {
+	switch rng.mode {
 	case "min":
 		spc.SetArg(ArgMode, "min")
 
@@ -300,21 +300,21 @@ func (r RangeRule) Spec() (*spec.Spec, error) {
 		return nil, NewInternalErrorf(
 			"%s: invalid rule mode: %q",
 			RangeRuleName,
-			r.mode,
+			rng.mode,
 			xrr.WithCode(ECInvRuleMode),
 		)
 	}
-	spc.SetArg(spec.ArgValue, r.threshold)
+	spc.SetArg(spec.ArgValue, rng.threshold)
 
-	if r.flags&flgCustomMsg != 0 {
-		spc.SetArg(ArgErrMsg, r.tpl)
+	if rng.flags&flgCustomMsg != 0 {
+		spc.SetArg(ArgErrMsg, rng.tpl)
 	}
-	if r.flags&flgCustomCode != 0 {
-		spc.SetArg(ArgErrCode, r.code)
+	if rng.flags&flgCustomCode != 0 {
+		spc.SetArg(ArgErrCode, rng.code)
 	}
 
-	if r.flags&flgCustomFn != 0 {
-		spc.SetArg(spec.ArgSrc, r.fn)
+	if rng.flags&flgCustomFn != 0 {
+		spc.SetArg(spec.ArgSrc, rng.fn)
 	}
 
 	return spc, nil

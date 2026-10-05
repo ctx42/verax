@@ -63,11 +63,11 @@ type MatchRule struct {
 	flags     uint8          // Customizations.
 }
 
-func (r MatchRule) Validate(have any) error {
-	if r.sticky != nil {
-		return r.sticky
+func (mat MatchRule) Validate(have any) error {
+	if mat.sticky != nil {
+		return mat.sticky
 	}
-	if !r.condition {
+	if !mat.condition {
 		return nil
 	}
 	if IsEmpty(have) {
@@ -76,43 +76,43 @@ func (r MatchRule) Validate(have any) error {
 
 	val := Indirect(have)
 	isString, str, isBytes, bs := StringOrBytes(val)
-	if isString && r.want.MatchString(str) || isBytes && r.want.Match(bs) {
+	if isString && mat.want.MatchString(str) || isBytes && mat.want.Match(bs) {
 		return nil
 	}
-	return NewError(r.msg, r.code)
+	return NewError(mat.msg, mat.code)
 }
 
-func (r MatchRule) When(condition bool) MatchRule {
-	r.condition = condition
-	return r
+func (mat MatchRule) When(condition bool) MatchRule {
+	mat.condition = condition
+	return mat
 }
 
-func (r MatchRule) Message(msg string) MatchRule {
+func (mat MatchRule) Message(msg string) MatchRule {
 	if msg != "" {
-		r.msg = msg
-		r.flags |= flgCustomMsg
+		mat.msg = msg
+		mat.flags |= flgCustomMsg
 	}
-	return r
+	return mat
 }
 
-func (r MatchRule) Code(code string) MatchRule {
+func (mat MatchRule) Code(code string) MatchRule {
 	if code != "" {
-		r.code = code
-		r.flags |= flgCustomCode
+		mat.code = code
+		mat.flags |= flgCustomCode
 	}
-	return r
+	return mat
 }
 
-func (r MatchRule) Spec() (*spec.Spec, error) {
-	if r.sticky != nil {
-		return nil, r.sticky
+func (mat MatchRule) Spec() (*spec.Spec, error) {
+	if mat.sticky != nil {
+		return nil, mat.sticky
 	}
-	spc := spec.NewSpec(MatchRuleName).SetArg(spec.ArgValue, r.want.String())
-	if r.flags&flgCustomMsg != 0 {
-		spc.SetArg(ArgErrMsg, r.msg)
+	spc := spec.NewSpec(MatchRuleName).SetArg(spec.ArgValue, mat.want.String())
+	if mat.flags&flgCustomMsg != 0 {
+		spc.SetArg(ArgErrMsg, mat.msg)
 	}
-	if r.flags&flgCustomCode != 0 {
-		spc.SetArg(ArgErrCode, r.code)
+	if mat.flags&flgCustomCode != 0 {
+		spc.SetArg(ArgErrCode, mat.code)
 	}
 	return spc, nil
 }

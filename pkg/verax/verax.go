@@ -355,14 +355,14 @@ func NewNamed() Named {
 }
 
 // Set associates the rule with the name. Chainable.
-func (n Named) Set(name string, rule Rule) Named {
-	n[name] = rule
-	return n
+func (nmd Named) Set(name string, rule Rule) Named {
+	nmd[name] = rule
+	return nmd
 }
 
 // Get returns the named rule or nil if it doesn't exist.
-func (n Named) Get(name string) Rule {
-	if rule, ok := n[name]; ok {
+func (nmd Named) Get(name string) Rule {
+	if rule, ok := nmd[name]; ok {
 		return rule
 	}
 	return nil
@@ -370,16 +370,16 @@ func (n Named) Get(name string) Rule {
 
 // GetOrError returns the named rule; when it doesn't exist, it returns an
 // instance of [Fail] with [ECUnkRule] error code.
-func (n Named) GetOrError(name string) Rule {
-	if r := n.Get(name); r != nil {
+func (nmd Named) GetOrError(name string) Rule {
+	if r := nmd.Get(name); r != nil {
 		return r
 	}
 	return Fail("unknown rule", ECUnkRule)
 }
 
 // GetOrNoop returns the named rule or [Noop] rule if it doesn't exist.
-func (n Named) GetOrNoop(name string) Rule {
-	if rule, ok := n[name]; ok {
+func (nmd Named) GetOrNoop(name string) Rule {
+	if rule, ok := nmd[name]; ok {
 		return rule
 	}
 	return Noop

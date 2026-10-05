@@ -114,11 +114,11 @@ type LengthRule struct {
 }
 
 //nolint:cyclop
-func (r LengthRule) Validate(have any) error {
-	if r.sticky != nil {
-		return r.sticky
+func (lng LengthRule) Validate(have any) error {
+	if lng.sticky != nil {
+		return lng.sticky
 	}
-	if !r.condition {
+	if !lng.condition {
 		return nil
 	}
 	if IsEmpty(have) {
@@ -128,95 +128,95 @@ func (r LengthRule) Validate(have any) error {
 	var l int
 	var err error
 	val := Indirect(have)
-	if s, ok := val.(string); ok && r.mode == "rune-length" {
+	if s, ok := val.(string); ok && lng.mode == "rune-length" {
 		l = utf8.RuneCountInString(s)
 	} else if l, err = LengthOfValue(val); err != nil {
 		return err
 	}
 
-	if r.min > 0 && l < r.min || r.max > 0 && l > r.max ||
-		r.min == 0 && r.max == 0 && l > 0 {
-		return NewError(r.msg, r.code)
+	if lng.min > 0 && l < lng.min || lng.max > 0 && l > lng.max ||
+		lng.min == 0 && lng.max == 0 && l > 0 {
+		return NewError(lng.msg, lng.code)
 	}
 	return nil
 }
 
-func (r LengthRule) When(condition bool) LengthRule {
-	r.condition = condition
-	return r
+func (lng LengthRule) When(condition bool) LengthRule {
+	lng.condition = condition
+	return lng
 }
 
-func (r LengthRule) Message(tpl string) LengthRule {
-	if r.sticky != nil || tpl == "" {
-		return r
+func (lng LengthRule) Message(tpl string) LengthRule {
+	if lng.sticky != nil || tpl == "" {
+		return lng
 	}
 	parsed, err := template.New(LengthRuleName).
 		Option("missingkey=error").
 		Parse(tpl)
 	if err != nil {
-		r.sticky = NewInternalErrorf(
+		lng.sticky = NewInternalErrorf(
 			"%s(%s): custom template parse error",
 			LengthRuleName,
-			r.mode,
+			lng.mode,
 			xrr.WithCode(ECInternal),
 			xrr.WithCause(err),
 		)
-		return r
+		return lng
 	}
 
 	buf := &bytes.Buffer{}
-	data := map[string]any{ArgMin: r.min, ArgMax: r.max}
+	data := map[string]any{ArgMin: lng.min, ArgMax: lng.max}
 	if err = parsed.Execute(buf, data); err != nil {
-		r.sticky = NewInternalErrorf(
+		lng.sticky = NewInternalErrorf(
 			"%s(%s): custom template render error",
 			LengthRuleName,
-			r.mode,
+			lng.mode,
 			xrr.WithCode(ECInternal),
 			xrr.WithCause(err),
 		)
-		return r
+		return lng
 	}
-	r.tpl = tpl
-	r.msg = buf.String()
-	r.flags |= flgCustomMsg
-	return r
+	lng.tpl = tpl
+	lng.msg = buf.String()
+	lng.flags |= flgCustomMsg
+	return lng
 }
 
-func (r LengthRule) Code(code string) LengthRule {
+func (lng LengthRule) Code(code string) LengthRule {
 	if code != "" {
-		r.code = code
-		r.flags |= flgCustomCode
+		lng.code = code
+		lng.flags |= flgCustomCode
 	}
-	return r
+	return lng
 }
 
-func (r LengthRule) Spec() (*spec.Spec, error) {
-	if r.sticky != nil {
-		return nil, r.sticky
+func (lng LengthRule) Spec() (*spec.Spec, error) {
+	if lng.sticky != nil {
+		return nil, lng.sticky
 	}
 
 	spc := spec.NewSpec(LengthRuleName)
-	switch r.mode {
+	switch lng.mode {
 	case "length", "rune-length":
-		spc.SetArg(ArgMode, r.mode)
+		spc.SetArg(ArgMode, lng.mode)
 
 	default:
 		return nil, NewInternalErrorf(
 			"%s: invalid rule mode: %q",
 			LengthRuleName,
-			r.mode,
+			lng.mode,
 			xrr.WithCode(ECInvRuleMode),
 		)
 	}
 
-	spc.SetArg(ArgMin, r.min)
-	spc.SetArg(ArgMax, r.max)
+	spc.SetArg(ArgMin, lng.min)
+	spc.SetArg(ArgMax, lng.max)
 
-	if r.flags&flgCustomMsg != 0 {
-		spc.SetArg(ArgErrMsg, r.tpl)
+	if lng.flags&flgCustomMsg != 0 {
+		spc.SetArg(ArgErrMsg, lng.tpl)
 	}
-	if r.flags&flgCustomCode != 0 {
-		spc.SetArg(ArgErrCode, r.code)
+	if lng.flags&flgCustomCode != 0 {
+		spc.SetArg(ArgErrCode, lng.code)
 	}
 	return spc, nil
 }

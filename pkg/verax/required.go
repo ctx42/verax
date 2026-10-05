@@ -91,65 +91,65 @@ type RequiredRule struct {
 	flags     uint8  // Customizations.
 }
 
-func (r RequiredRule) Validate(have any) error {
-	if !r.condition {
+func (req RequiredRule) Validate(have any) error {
+	if !req.condition {
 		return nil
 	}
 	isNil, isEmpty := checkNilAndEmpty(have)
-	if isNil && r.mode == "not-empty" {
+	if isNil && req.mode == "not-empty" {
 		return nil
 	}
-	if isNil && (r.mode == "required" || r.mode == "not-nil") {
-		return NewError(r.msg, r.code)
+	if isNil && (req.mode == "required" || req.mode == "not-nil") {
+		return NewError(req.msg, req.code)
 	}
 	if !isEmpty {
 		return nil
 	}
-	if r.mode == "not-nil" {
+	if req.mode == "not-nil" {
 		return nil
 	}
-	return NewError(r.msg, r.code)
+	return NewError(req.msg, req.code)
 }
 
-func (r RequiredRule) When(condition bool) RequiredRule {
-	r.condition = condition
-	return r
+func (req RequiredRule) When(condition bool) RequiredRule {
+	req.condition = condition
+	return req
 }
 
-func (r RequiredRule) Message(msg string) RequiredRule {
+func (req RequiredRule) Message(msg string) RequiredRule {
 	if msg == "" {
-		return r
+		return req
 	}
-	r.msg = msg
-	r.flags |= flgCustomMsg
-	return r
+	req.msg = msg
+	req.flags |= flgCustomMsg
+	return req
 }
 
-func (r RequiredRule) Code(code string) RequiredRule {
+func (req RequiredRule) Code(code string) RequiredRule {
 	if code != "" {
-		r.code = code
-		r.flags |= flgCustomCode
+		req.code = code
+		req.flags |= flgCustomCode
 	}
-	return r
+	return req
 }
 
-func (r RequiredRule) Spec() (*spec.Spec, error) {
+func (req RequiredRule) Spec() (*spec.Spec, error) {
 	spc := spec.NewSpec(RequiredRuleName)
-	if r.flags&flgCustomMsg != 0 {
-		spc.SetArg(ArgErrMsg, r.msg)
+	if req.flags&flgCustomMsg != 0 {
+		spc.SetArg(ArgErrMsg, req.msg)
 	}
-	if r.flags&flgCustomCode != 0 {
-		spc.SetArg(ArgErrCode, r.code)
+	if req.flags&flgCustomCode != 0 {
+		spc.SetArg(ArgErrCode, req.code)
 	}
-	switch r.mode {
+	switch req.mode {
 	case "required", "not-empty", "not-nil":
-		spc.SetArg(ArgMode, r.mode)
+		spc.SetArg(ArgMode, req.mode)
 
 	default:
 		return nil, NewInternalErrorf(
 			"%s: invalid rule mode: %q",
 			RequiredRuleName,
-			r.mode,
+			req.mode,
 			xrr.WithCode(ECInvRuleMode),
 		)
 	}

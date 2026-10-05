@@ -82,8 +82,8 @@ type InRule struct {
 	flags     uint8       // Customizations.
 }
 
-func (r InRule) Validate(have any) error {
-	if !r.condition {
+func (inr InRule) Validate(have any) error {
+	if !inr.condition {
 		return nil
 	}
 	if IsEmpty(have) {
@@ -91,71 +91,71 @@ func (r InRule) Validate(have any) error {
 	}
 
 	v := Indirect(have)
-	for _, e := range r.want {
+	for _, e := range inr.want {
 		if e.fn(e.want, v) == nil {
-			if r.mode == "in" {
+			if inr.mode == "in" {
 				// We've found a value in the set so we can return with success.
 				return nil
 			}
 			// We've found value that should not be valid.
-			return NewError(r.msg, r.code)
+			return NewError(inr.msg, inr.code)
 		}
 	}
-	if r.mode == "in" {
+	if inr.mode == "in" {
 		// None of the conditioned values are on the list of valid values.
-		return NewError(r.msg, r.code)
+		return NewError(inr.msg, inr.code)
 	}
 
 	// None of the values were on the list of invalid values.
 	return nil
 }
 
-func (r InRule) When(condition bool) InRule {
-	r.condition = condition
-	return r
+func (inr InRule) When(condition bool) InRule {
+	inr.condition = condition
+	return inr
 }
 
-func (r InRule) Message(msg string) InRule {
+func (inr InRule) Message(msg string) InRule {
 	if msg != "" {
-		r.msg = msg
-		r.flags |= flgCustomMsg
+		inr.msg = msg
+		inr.flags |= flgCustomMsg
 	}
-	return r
+	return inr
 }
 
-func (r InRule) Code(code string) InRule {
+func (inr InRule) Code(code string) InRule {
 	if code != "" {
-		r.code = code
-		r.flags |= flgCustomCode
+		inr.code = code
+		inr.flags |= flgCustomCode
 	}
-	return r
+	return inr
 }
 
-func (r InRule) Spec() (*spec.Spec, error) {
+func (inr InRule) Spec() (*spec.Spec, error) {
 	spc := spec.NewSpec(InRuleName)
-	switch r.mode {
+	switch inr.mode {
 	case "in", "not-in":
-		spc.SetArg(ArgMode, r.mode)
+		spc.SetArg(ArgMode, inr.mode)
 
 	default:
 		return nil, NewInternalErrorf(
 			"%s: invalid rule mode: %q",
 			InRuleName,
-			r.mode,
+			inr.mode,
 			xrr.WithCode(ECInvRuleMode),
 		)
 	}
 
 	var vls []any
-	for _, eq := range r.want {
+	for _, eq := range inr.want {
 		vls = append(vls, eq.want)
 	}
 	spc.SetArg(spec.ArgValues, vls)
-	if r.flags&flgCustomMsg != 0 {
-		spc.SetArg(ArgErrMsg, r.msg)
+	if inr.flags&flgCustomMsg != 0 {
+		spc.SetArg(ArgErrMsg, inr.msg)
 	}
-	if r.flags&flgCustomCode != 0 {
-		spc.SetArg(ArgErrCode, r.code)
+	if inr.flags&flgCustomCode != 0 {
+		spc.SetArg(ArgErrCode, inr.code)
 	}
 	return spc, nil
 }

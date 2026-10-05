@@ -65,58 +65,58 @@ type AbsentRule struct {
 	flags     uint8  // Customizations.
 }
 
-func (r AbsentRule) Validate(have any) error {
-	if !r.condition {
+func (abs AbsentRule) Validate(have any) error {
+	if !abs.condition {
 		return nil
 	}
 	isNil := IsNil(have)
-	if !isNil && (r.mode == "nil" || !isEmptyValue(have)) {
-		return NewError(r.msg, r.code)
+	if !isNil && (abs.mode == "nil" || !isEmptyValue(have)) {
+		return NewError(abs.msg, abs.code)
 	}
 	return nil
 }
 
-func (r AbsentRule) When(condition bool) AbsentRule {
-	r.condition = condition
-	return r
+func (abs AbsentRule) When(condition bool) AbsentRule {
+	abs.condition = condition
+	return abs
 }
 
-func (r AbsentRule) Message(msg string) AbsentRule {
+func (abs AbsentRule) Message(msg string) AbsentRule {
 	if msg != "" {
-		r.msg = msg
-		r.flags |= flgCustomMsg
+		abs.msg = msg
+		abs.flags |= flgCustomMsg
 	}
-	return r
+	return abs
 }
 
-func (r AbsentRule) Code(code string) AbsentRule {
+func (abs AbsentRule) Code(code string) AbsentRule {
 	if code != "" {
-		r.code = code
-		r.flags |= flgCustomCode
+		abs.code = code
+		abs.flags |= flgCustomCode
 	}
-	return r
+	return abs
 }
 
-func (r AbsentRule) Spec() (*spec.Spec, error) {
+func (abs AbsentRule) Spec() (*spec.Spec, error) {
 	spc := spec.NewSpec(AbsentRuleName)
-	switch r.mode {
+	switch abs.mode {
 	case "nil", "empty":
-		spc.SetArg(ArgMode, r.mode)
+		spc.SetArg(ArgMode, abs.mode)
 
 	default:
 		return nil, NewInternalErrorf(
 			"%s: invalid rule mode: %q",
 			AbsentRuleName,
-			r.mode,
+			abs.mode,
 			xrr.WithCode(ECInvRuleMode),
 		)
 	}
 
-	if r.flags&flgCustomMsg != 0 {
-		spc.SetArg(ArgErrMsg, r.msg)
+	if abs.flags&flgCustomMsg != 0 {
+		spc.SetArg(ArgErrMsg, abs.msg)
 	}
-	if r.flags&flgCustomCode != 0 {
-		spc.SetArg(ArgErrCode, r.code)
+	if abs.flags&flgCustomCode != 0 {
+		spc.SetArg(ArgErrCode, abs.code)
 	}
 	return spc, nil
 }

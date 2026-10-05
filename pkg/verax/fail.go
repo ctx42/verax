@@ -35,34 +35,34 @@ type FailRule struct {
 	code      string // Validation error code.
 }
 
-func (r FailRule) Validate(_ any) error {
-	if !r.condition {
+func (fal FailRule) Validate(_ any) error {
+	if !fal.condition {
 		return nil
 	}
-	return NewError(r.msg, r.code)
+	return NewError(fal.msg, fal.code)
 }
 
-func (r FailRule) When(condition bool) FailRule {
-	r.condition = condition
-	return r
+func (fal FailRule) When(condition bool) FailRule {
+	fal.condition = condition
+	return fal
 }
 
-func (r FailRule) Message(msg string) FailRule {
+func (fal FailRule) Message(msg string) FailRule {
 	if msg != "" {
-		r.msg = msg
+		fal.msg = msg
 	}
-	return r
+	return fal
 }
 
-func (r FailRule) Code(code string) FailRule {
+func (fal FailRule) Code(code string) FailRule {
 	if code != "" {
-		r.code = code
+		fal.code = code
 	}
-	return r
+	return fal
 }
 
-func (r FailRule) Spec() (*spec.Spec, error) {
-	if r.msg == "" {
+func (fal FailRule) Spec() (*spec.Spec, error) {
+	if fal.msg == "" {
 		return nil, NewInternalErrorf(
 			"%s: error cannot have an empty message",
 			FailRuleName,
@@ -70,9 +70,9 @@ func (r FailRule) Spec() (*spec.Spec, error) {
 		)
 	}
 
-	spc := spec.NewSpec(FailRuleName).SetArg(ArgErrMsg, r.msg)
-	if r.code != "" && r.code != xrr.ECGeneric {
-		spc.SetArg(ArgErrCode, r.code)
+	spc := spec.NewSpec(FailRuleName).SetArg(ArgErrMsg, fal.msg)
+	if fal.code != "" && fal.code != xrr.ECGeneric {
+		spc.SetArg(ArgErrCode, fal.code)
 	}
 	return spc, nil
 }
