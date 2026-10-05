@@ -544,6 +544,20 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 		assert.Nil(t, have)
 	})
 
+	t.Run("error - argument type not in registry", func(t *testing.T) {
+		// --- Given ---
+		spc := NewSpec("my-spec").SetArg("int", 1)
+		reg := NewRegistry[TstType]()
+		reg.jtr = jsontype.NewRegistry()
+
+		// --- When ---
+		have, err := reg.EncodeSpec(spc)
+
+		// --- Then ---
+		assert.ErrorIs(t, convert.ErrUnsType, err)
+		assert.Nil(t, have)
+	})
+
 	t.Run("not reserved argument names", func(t *testing.T) {
 		// --- Given ---
 		spc := NewSpec("my-spec").

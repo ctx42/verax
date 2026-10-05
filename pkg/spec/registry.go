@@ -212,7 +212,8 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 			work.Args[name] = values
 
 		default:
-			val, err := jsontype.NewValue(value)
+			jtr := jsontype.WithRegistry(reg.jsonTypes())
+			val, err := jsontype.NewValue(value, jtr)
 			if err != nil {
 				format := "spec %s to JSON: %w"
 				return nil, NewErrorf(format, spc.Name, err)
