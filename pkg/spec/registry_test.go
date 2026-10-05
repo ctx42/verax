@@ -681,7 +681,9 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSpec, err)
-		assert.ErrorEqual(t, "JSON to spec: invalid spec", err)
+		wMsg := "JSON to spec: invalid spec: " +
+			"invalid character '!' looking for beginning of object key string"
+		assert.ErrorEqual(t, wMsg, err)
 	})
 
 	t.Run("error - nil spec", func(t *testing.T) {
@@ -790,7 +792,9 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
 		wMsg := "JSON to spec: spec my-spec, argument specs: " +
-			"invalid spec argument"
+			"invalid spec argument: " +
+			"json: cannot unmarshal number " +
+			"into Go value of type []json.RawMessage"
 		assert.ErrorEqual(t, wMsg, err)
 	})
 
@@ -842,7 +846,9 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
 		wMsg := "JSON to spec: spec my-spec, argument types: " +
-			"invalid spec argument"
+			"invalid spec argument: " +
+			"json: cannot unmarshal number " +
+			"into Go value of type []json.RawMessage"
 		assert.ErrorEqual(t, wMsg, err)
 	})
 
@@ -900,7 +906,8 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
 		wMsg := "JSON to spec: spec my-spec, argument src_go: " +
-			"invalid spec argument"
+			"invalid spec argument: " +
+			"json: cannot unmarshal number into Go value of type spec.Source"
 		assert.ErrorEqual(t, wMsg, err)
 	})
 
@@ -948,7 +955,9 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
 		wMsg := "JSON to spec: spec my-spec, argument values: " +
-			"invalid spec argument"
+			"invalid spec argument: " +
+			"json: cannot unmarshal number " +
+			"into Go value of type []json.RawMessage"
 		assert.ErrorEqual(t, wMsg, err)
 	})
 
@@ -1017,7 +1026,8 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
 		wMsg := "JSON to spec: spec my-spec, argument arg: " +
-			"invalid spec argument"
+			"invalid spec argument: jsontype: invalid type: " +
+			"expected float64 got string"
 		assert.ErrorEqual(t, wMsg, err)
 	})
 
@@ -1065,7 +1075,9 @@ func Test_Registry_DecodeAndBuild(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSpec, err)
-		assert.ErrorEqual(t, "JSON to spec: invalid spec", err)
+		wMsg := "JSON to spec: invalid spec: " +
+			"unexpected end of JSON input"
+		assert.ErrorEqual(t, wMsg, err)
 		assert.Zero(t, have)
 	})
 
@@ -1078,7 +1090,9 @@ func Test_Registry_DecodeAndBuild(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSpec, err)
-		assert.ErrorEqual(t, "JSON to spec: invalid spec", err)
+		wMsg := "JSON to spec: invalid spec: " +
+			"invalid character '!' looking for beginning of object key string"
+		assert.ErrorEqual(t, wMsg, err)
 		assert.Zero(t, have)
 	})
 
@@ -1175,7 +1189,10 @@ func Test_Registry_decodeSpecs(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		assert.ErrorEqual(t, "invalid spec argument", err)
+		wMsg := "invalid spec argument: " +
+			"json: cannot unmarshal number " +
+			"into Go value of type []json.RawMessage"
+		assert.ErrorEqual(t, wMsg, err)
 		assert.Nil(t, have)
 	})
 
@@ -1189,7 +1206,9 @@ func Test_Registry_decodeSpecs(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
-		assert.ErrorEqual(t, "invalid spec argument", err)
+		wMsg := "invalid spec argument: json: cannot unmarshal string " +
+			"into Go value of type []json.RawMessage"
+		assert.ErrorEqual(t, wMsg, err)
 		assert.Nil(t, have)
 	})
 
@@ -1203,7 +1222,9 @@ func Test_Registry_decodeSpecs(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvSpec, err)
-		assert.ErrorEqual(t, "index 0: JSON to spec: invalid spec", err)
+		wMsg := "^index 0: JSON to spec: invalid spec: " +
+			"json: cannot unmarshal string into Go value"
+		assert.ErrorRegexp(t, wMsg, err)
 		assert.Nil(t, have)
 	})
 
@@ -1326,7 +1347,9 @@ func Test_Registry_decodeTypes(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
 		wMsg := "JSON to spec: spec my-spec, argument types: " +
-			"invalid spec argument"
+			"invalid spec argument: " +
+			"json: cannot unmarshal number " +
+			"into Go value of type []json.RawMessage"
 		assert.ErrorEqual(t, wMsg, err)
 	})
 
@@ -1445,7 +1468,8 @@ func Test_Registry_decodeSource(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
 		wMsg := "JSON to spec: spec my-spec, argument src_go: " +
-			"invalid spec argument"
+			"invalid spec argument: " +
+			"invalid character '!' looking for beginning of object key string"
 		assert.ErrorEqual(t, wMsg, err)
 	})
 
@@ -1574,7 +1598,8 @@ func Test_Registry_decodeValues(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
 		wMsg := "JSON to spec: spec my-spec, argument values: " +
-			"invalid spec argument"
+			"invalid spec argument: " +
+			"invalid character '!' looking for beginning of value"
 		assert.ErrorEqual(t, wMsg, err)
 	})
 
@@ -1590,7 +1615,7 @@ func Test_Registry_decodeValues(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
 		wMsg := "JSON to spec: spec my-spec, argument values: index 0: " +
-			"invalid spec argument"
+			"invalid spec argument: jsontype: unsupported type: "
 		assert.ErrorEqual(t, wMsg, err)
 	})
 
@@ -1632,7 +1657,8 @@ func Test_Registry_decodeValue(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArg, err)
 		wMsg := "JSON to spec: spec my-spec, argument arg-name: " +
-			"invalid spec argument"
+			"invalid spec argument: jsontype: " +
+			"invalid character '!' looking for beginning of object key string"
 		assert.ErrorEqual(t, wMsg, err)
 	})
 }

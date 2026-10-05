@@ -6,6 +6,7 @@ package spec
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"maps"
 	"reflect"
 	"sync"
@@ -229,6 +230,12 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 	return data, nil
 }
 
+// withCause returns an error matching both the sentinel and its cause with
+// [errors.Is], reading "sentinel: cause".
+func withCause(sentinel, cause error) error {
+	return fmt.Errorf("%w: %w", sentinel, cause)
+}
+
 // jsNull represents the JSON null value.
 var jsNull = json.RawMessage(`null`)
 
@@ -247,7 +254,7 @@ func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
 		Spec: spc,
 	}
 	if err := json.Unmarshal(data, &tmp); err != nil {
-		return NewErrorf("JSON to spec: %w", ErrInvSpec)
+		return NewErrorf("JSON to spec: %w", withCause(ErrInvSpec, err))
 	}
 	if spc.Name == "" {
 		return NewErrorf("JSON to spec: empty name: %w", ErrInvSpec)
@@ -345,7 +352,7 @@ func (reg *Registry[T]) encodeSpecs(value any) (any, error) {
 func (reg *Registry[T]) decodeSpecs(data []byte) ([]*Spec, error) {
 	var subs []json.RawMessage
 	if err := json.Unmarshal(data, &subs); err != nil {
-		return nil, ErrInvArg
+		return nil, NewErrorf("%w", withCause(ErrInvArg, err))
 	}
 
 	var sps []*Spec
@@ -441,7 +448,7 @@ func (reg *Registry[T]) decodeSource(data []byte, spc *Spec) error {
 	src := Source{}
 	if err := json.Unmarshal(data, &src); err != nil {
 		format := "JSON to spec: spec %s, argument %s: %w"
-		return NewErrorf(format, spc.Name, ArgSrc, ErrInvArg)
+		return NewErrorf(format, spc.Name, ArgSrc, withCause(ErrInvArg, err))
 	}
 	if src.Name == "" {
 		format := "JSON to spec: spec %s, argument %s: %w"
@@ -483,8 +490,9 @@ func (reg *Registry[T]) encodeValues(value any) (any, error) {
 func (reg *Registry[T]) decodeValues(data []byte, spc *Spec) error {
 	var rv []json.RawMessage
 	if err := json.Unmarshal(data, &rv); err != nil {
+		cause := withCause(ErrInvArg, err)
 		format := "JSON to spec: spec %s, argument %s: %w"
-		return NewErrorf(format, spc.Name, ArgValues, ErrInvArg)
+		return NewErrorf(format, spc.Name, ArgValues, cause)
 	}
 	var vs []any
 	for idx, v := range rv {
@@ -496,7 +504,7 @@ func (reg *Registry[T]) decodeValues(data []byte, spc *Spec) error {
 				spc.Name,
 				ArgValues,
 				idx,
-				ErrInvArg,
+				withCause(ErrInvArg, err),
 			)
 		}
 		vs = append(vs, val.GoValue())
@@ -512,7 +520,7 @@ func (reg *Registry[T]) decodeValue(name string, data []byte, spc *Spec) error {
 	err := jsontype.Unmarshal(reg.jsonTypes(), data, &val)
 	if err != nil {
 		format := "JSON to spec: spec %s, argument %s: %w"
-		return NewErrorf(format, spc.Name, name, ErrInvArg)
+		return NewErrorf(format, spc.Name, name, withCause(ErrInvArg, err))
 	}
 	spc.SetArg(name, val.GoValue())
 	return nil
