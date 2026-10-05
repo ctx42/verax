@@ -670,6 +670,21 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
+	t.Run("resets reused spec", func(t *testing.T) {
+		// --- Given ---
+		data := `{"name": "new", "args": {"new": true}}`
+		reg := NewRegistry[TstType]()
+		have := &Spec{Name: "old", Args: map[string]any{"old": 1}}
+
+		// --- When ---
+		err := reg.DecodeSpec([]byte(data), have)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		want := &Spec{Name: "new", Args: map[string]any{"new": true}}
+		assert.Equal(t, want, have)
+	})
+
 	t.Run("JSON null arguments are ignored", func(t *testing.T) {
 		// --- Given ---
 		data := `{
