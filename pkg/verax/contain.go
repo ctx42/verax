@@ -44,7 +44,7 @@ func (r ContainRule) Validate(have any) error {
 	case reflect.Map:
 		for _, k := range vo.MapKeys() {
 			val := getInterface(vo.MapIndex(k))
-			if err := Validate(val, r.rule); err == nil {
+			if r.rule.fn(r.rule.want, val) == nil {
 				return nil
 			}
 		}
@@ -52,7 +52,7 @@ func (r ContainRule) Validate(have any) error {
 	case reflect.Slice, reflect.Array:
 		for i := range vo.Len() {
 			val := getInterface(vo.Index(i))
-			if err := Validate(val, r.rule); err == nil {
+			if r.rule.fn(r.rule.want, val) == nil {
 				return nil
 			}
 		}
