@@ -65,12 +65,6 @@ type twoStr struct {
 	FStrPtr *string
 }
 
-// newTwoStr returns new instance of twoStr.
-func newTwoStr() *twoStr {
-	p := "FpStr"
-	return &twoStr{FStr: "FStr", FStrPtr: &p}
-}
-
 func (two *twoStr) String() string { return two.FStr + " " + *two.FStrPtr }
 
 // embeddedPtr is a struct with twoStr pointer embedded not implementing

@@ -465,7 +465,7 @@ func Test_RangeRule_Validate_valid_tabular(t *testing.T) {
 }
 
 func Test_RangeRule_Validate_invalid_tabular(t *testing.T) {
-	cmp := func(_, _ any) (int, error) { return 0, errTst }
+	fn := func(_, _ any) (int, error) { return 0, errTst }
 
 	tt := []struct {
 		testN string
@@ -478,7 +478,7 @@ func Test_RangeRule_Validate_invalid_tabular(t *testing.T) {
 	}{
 		{
 			"custom fn",
-			Min(42).With(cmp),
+			Min(42).With(fn),
 			42,
 			"",
 			"",
@@ -486,7 +486,7 @@ func Test_RangeRule_Validate_invalid_tabular(t *testing.T) {
 		},
 		{
 			"custom fn with custom msg",
-			Min(42).With(cmp),
+			Min(42).With(fn),
 			42,
 			"test msg",
 			"",
@@ -494,7 +494,7 @@ func Test_RangeRule_Validate_invalid_tabular(t *testing.T) {
 		},
 		{
 			"custom fn with custom code",
-			Min(42).With(cmp),
+			Min(42).With(fn),
 			42,
 			"",
 			"MyCode",
@@ -502,7 +502,7 @@ func Test_RangeRule_Validate_invalid_tabular(t *testing.T) {
 		},
 		{
 			"custom fn with msg and code",
-			Min(42).With(cmp),
+			Min(42).With(fn),
 			42,
 			"custom msg",
 			"MyCode",
