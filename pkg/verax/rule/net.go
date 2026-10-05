@@ -14,7 +14,7 @@ import (
 
 // Regexp rules.
 const (
-	// dnsNameRx represents valid DNS name regular expression.
+	// dnsNameRx matches DNS names; labels may contain underscores.
 	dnsNameRx string = `^([a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62}){1}` +
 		`(\.[a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62})*[\._]?$`
 
@@ -27,11 +27,8 @@ const (
 
 // Compiled regexp rules.
 var (
-	// dnsNameRxc represents compiled valid DNS name regular expression.
 	dnsNameRxc = regexp.MustCompile(dnsNameRx)
-
-	// domainRxc represents compiled valid domain name regular expression.
-	domainRxc = regexp.MustCompile(domainRx)
+	domainRxc  = regexp.MustCompile(domainRx)
 )
 
 // Net error codes.
@@ -45,34 +42,22 @@ const (
 	ECHost    = "ECHost"    // Error code for an invalid network hostname.
 )
 
-// Validation errors.
-var (
-	// msgIP is the error message for invalid IPv4 or IPv6 address.
-	msgIP = "must be a valid IP address"
-
-	// msgIPv4 is the error message for invalid IPv4 address.
-	msgIPv4 = "must be a valid IPv4 address"
-
-	// msgIPv6 is the error message for invalid IPv6 address.
-	msgIPv6 = "must be a valid IPv6 address"
-
-	// msgPort is the error message for an invalid network port.
-	msgPort = "must be a valid network port"
-
-	// msgDNSName is the error message for an invalid DNS name.
+// Validation error messages.
+const (
+	msgIP      = "must be a valid IP address"
+	msgIPv4    = "must be a valid IPv4 address"
+	msgIPv6    = "must be a valid IPv6 address"
+	msgPort    = "must be a valid network port"
 	msgDNSName = "must be a valid DNS name"
-
-	// msgDomain is the error message for an invalid domain name.
-	msgDomain = "must be a valid domain"
-
-	// msgHost is the error message for an invalid network hostname.
-	msgHost = "must be a valid network hostname"
+	msgDomain  = "must be a valid domain"
+	msgHost    = "must be a valid network hostname"
 )
 
 // IsIP checks if a string is either IPv4 or IPv6.
 func IsIP(str string) bool { return net.ParseIP(str) != nil }
 
-// CheckIP is [verax.RuleFunc] that checks a string is valid IPv4 or IPv6.
+// CheckIP is a [verax.RuleFunc] that checks that a string is a valid IPv4 or
+// IPv6 address.
 var CheckIP = verax.Check(IsIP, msgIP, ECIP)
 
 // IP validates if a string is a valid IPv4 or IPv6 address.
@@ -84,7 +69,8 @@ func IsIPv4(str string) bool {
 	return ip != nil && strings.Contains(str, ".")
 }
 
-// CheckIPv4 is [verax.RuleFunc] that checks a string is a valid IPv4.
+// CheckIPv4 is a [verax.RuleFunc] that checks that a string is a valid IPv4
+// address.
 var CheckIPv4 = verax.Check(IsIPv4, msgIPv4, ECIPv4)
 
 // IPv4 validates if a string is a valid IPv4 address.
@@ -96,7 +82,8 @@ func IsIPv6(str string) bool {
 	return ip != nil && strings.Contains(str, ":")
 }
 
-// CheckIPv6 is [verax.RuleFunc] that checks a string is a valid IPv6.
+// CheckIPv6 is a [verax.RuleFunc] that checks that a string is a valid IPv6
+// address.
 var CheckIPv6 = verax.Check(IsIPv6, msgIPv6, ECIPv6)
 
 // IPv6 validates if a string is a valid IPv6 address.
@@ -110,7 +97,8 @@ func IsPort(str string) bool {
 	return false
 }
 
-// CheckPort is [verax.RuleFunc] that checks a string is a valid network port.
+// CheckPort is a [verax.RuleFunc] that checks that a string is a valid network
+// port.
 var CheckPort = verax.Check(IsPort, msgPort, ECPort)
 
 // Port validates if a string is a valid network port number.
@@ -124,7 +112,8 @@ func IsDNSName(str string) bool {
 	return !IsIP(str) && dnsNameRxc.MatchString(str)
 }
 
-// CheckDNSName is [verax.RuleFunc] that checks a string is a valid DNS name.
+// CheckDNSName is a [verax.RuleFunc] that checks that a string is a valid DNS
+// name.
 var CheckDNSName = verax.Check(IsDNSName, msgDNSName, ECDNSName)
 
 // DNSName validates if a string is a valid DNS name.
@@ -138,7 +127,8 @@ func IsDomain(str string) bool {
 	return domainRxc.MatchString(str)
 }
 
-// CheckDomain is [verax.RuleFunc] that checks a string is a valid domain name.
+// CheckDomain is a [verax.RuleFunc] that checks that a string is a valid
+// domain name.
 var CheckDomain = verax.Check(IsDomain, msgDomain, ECDomain)
 
 // Domain validates if a string is a valid domain name.
@@ -147,8 +137,8 @@ var Domain = verax.By(CheckDomain)
 // IsHost checks if the string is a valid IPv4, IPv6, or valid DNS name.
 func IsHost(str string) bool { return IsIP(str) || IsDNSName(str) }
 
-// CheckHost is [verax.RuleFunc] that checks a string is a valid network
-// hostname.
+// CheckHost is a [verax.RuleFunc] that checks that a string is a valid
+// network hostname.
 var CheckHost = verax.Check(IsHost, msgHost, ECHost)
 
 // Host validates if a string is a valid network hostname.
