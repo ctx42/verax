@@ -58,6 +58,31 @@ func Test_ContainRule_Validate(t *testing.T) {
 		assert.SameType(t, &InternalError{}, err)
 		xrrtest.AssertEqual(t, "must be iterable (ECInvType)", err)
 	})
+
+	t.Run("error - custom message", func(t *testing.T) {
+		// --- Given ---
+		r := Contain(Equal(1)).Message("need {{.value}}")
+
+		// --- When ---
+		err := r.Validate([]int{2})
+
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		xrrtest.AssertEqual(t, "need 1 (ECNotEqual)", err)
+	})
+
+	t.Run("error - custom code", func(t *testing.T) {
+		// --- Given ---
+		r := Contain(Equal(1)).Code("ECTst")
+
+		// --- When ---
+		err := r.Validate([]int{2})
+
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		wMsg := "must contain at least one '1' value (ECTst)"
+		xrrtest.AssertEqual(t, wMsg, err)
+	})
 }
 
 func Test_ContainRule_Validate_valid_tabular(t *testing.T) {

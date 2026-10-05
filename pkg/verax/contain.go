@@ -61,8 +61,15 @@ func (r ContainRule) Validate(have any) error {
 		return NewInternalErrorf("must be iterable", xrr.WithCode(ECInvType))
 	}
 
+	code := ECNotEqual
+	if r.rule.flags&flgCustomCode != 0 {
+		code = r.rule.code
+	}
+	if r.rule.flags&flgCustomMsg != 0 {
+		return NewError(r.rule.msg, code)
+	}
 	format := "must contain at least one '%v' value"
-	return NewErrorf(format, r.rule.want, xrr.WithCode(ECNotEqual))
+	return NewErrorf(format, r.rule.want, xrr.WithCode(code))
 }
 
 func (r ContainRule) When(condition bool) ContainRule {
