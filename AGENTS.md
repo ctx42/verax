@@ -34,7 +34,7 @@ golangci-lint run --config tmp/.golangci.yml ./...
 - **`pkg/verax`** — Core package. Contains the `Validate` and `ValidateStruct`
   entry points, all built-in rules, the error types, and struct-tag handling.
 - **`pkg/verax/rule`** — Specialized rules not suitable for the core package:
-  Base64, network types (IP, email, URL, CIDR, domain), and SemVer.
+  Base64, network types (IP, port, DNS name, domain, host), and SemVer.
 - **`pkg/spec`** — Serialization layer. Provides `Spec`, `Source`, `Registry`,
   and `Builder` types so rules can be represented as data and reconstructed at
   runtime (useful for storing validation config in databases or APIs).
