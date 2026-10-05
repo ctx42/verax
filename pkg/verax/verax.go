@@ -196,15 +196,17 @@ type IsFunc[T any] func(v T) bool
 // an [InternalError] for misuse such as unsupported or mismatched types.
 type EqualFunc func(want, have any) error
 
-// Check creates a [RuleFunc] from [IsFunc].
+// Check creates a [RuleFunc] from [IsFunc]. Pointers are dereferenced, and
+// values of a type convertible to T with the same kind (for example, a named
+// string type for T string) are converted to T.
 func Check[T any](fn IsFunc[T], msg, code string) RuleFunc {
 	return func(have any) error {
-		vt, ok := have.(T)
+		vt, ok := convertTo[T](have)
 		if !ok {
 			return NewInternalErrorf(
-				"%s: expected %T, got %T",
+				"%s: expected %s, got %T",
 				msg,
-				vt,
+				reflect.TypeFor[T](),
 				have,
 				xrr.WithCode(ECInvType),
 			)

@@ -24,6 +24,40 @@ func Test_ToAnySlice(t *testing.T) {
 	assert.Equal(t, []any{1, 2, 3}, ToAnySlice(1, 2, 3))
 }
 
+func Test_convertTo_tabular(t *testing.T) {
+	type hostname string
+	str := "abc"
+	hst := hostname("abc")
+	var nilStr *string
+
+	tt := []struct {
+		testN string
+
+		val  any
+		want string
+		ok   bool
+	}{
+		{"string", "abc", "abc", true},
+		{"named string", hst, "abc", true},
+		{"pointer to string", &str, "abc", true},
+		{"pointer to named string", &hst, "abc", true},
+		{"nil pointer", nilStr, "", false},
+		{"nil", nil, "", false},
+		{"int", 65, "", false},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			have, ok := convertTo[string](tc.val)
+
+			// --- Then ---
+			assert.Equal(t, tc.want, have)
+			assert.Equal(t, tc.ok, ok)
+		})
+	}
+}
+
 func Test_AsRuleBuilder(t *testing.T) {
 	t.Run("returns nil when T does not implement Rule", func(t *testing.T) {
 		// --- When ---

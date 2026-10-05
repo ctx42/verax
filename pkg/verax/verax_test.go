@@ -223,6 +223,24 @@ func Test_Check(t *testing.T) {
 		assert.Equal(t, 42, with)
 	})
 
+	t.Run("named type and pointer", func(t *testing.T) {
+		// --- Given ---
+		type hostname string
+		var with []string
+		fn := func(have string) bool { with = append(with, have); return true }
+		str := "b"
+		hst := hostname("c")
+
+		// --- When ---
+		have := Check(fn, "test err", "ECTst")
+
+		// --- Then ---
+		assert.NoError(t, have(hostname("a")))
+		assert.NoError(t, have(&str))
+		assert.NoError(t, have(&hst))
+		assert.Equal(t, []string{"a", "b", "c"}, with)
+	})
+
 	t.Run("error - invalid type", func(t *testing.T) {
 		// --- Given ---
 		fn := func(have int) bool { return true }

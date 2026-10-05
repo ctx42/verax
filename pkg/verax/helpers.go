@@ -5,6 +5,7 @@ package verax
 
 import (
 	"bytes"
+	"reflect"
 	"text/template"
 	"time"
 
@@ -20,6 +21,23 @@ func ToAnySlice[T any](vls ...T) []any {
 		tmp = append(tmp, val)
 	}
 	return tmp
+}
+
+// convertTo returns val as T. It dereferences val with [Indirect] and converts
+// values whose type is convertible to T and has the same kind as T. It
+// returns false when val cannot be represented as T.
+func convertTo[T any](val any) (T, bool) {
+	if vt, ok := val.(T); ok {
+		return vt, true
+	}
+	var zero T
+	rv := reflect.ValueOf(Indirect(val))
+	typ := reflect.TypeFor[T]()
+	if !rv.IsValid() || rv.Kind() != typ.Kind() || !rv.CanConvert(typ) {
+		return zero, false
+	}
+	vt, ok := rv.Convert(typ).Interface().(T)
+	return vt, ok
 }
 
 // AsRuleBuilder wraps a typed spec constructor and returns a [Builder] for it.
