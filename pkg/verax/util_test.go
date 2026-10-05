@@ -60,6 +60,7 @@ func Test_EnsureString_error_tabular(t *testing.T) {
 		code string
 	}{
 		{"int", 100, "", "must be either a string or byte slice", ECInvType},
+		{"nil", nil, "", "must be either a string or byte slice", ECInvType},
 		{
 			"pointer to string",
 			&str,

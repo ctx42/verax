@@ -21,7 +21,7 @@ func EnsureString(value any) (string, error) {
 	if v.Kind() == reflect.String {
 		return v.String(), nil
 	}
-	if v.Type() == bytesType {
+	if v.IsValid() && v.Type() == bytesType {
 		return string(v.Interface().([]byte)), nil //nolint:forcetypeassert
 	}
 	return "", NewError("must be either a string or byte slice", ECInvType)
