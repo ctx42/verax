@@ -1156,6 +1156,18 @@ func Test_rangeOutcome_tabular(t *testing.T) {
 			true,
 		},
 		{
+			"min-exclusive any negative result",
+			"min-exclusive",
+			-2,
+			true,
+		},
+		{
+			"max-exclusive any positive result",
+			"max-exclusive",
+			2,
+			true,
+		},
+		{
 			"a range must be greater than a value - value equal",
 			"min-exclusive",
 			0,

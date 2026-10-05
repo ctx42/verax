@@ -402,11 +402,11 @@ func rangeOutcome(mode string, result int) bool {
 	case "min":
 		return result <= 0
 	case "min-exclusive":
-		return result == -1
+		return result < 0
 	case "max":
 		return result >= 0
 	case "max-exclusive":
-		return result == 1
+		return result > 0
 	}
 	return false
 }
