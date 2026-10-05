@@ -59,6 +59,19 @@ func Test_ContainRule_Validate(t *testing.T) {
 		xrrtest.AssertEqual(t, "must be iterable (ECInvType)", err)
 	})
 
+	t.Run("error - sticky", func(t *testing.T) {
+		// --- Given ---
+		r := Contain(Equal(1)).Message("{{.")
+
+		// --- When ---
+		err := r.Validate([]int{1})
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := "equal-rule(equal): custom template parse error"
+		assert.ErrorEqual(t, wMsg, err)
+	})
+
 	t.Run("error - custom message", func(t *testing.T) {
 		// --- Given ---
 		r := Contain(Equal(1)).Message("need {{.value}}")

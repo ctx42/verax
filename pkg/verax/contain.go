@@ -35,6 +35,9 @@ type ContainRule struct {
 }
 
 func (r ContainRule) Validate(have any) error {
+	if r.rule.sticky != nil {
+		return r.rule.sticky
+	}
 	if !r.condition {
 		return nil
 	}
