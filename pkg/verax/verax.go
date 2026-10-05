@@ -27,14 +27,14 @@ const (
 	// ECInvFormat is the error code for an invalid value format.
 	ECInvFormat = "ECInvFormat"
 
-	// ECInvValue is the error code for invalid value.
+	// ECInvValue is the error code for an invalid value.
 	ECInvValue = "ECInvValue"
 
 	// ECUnkRule represents an unknown rule error code.
 	ECUnkRule = "ECUnkRule"
 
-	// ECInvRuleMode is error code used when a [spec.Spec] defines unsupported
-	// rule mode.
+	// ECInvRuleMode is the error code used when a [spec.Spec] defines an
+	// unsupported rule mode.
 	ECInvRuleMode = "ECInvRuleMode"
 )
 
@@ -82,7 +82,7 @@ type Rule interface {
 	// - If only the message is overridden: return a new [Error] instance with
 	//   the original error's code and the custom message.
 	// - If only the code is overridden: return the original error after
-	//   calling [SetCode] on it.
+	//   calling [xrr.SetCode] on it.
 	// - If neither is overridden: return the error from the validation
 	//   function unchanged.
 	//
@@ -119,10 +119,10 @@ func Builders() map[string]spec.Builder[Rule] {
 		RequiredRuleName: AsRuleBuilder(RequiredRuleFromSpec),
 		SkipRuleName:     AsRuleBuilder(SkipRuleFromSpec),
 		RangeRuleName:    AsRuleBuilder(RangeRuleFromSpec),
+		SetRuleName:      AsRuleBuilder(SetRuleFromSpec),
 
 		// [TypeRule] is intentionally excluded: it holds a [reflect.Type]
 		// which has no portable cross-language representation.
-		SetRuleName: AsRuleBuilder(SetRuleFromSpec),
 	}
 }
 
@@ -183,7 +183,7 @@ func SetRuleFromSpec(spc *spec.Spec) (Set, error) {
 type RuleFunc func(v any) error
 
 // IsFunc represents a validator function returning true only for valid values.
-// You may wrap it as a [Rule] by calling [Check].
+// Convert it to a [RuleFunc] with [Check] and wrap that with [By].
 type IsFunc[T any] func(v T) bool
 
 // EqualFunc is the signature for a custom comparison function. It receives the

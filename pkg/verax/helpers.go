@@ -42,7 +42,8 @@ func convertTo[T any](val any) (T, bool) {
 	return vt, ok
 }
 
-// AsRuleBuilder wraps a typed spec constructor and returns a [Builder] for it.
+// AsRuleBuilder wraps a typed spec constructor and returns a [spec.Builder]
+// for it. It returns nil when T does not implement [Rule].
 func AsRuleBuilder[T any](fn func(*spec.Spec) (T, error)) spec.Builder[Rule] {
 	if !reflect.TypeFor[T]().Implements(reflect.TypeFor[Rule]()) {
 		return nil
@@ -57,7 +58,7 @@ func AsRuleBuilder[T any](fn func(*spec.Spec) (T, error)) spec.Builder[Rule] {
 	}
 }
 
-// mustTpl returns parsed text template with the given name. Panics on error.
+// mustTpl returns a parsed text template with the given name. Panics on error.
 func mustTpl(name, tpl string) *template.Template {
 	return template.Must(template.New(name).
 		Option("missingkey=error").

@@ -44,7 +44,9 @@ var (
 	tplNotEqual = mustTpl(EqualRuleName, msgNotEqual)
 )
 
-// Equal constructs rule conditioning a validated value is equal to "want".
+// Equal constructs a rule conditioning a validated value is equal to "want".
+// Values are compared using [reflect.DeepEqual]. An empty value is considered
+// valid. Use the [Required] rule to make sure a value is not empty.
 func Equal(want any) EqualRule {
 	r := EqualRule{
 		mode:      "equal",
@@ -59,8 +61,9 @@ func Equal(want any) EqualRule {
 	return r
 }
 
-// NotEqual constructs rule conditioning a validated value is not equal to
-// "want".
+// NotEqual constructs a rule conditioning a validated value is not equal to
+// "want". Values are compared using [reflect.DeepEqual]. An empty value is
+// considered valid. Use the [Required] rule to make sure a value is not empty.
 func NotEqual(want any) EqualRule {
 	r := EqualRule{
 		mode:      "not-equal",
@@ -133,7 +136,7 @@ type EqualRule struct {
 	condition bool      // Run validation only when true.
 	fn        EqualFunc // Equality testing function.
 	tpl       string    // The original error message template.
-	msg       string    // The original error template string.
+	msg       string    // Validation error message rendered from template.
 	code      string    // Validation error code.
 	sticky    error     // Sticky error.
 	flags     uint8     // Customizations.
@@ -203,6 +206,10 @@ func (eql EqualRule) With(fn EqualFunc) EqualRule {
 	return eql
 }
 
+// Message sets a custom error message. The message is a text/template
+// rendered with the wanted value as {{.value}}. An empty template is ignored.
+// A template that fails to parse or render sets a sticky [InternalError]
+// returned by [EqualRule.Validate] and [EqualRule.Spec].
 func (eql EqualRule) Message(tpl string) EqualRule {
 	if eql.sticky != nil || tpl == "" {
 		return eql

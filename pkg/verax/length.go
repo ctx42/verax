@@ -146,6 +146,10 @@ func (lng LengthRule) When(condition bool) LengthRule {
 	return lng
 }
 
+// Message sets a custom error message. The message is a text/template
+// rendered with the bounds as {{.min}} and {{.max}}. An empty template is
+// ignored. A template that fails to parse or render sets a sticky
+// [InternalError] returned by [LengthRule.Validate] and [LengthRule.Spec].
 func (lng LengthRule) Message(tpl string) LengthRule {
 	if lng.sticky != nil || tpl == "" {
 		return lng

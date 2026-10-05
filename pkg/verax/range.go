@@ -233,6 +233,10 @@ func (rng RangeRule) When(condition bool) RangeRule {
 	return rng
 }
 
+// Message sets a custom error message. The message is a text/template
+// rendered with the range value as {{.value}}. An empty template is ignored.
+// A template that fails to parse or render sets a sticky [InternalError]
+// returned by [RangeRule.Validate] and [RangeRule.Spec].
 func (rng RangeRule) Message(tpl string) RangeRule {
 	if rng.sticky != nil || tpl == "" {
 		return rng

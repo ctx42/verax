@@ -89,6 +89,7 @@ func (con ContainRule) Code(code string) ContainRule {
 	return con
 }
 
+// Message sets a custom error message. It behaves like [EqualRule.Message].
 func (con ContainRule) Message(msg string) ContainRule {
 	con.rule = con.rule.Message(msg)
 	return con

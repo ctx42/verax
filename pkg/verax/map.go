@@ -113,9 +113,6 @@ func (mpr MapRule) IsDefined(key any) bool {
 	return false
 }
 
-// Validate checks the value against the rule's condition(s) and returns
-// a validation error if it fails.
-//
 //nolint:cyclop,gocognit
 func (mpr MapRule) Validate(have any) error {
 	if !mpr.condition {
@@ -265,8 +262,8 @@ func MapRuleFromSpec(spc *spec.Spec) (MapRule, error) {
 }
 
 // Key specifies a map key and the corresponding validation rules.
-// Use with [Map] to validate specific entries (supports [Optional],
-// [When], chaining, and [Specable] roundtrips).
+// Use with [Map] to validate specific entries (supports [MapKey.Optional],
+// [MapKey.When], chaining, and [spec.Specable] round trips).
 func Key(key any, rules ...Rule) MapKey {
 	return MapKey{
 		key:   key,

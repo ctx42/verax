@@ -62,7 +62,7 @@ func LengthOfValue(value any) (int, error) {
 	}
 }
 
-// checkNilAndEmpty checks value is nil or empty.
+// checkNilAndEmpty reports whether the value is nil and whether it is empty.
 func checkNilAndEmpty(v any) (isNil, isEmpty bool) {
 	isNil = IsNil(v)
 	if isNil {
@@ -169,8 +169,9 @@ func IsNil(v any) bool {
 
 // Indirect dereferences the given value if it is a pointer or interface,
 // returning the underlying value. If the value implements [driver.Valuer], it
-// returns the result of calling its Value method. If the input is nil or not a
-// pointer/interface, it is returned unchanged.
+// returns the result of calling its Value method. An untyped nil or a nil
+// pointer, interface, map, slice, channel or function returns an untyped nil;
+// any other value that is not a pointer or interface is returned unchanged.
 //
 // Examples:
 //

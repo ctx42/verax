@@ -54,9 +54,9 @@ func (fr FieldRule) Tag(tag string) FieldRule {
 //	    Name  string
 //	    Value string
 //	}{"name", "demo"}
-//	err := validation.ValidateStruct(&value,
-//	    verax.Field(&a.Name, verax.Required),
-//	    verax.Field(&a.Value, verax.Required, verax.Length(5, 10)),
+//	err := verax.ValidateStruct(&value,
+//	    verax.Field(&value.Name, verax.Required),
+//	    verax.Field(&value.Value, verax.Required, verax.Length(5, 10)),
 //	)
 //	fmt.Println(err)
 //	// Value: the length must be between 5 and 10.
