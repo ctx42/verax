@@ -333,7 +333,7 @@ func Test_RangeRule_Validate(t *testing.T) {
 	t.Run("error - custom fn error with msg and code", func(t *testing.T) {
 		// --- Given ---
 		fn := func(_, _ any) (int, error) { return 0, ErrTst }
-		r := Min(44).With(fn).Message("custom {{.value}}").Code("ECTst")
+		r := Min(44).With(fn).Message("custom {{.value}}").Code("ECCustom")
 
 		// --- When ---
 		err := r.Validate(42)
@@ -341,7 +341,7 @@ func Test_RangeRule_Validate(t *testing.T) {
 		// --- Then ---
 		assert.SameType(t, &Error{}, err)
 		assert.ErrorEqual(t, "custom 44", err)
-		xrrtest.AssertCode(t, "ECTst", err)
+		xrrtest.AssertCode(t, "ECCustom", err)
 	})
 
 	t.Run("error - custom fn error with a custom message", func(t *testing.T) {
@@ -361,7 +361,7 @@ func Test_RangeRule_Validate(t *testing.T) {
 	t.Run("error - custom fn error with custom code", func(t *testing.T) {
 		// --- Given ---
 		fn := func(_, _ any) (int, error) { return 0, ErrTst }
-		r := Min(42).With(fn).Code("ECTst")
+		r := Min(42).With(fn).Code("ECCustom")
 
 		// --- When ---
 		err := r.Validate(42)
@@ -369,7 +369,7 @@ func Test_RangeRule_Validate(t *testing.T) {
 		// --- Then ---
 		assert.SameType(t, &Error{}, err)
 		assert.ErrorIs(t, ErrTst, err)
-		xrrtest.AssertCode(t, "ECTst", err)
+		xrrtest.AssertCode(t, "ECCustom", err)
 	})
 
 	t.Run("custom fn for unsupported type", func(t *testing.T) {

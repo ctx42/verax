@@ -388,7 +388,7 @@ func Test_EqualRule_Validate(t *testing.T) {
 		// --- Given ---
 		e := NewError("test msg", "ECTst")
 		fn := func(x, y any) error { return e }
-		r := Equal(42).With(fn).Message("custom msg").Code("ECTst")
+		r := Equal(42).With(fn).Message("custom msg").Code("ECCustom")
 
 		// --- When ---
 		err := r.Validate(44)
@@ -397,7 +397,7 @@ func Test_EqualRule_Validate(t *testing.T) {
 		assert.SameType(t, &Error{}, err)
 		assert.False(t, errors.Is(err, e))
 		assert.ErrorEqual(t, "custom msg", err)
-		xrrtest.AssertCode(t, "ECTst", err)
+		xrrtest.AssertCode(t, "ECCustom", err)
 	})
 
 	t.Run("error - NotEqual", func(t *testing.T) {
