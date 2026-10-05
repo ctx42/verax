@@ -378,7 +378,7 @@ func Test_EqualRule_Validate(t *testing.T) {
 		xrrtest.AssertCode(t, "ECCustom", err)
 	})
 
-	t.Run("error - custom error message and code with EqualFunc", func(t *testing.T) {
+	t.Run("error - custom message and code with EqualFunc", func(t *testing.T) {
 		// --- Given ---
 		e := NewError("test msg", "ECTst")
 		fn := func(x, y any) error { return e }
@@ -924,7 +924,9 @@ func Test_EqualRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := `equal-rule: spec argument "src_go" must be verax.EqualFunc, got int`
+		wMsg := "" +
+			`equal-rule: spec argument "src_go" must be verax.EqualFunc, ` +
+			`got int`
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, spec.ECInvSpec, err)
 		assert.Zero(t, have)
@@ -960,7 +962,9 @@ func Test_EqualRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := `equal-rule: spec argument "src_go" must be verax.EqualFunc, got int`
+		wMsg := "" +
+			`equal-rule: spec argument "src_go" must be verax.EqualFunc, ` +
+			`got int`
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, spec.ECInvSpec, err)
 		assert.Zero(t, have)
@@ -1125,7 +1129,7 @@ func Test_EqualRule_Spec_EqualRuleFromSpec_round_trip(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
-	t.Run("Equal with EqualFunc - with message and code", func(t *testing.T) {
+	t.Run("Equal with EqualFunc - message and code", func(t *testing.T) {
 		// --- Given ---
 		fn := EqualFunc(func(any, any) error { return nil })
 		want := Equal(42).With(fn).Message("test msg").Code("ECTst")
@@ -1139,7 +1143,7 @@ func Test_EqualRule_Spec_EqualRuleFromSpec_round_trip(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
-	t.Run("NotEqual with EqualFunc - with message and code", func(t *testing.T) {
+	t.Run("NotEqual with EqualFunc - message and code", func(t *testing.T) {
 		// --- Given ---
 		fn := EqualFunc(func(any, any) error { return nil })
 		want := NotEqual(42).With(fn).Message("test msg").Code("ECTst")

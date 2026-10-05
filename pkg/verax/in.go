@@ -136,6 +136,7 @@ func (r InRule) Spec() (*spec.Spec, error) {
 	switch r.mode {
 	case "in", "not-in":
 		spc.SetArg(ArgMode, r.mode)
+
 	default:
 		return nil, NewInternalErrorf(
 			"%s: invalid rule mode: %q",
@@ -182,8 +183,10 @@ func InRuleFromSpec(spc *spec.Spec) (InRule, error) {
 	switch mode {
 	case "in":
 		rule = In(vls...)
+
 	case "not-in":
 		rule = NotIn(vls...)
+
 	default:
 		return InRule{}, NewInternalErrorf(
 			"%s: invalid spec rule mode: %q",

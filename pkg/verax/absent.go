@@ -102,6 +102,7 @@ func (r AbsentRule) Spec() (*spec.Spec, error) {
 	switch r.mode {
 	case "nil", "empty":
 		spc.SetArg(ArgMode, r.mode)
+
 	default:
 		return nil, NewInternalErrorf(
 			"%s: invalid rule mode: %q",
@@ -139,8 +140,10 @@ func AbsentRuleFromSpec(spc *spec.Spec) (AbsentRule, error) {
 	switch mode {
 	case "empty":
 		rule = Empty
+
 	case "nil":
 		rule = Nil
+
 	default:
 		return AbsentRule{}, NewInternalErrorf(
 			"%s: invalid spec rule mode: %q",

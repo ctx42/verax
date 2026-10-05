@@ -20,7 +20,9 @@ import (
 // so isEmptyValue falls through to the reflect-based branch.
 type tErrValuer struct{ n int }
 
-func (tErrValuer) Value() (driver.Value, error) { return nil, errors.New("forced error") }
+func (tErrValuer) Value() (driver.Value, error) {
+	return nil, errors.New("forced error")
+}
 
 func Test_EnsureString_ok_tabular(t *testing.T) {
 	tt := []struct {
@@ -332,7 +334,7 @@ func Test_IsEmpty_tabular(t *testing.T) {
 }
 
 func Test_isEmptyValue_Valuer_error(t *testing.T) {
-	t.Run("falls through to reflect branch when Value returns error", func(t *testing.T) {
+	t.Run("Value error falls through to reflect", func(t *testing.T) {
 		// tErrValuer.Value() returns an error, so isEmptyValue skips the
 		// Valuer branch and falls through to reflect; n=1 makes it non-zero.
 

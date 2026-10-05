@@ -55,7 +55,8 @@ var (
 	}
 
 	// NotEmpty conditions if a value is either nil or not empty. It differs
-	// from [Required] in that it treats a nil pointer or nil interface as valid.
+	// from [Required] in that it treats a nil pointer or nil interface as
+	// valid.
 	NotEmpty = RequiredRule{
 		mode:      "not-empty",
 		condition: true,
@@ -143,6 +144,7 @@ func (r RequiredRule) Spec() (*spec.Spec, error) {
 	switch r.mode {
 	case "required", "not-empty", "not-nil":
 		spc.SetArg(ArgMode, r.mode)
+
 	default:
 		return nil, NewInternalErrorf(
 			"%s: invalid rule mode: %q",
@@ -174,10 +176,13 @@ func RequiredRuleFromSpec(spc *spec.Spec) (RequiredRule, error) {
 	switch mode {
 	case "required":
 		rule = Required
+
 	case "not-empty":
 		rule = NotEmpty
+
 	case "not-nil":
 		rule = NotNil
+
 	default:
 		return RequiredRule{}, NewInternalErrorf(
 			"%s: invalid spec rule mode: %q",

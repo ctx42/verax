@@ -354,7 +354,7 @@ func Test_ValidateStruct(t *testing.T) {
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
-	t.Run("invalid field from pointer struct value receiver", func(t *testing.T) {
+	t.Run("invalid pointer struct value receiver", func(t *testing.T) {
 		// --- Given ---
 		s := Model{
 			ModelVal: ModelVal{"abc"},
@@ -376,7 +376,7 @@ func Test_ValidateStruct(t *testing.T) {
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
-	t.Run("invalid field from pointer struct pointer receiver", func(t *testing.T) {
+	t.Run("invalid pointer struct pointer receiver", func(t *testing.T) {
 		// --- Given ---
 		s := Model{
 			ModelVal: ModelVal{"abc"},
@@ -559,7 +559,7 @@ func Test_ValidateStruct(t *testing.T) {
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
-	t.Run("rule returning ECInternal propagates as InternalError", func(t *testing.T) {
+	t.Run("error - rule returns ECInternal", func(t *testing.T) {
 		// --- Given ---
 		mf := NewTStruct()
 		rs := []FieldRule{
@@ -577,7 +577,7 @@ func Test_ValidateStruct(t *testing.T) {
 		assert.ErrorContain(t, "f_json", err)
 	})
 
-	t.Run("anonymous field non-Fielder error stored under field name", func(t *testing.T) {
+	t.Run("anonymous field non-Fielder error", func(t *testing.T) {
 		// --- Given ---
 		s := Model{
 			ModelVal: ModelVal{"abc"},

@@ -56,7 +56,8 @@ func Equal(want any) EqualRule {
 	return r
 }
 
-// NotEqual constructs rule conditioning a validated value is not equal to "want".
+// NotEqual constructs rule conditioning a validated value is not equal to
+// "want".
 func NotEqual(want any) EqualRule {
 	r := EqualRule{
 		mode:      "not-equal",
@@ -181,8 +182,10 @@ func (r EqualRule) With(fn EqualFunc) EqualRule {
 	switch r.mode {
 	case "equal", "equal-by":
 		r.mode = "equal-by"
+
 	case "not-equal", "not-equal-by":
 		r.mode = "not-equal-by"
+
 	default:
 		r.sticky = NewInternalErrorf(
 			"%s: invalid rule mode: %q",
@@ -253,8 +256,10 @@ func (r EqualRule) spec(name string) (*spec.Spec, error) {
 	switch r.mode {
 	case "equal", "not-equal":
 		// Nothing to do.
+
 	case "equal-by", "not-equal-by":
 		spc.SetArg(spec.ArgSrc, r.fn)
+
 	default:
 		return nil, NewInternalErrorf(
 			"%s: invalid rule mode: %q",
@@ -305,20 +310,24 @@ func equalRuleFromSpec(spc *spec.Spec, name string) (EqualRule, error) {
 	switch mode {
 	case "equal":
 		rule = Equal(val)
+
 	case "not-equal":
 		rule = NotEqual(val)
+
 	case "equal-by":
 		fn, err := getArg[EqualFunc](spc.Args, spec.ArgSrc, name)
 		if err != nil {
 			return EqualRule{}, err
 		}
 		rule = Equal(val).With(fn)
+
 	case "not-equal-by":
 		fn, err := getArg[EqualFunc](spc.Args, spec.ArgSrc, name)
 		if err != nil {
 			return EqualRule{}, err
 		}
 		rule = NotEqual(val).With(fn)
+
 	default:
 		return EqualRule{}, NewInternalErrorf(
 			"%s: invalid spec rule mode: %q",

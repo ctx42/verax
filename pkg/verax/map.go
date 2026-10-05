@@ -37,7 +37,10 @@ var (
 	ErrNotMapPtr = NewInternalError("only a map can be validated", ECInternal)
 
 	// ErrInvKeyType is the error returned when a map key type is incorrect.
-	ErrInvKeyType = NewInternalError("the key type does not match the map", ECInternal)
+	ErrInvKeyType = NewInternalError(
+		"the key type does not match the map",
+		ECInternal,
+	)
 
 	// ErrKeyMissing is the error returned when a required map key is missing.
 	ErrKeyMissing = NewError("missing key", ECMapKeyMissing)
@@ -113,7 +116,7 @@ func (r MapRule) IsDefined(key any) bool {
 // Validate checks the value against the rule's condition(s) and returns
 // a validation error if it fails.
 //
-// nolint: cyclop, gocognit
+//nolint:cyclop,gocognit
 func (r MapRule) Validate(have any) error {
 	val := reflect.ValueOf(have)
 	if val.Kind() == reflect.Pointer {

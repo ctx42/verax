@@ -23,10 +23,11 @@ var (
 	msgInvMatch = "must match a valid format"
 )
 
-// Match returns a validation rule that conditions if a value matches the specified
-// regular expression. This rule should only be used for validating strings and
-// byte slices, or a validation error will be reported. An empty value is
-// considered valid. Use the [Required] rule to make sure a value is not empty.
+// Match returns a validation rule that conditions if a value matches the
+// specified regular expression. This rule should only be used for validating
+// strings and byte slices, or a validation error will be reported. An empty
+// value is considered valid. Use the [Required] rule to make sure a value is
+// not empty.
 func Match(want *regexp.Regexp) MatchRule {
 	r := MatchRule{
 		want:      want,
@@ -51,8 +52,8 @@ var (
 	_ Rule                   = MatchRule{}
 )
 
-// MatchRule is a validation rule that conditions if a value matches the specified
-// regular expression.
+// MatchRule is a validation rule that conditions if a value matches the
+// specified regular expression.
 type MatchRule struct {
 	want      *regexp.Regexp // Regexp a value must match.
 	condition bool           // Run validation only when true.

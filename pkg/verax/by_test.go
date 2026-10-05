@@ -346,7 +346,9 @@ func Test_ByRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := `by-rule: spec argument "src_go" must be verax.RuleFunc, got int`
+		wMsg := "" +
+			`by-rule: spec argument "src_go" must be verax.RuleFunc, ` +
+			`got int`
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, spec.ECInvSpec, err)
 		assert.Zero(t, have)

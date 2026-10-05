@@ -195,7 +195,7 @@ func Test_RangeRule_With(t *testing.T) {
 		assert.Equal(t, flgCustomFn, have.flags)
 	})
 
-	t.Run("ignores ECInvType sticky so caller can provide a custom function", func(t *testing.T) {
+	t.Run("custom fn overrides ECInvType sticky", func(t *testing.T) {
 		// --- Given ---
 		fn := func(want, have any) (int, error) { return 0, nil }
 		r := Min(func() {})
@@ -310,7 +310,7 @@ func Test_RangeRule_Validate(t *testing.T) {
 		assert.Equal(t, 44, h)
 	})
 
-	t.Run("error - custom fn error replaced by custom msg and code", func(t *testing.T) {
+	t.Run("error - custom fn error with msg and code", func(t *testing.T) {
 		// --- Given ---
 		fn := func(_, _ any) (int, error) { return 0, ErrTst }
 		r := Min(44).With(fn).Message("custom {{.value}}").Code("ECTst")

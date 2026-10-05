@@ -16,7 +16,9 @@ import (
 	"github.com/ctx42/verax/pkg/verax"
 )
 
-var emailRx = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+var emailRx = regexp.MustCompile(
+	`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`,
+)
 
 type CreateUserRequest struct {
 	Name  string `json:"name"`
@@ -277,7 +279,7 @@ func ExampleMap() {
 		)),
 	)
 
-	err := verax.Validate(data, MyRule) // nolint: ineffassign
+	err := verax.Validate(data, MyRule) //nolint:ineffassign
 	// or
 	err = MyRule.Validate(data)
 
@@ -318,7 +320,7 @@ func ExampleSet() {
 		verax.Length(4, 5),
 	}
 
-	err := NameRule.Validate("abc") // nolint: ineffassign
+	err := NameRule.Validate("abc") //nolint:ineffassign
 	// or
 	err = verax.Validate("abc", NameRule)
 
@@ -350,7 +352,7 @@ func ExampleBy() {
 
 	AbcRule := verax.By(fn)
 
-	err := AbcRule.Validate("xyz") // nolint: ineffassign
+	err := AbcRule.Validate("xyz") //nolint:ineffassign
 	// or
 	err = verax.Validate("xyz", AbcRule)
 
@@ -535,7 +537,13 @@ func ExampleBuilders_encode() {
 }
 
 func ExampleBuilders_decode() {
-	data := []byte(`{"name":"range-rule","args":{"mode":{"type":"string","value":"min"},"value":{"type":"int","value":18}}}`)
+	data := []byte(`{
+		"name": "range-rule",
+		"args": {
+			"mode": {"type": "string", "value": "min"},
+			"value": {"type": "int", "value": 18}
+		}
+	}`)
 
 	reg := spec.NewRegistry[verax.Rule]()
 	reg.RegisterBuilders(verax.Builders())
@@ -574,7 +582,8 @@ func ExampleBuilders_by() {
 	spc, _ := rule.Spec()
 	data, _ := reg.EncodeSpec(spc)
 
-	// Decode and rebuild — the function is resolved by name from the registry.
+	// Decode and rebuild — the function is resolved by name from the
+	// registry.
 	restored, _ := reg.DecodeAndBuild(data)
 
 	err := verax.Validate("hi", restored)

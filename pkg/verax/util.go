@@ -22,7 +22,7 @@ func EnsureString(value any) (string, error) {
 		return v.String(), nil
 	}
 	if v.Type() == bytesType {
-		return string(v.Interface().([]byte)), nil // nolint: forcetypeassert
+		return string(v.Interface().([]byte)), nil //nolint:forcetypeassert
 	}
 	return "", NewError("must be either a string or byte slice", ECInvType)
 }
@@ -41,7 +41,7 @@ func StringOrBytes(value any) (
 		str = v.String()
 		isString = true
 	} else if v.Kind() == reflect.Slice && v.Type() == bytesType {
-		bs = v.Interface().([]byte) // nolint: forcetypeassert
+		bs = v.Interface().([]byte) //nolint:forcetypeassert
 		isBytes = true
 	}
 	return
@@ -199,7 +199,7 @@ func Indirect(v any) any {
 // getInterface returns interface for given reflection value.
 func getInterface(value reflect.Value) any {
 	//goland:noinspection GoSwitchMissingCasesForIotaConsts
-	switch value.Kind() { // nolint: exhaustive
+	switch value.Kind() { //nolint:exhaustive
 	case reflect.Pointer, reflect.Interface:
 		if value.IsNil() {
 			return nil

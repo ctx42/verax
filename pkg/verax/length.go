@@ -54,11 +54,11 @@ var (
 	tplLengthReqEmpty = mustTpl(LengthRuleName, msgLengthReqEmpty)
 )
 
-// Length returns a validation rule that conditions if a value's length is within
-// the specified range. If max is 0, it means there is no upper bound for the
-// length. This rule should only be used for validating strings, slices, maps,
-// and arrays. An empty value is considered valid. Use the [Required] rule to
-// make sure a value is not empty.
+// Length returns a validation rule that conditions if a value's length is
+// within the specified range. If max is 0, it means there is no upper bound
+// for the length. This rule should only be used for validating strings,
+// slices, maps, and arrays. An empty value is considered valid. Use the
+// [Required] rule to make sure a value is not empty.
 func Length(minimum, maximum int) LengthRule {
 	r := LengthRule{
 		mode:      "length",
@@ -71,12 +71,12 @@ func Length(minimum, maximum int) LengthRule {
 	return r
 }
 
-// RuneLength returns a validation rule that conditions if a string's rune length
-// is within the specified range. If max is 0, it means there is no upper bound
-// for the length. This rule should only be used for validating strings, slices,
-// maps, and arrays. An empty value is considered valid. Use the [Required]
-// rule to make sure a value is not empty. If the value being validated is not
-// a string, the rule works the same as Length.
+// RuneLength returns a validation rule that conditions if a string's rune
+// length is within the specified range. If max is 0, it means there is no
+// upper bound for the length. This rule should only be used for validating
+// strings, slices, maps, and arrays. An empty value is considered valid. Use
+// the [Required] rule to make sure a value is not empty. If the value being
+// validated is not a string, the rule works the same as Length.
 func RuneLength(minimum, maximum int) LengthRule {
 	r := LengthRule{
 		mode:      "rune-length",
@@ -110,7 +110,7 @@ type LengthRule struct {
 	flags     uint8  // Customizations.
 }
 
-// nolint: cyclop
+//nolint:cyclop
 func (r LengthRule) Validate(have any) error {
 	if r.sticky != nil {
 		return r.sticky
@@ -196,6 +196,7 @@ func (r LengthRule) Spec() (*spec.Spec, error) {
 	switch r.mode {
 	case "length", "rune-length":
 		spc.SetArg(ArgMode, r.mode)
+
 	default:
 		return nil, NewInternalErrorf(
 			"%s: invalid rule mode: %q",
@@ -248,8 +249,10 @@ func LengthRuleFromSpec(spc *spec.Spec) (LengthRule, error) {
 	switch mode {
 	case "length":
 		rule = Length(iMin, iMax)
+
 	case "rune-length":
 		rule = RuneLength(iMin, iMax)
+
 	default:
 		return LengthRule{}, NewInternalErrorf(
 			"%s: invalid spec rule mode: %q",

@@ -242,7 +242,11 @@ func Test_NewInternalErrorf(t *testing.T) {
 		cause := errors.New("original")
 
 		// --- When ---
-		err := NewInternalErrorf("connect failed: %w", cause, xrr.WithCode("ECTst"))
+		err := NewInternalErrorf(
+			"connect failed: %w",
+			cause,
+			xrr.WithCode("ECTst"),
+		)
 
 		// --- Then ---
 		e, _ := assert.SameType(t, &InternalError{}, err)

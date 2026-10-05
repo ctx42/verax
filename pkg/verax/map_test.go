@@ -610,7 +610,9 @@ func Test_MapRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := `map-rule: spec argument "specs" must be []*spec.Spec, got string`
+		wMsg := "" +
+			`map-rule: spec argument "specs" must be []*spec.Spec, ` +
+			`got string`
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, spec.ECInvSpec, err)
 		assert.Zero(t, have)
@@ -626,7 +628,9 @@ func Test_MapRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := `map-rule: key-spec[0]: map-key: invalid spec name: "bad-key-spec"`
+		wMsg := "" +
+			`map-rule: key-spec[0]: map-key: ` +
+			`invalid spec name: "bad-key-spec"`
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, spec.ECInvSpec, err)
 		assert.Zero(t, have)
@@ -670,7 +674,9 @@ func Test_MapRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := `map-rule: spec argument "allow_unknown" must be bool, got string`
+		wMsg := "" +
+			`map-rule: spec argument "allow_unknown" must be bool, ` +
+			`got string`
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, spec.ECInvSpec, err)
 		assert.Zero(t, have)

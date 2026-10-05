@@ -233,7 +233,7 @@ var validatableType = reflect.TypeFor[Validator]()
 // arrays, pointers, or interfaces with validatable elements. Returns nil for
 // nil pointers or interfaces.
 //
-// nolint: cyclop
+//nolint:cyclop
 func Validate(v any, rules ...Rule) error {
 	for _, rule := range rules {
 		if s, ok := rule.(SkipRule); ok && bool(s) {
@@ -272,7 +272,7 @@ func Validate(v any, rules ...Rule) error {
 	}
 
 	//goland:noinspection GoSwitchMissingCasesForIotaConsts
-	switch rv.Kind() { // nolint: exhaustive
+	switch rv.Kind() { //nolint:exhaustive
 	case reflect.Map:
 		if rv.Type().Elem().Implements(validatableType) {
 			return validateMap(rv)
@@ -304,7 +304,7 @@ func validateMap(rv reflect.Value) error {
 	var ers *FieldErrors
 	for _, key := range rv.MapKeys() {
 		if mv := rv.MapIndex(key).Interface(); mv != nil {
-			// nolint: forcetypeassert
+			//nolint:forcetypeassert
 			if err := mv.(Validator).Validate(); err != nil {
 				if ers == nil {
 					ers = &FieldErrors{}
@@ -324,7 +324,7 @@ func validateSlice(rv reflect.Value) error {
 	var ers *FieldErrors
 	for i := range rv.Len() {
 		if ev := rv.Index(i).Interface(); ev != nil {
-			// nolint: forcetypeassert
+			//nolint:forcetypeassert
 			if err := ev.(Validator).Validate(); err != nil {
 				if ers == nil {
 					ers = &FieldErrors{}

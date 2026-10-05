@@ -569,7 +569,9 @@ func Test_RequiredRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := `required-rule: spec argument "err_code" must be string, got int`
+		wMsg := "" +
+			`required-rule: spec argument "err_code" must be string, ` +
+			`got int`
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, spec.ECInvSpec, err)
 		assert.Zero(t, have)

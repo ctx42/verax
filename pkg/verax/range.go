@@ -136,11 +136,13 @@ func (r RangeRule) Exclusive() RangeRule {
 		r.tpl = msgLessThan
 		prefix := fmt.Sprintf("%s(max-exclusive)", RangeRuleName)
 		r.msg, r.sticky = renderTpl(tplLessThan, r.threshold, prefix)
+
 	case "min":
 		r.mode = "min-exclusive"
 		r.tpl = msgGreaterThan
 		prefix := fmt.Sprintf("%s(min-exclusive)", RangeRuleName)
 		r.msg, r.sticky = renderTpl(tplGreaterThan, r.threshold, prefix)
+
 	default:
 		// NOOP: already exclusive.
 	}
@@ -266,12 +268,16 @@ func (r RangeRule) Spec() (*spec.Spec, error) {
 	switch r.mode {
 	case "min":
 		spc.SetArg(ArgMode, "min")
+
 	case "min-exclusive":
 		spc.SetArg(ArgMode, "min-exclusive")
+
 	case "max":
 		spc.SetArg(ArgMode, "max")
+
 	case "max-exclusive":
 		spc.SetArg(ArgMode, "max-exclusive")
+
 	default:
 		return nil, NewInternalErrorf(
 			"%s: invalid rule mode: %q",
@@ -319,12 +325,16 @@ func RangeRuleFromSpec(spc *spec.Spec) (RangeRule, error) {
 	switch mode {
 	case "min":
 		rule = Min(val)
+
 	case "min-exclusive":
 		rule = Min(val).Exclusive()
+
 	case "max":
 		rule = Max(val)
+
 	case "max-exclusive":
 		rule = Max(val).Exclusive()
+
 	default:
 		return RangeRule{}, NewInternalErrorf(
 			"%s: invalid spec rule mode: %q",

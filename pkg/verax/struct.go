@@ -64,7 +64,7 @@ func (fr FieldRule) Tag(tag string) FieldRule {
 // Returns [InternalError] on unexpected errors, otherwise it returns
 // [FieldErrors] error.
 //
-// nolint: cyclop
+//nolint:cyclop
 func ValidateStruct(v any, fields ...FieldRule) error {
 	val := reflect.ValueOf(v)
 	if val.Kind() != reflect.Pointer || !val.IsNil() &&
@@ -111,7 +111,7 @@ func ValidateStruct(v any, fields ...FieldRule) error {
 			}
 			if sf.Anonymous {
 				// Merge errors from the anonymous struct field.
-				if es, ok := err.(xrr.Fielder); ok { // nolint: errorlint
+				if es, ok := err.(xrr.Fielder); ok { //nolint:errorlint
 					ers.Merge(es.ErrorFields())
 					continue
 				}
