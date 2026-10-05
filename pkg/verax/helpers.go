@@ -5,7 +5,9 @@ package verax
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
+	"strings"
 	"text/template"
 	"time"
 
@@ -60,6 +62,15 @@ func mustTpl(name, tpl string) *template.Template {
 	return template.Must(template.New(name).
 		Option("missingkey=error").
 		Parse(tpl))
+}
+
+// tplText returns txt as text/template source rendering txt verbatim. Text
+// containing an action delimiter is emitted as a quoted string action.
+func tplText(txt string) string {
+	if !strings.Contains(txt, "{{") {
+		return txt
+	}
+	return fmt.Sprintf("{{%q}}", txt)
 }
 
 // formatValue formats some value types in the more readable way.

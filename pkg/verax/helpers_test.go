@@ -146,6 +146,28 @@ func Test_mustTpl(t *testing.T) {
 	})
 }
 
+func Test_tplText_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		txt  string
+		want string
+	}{
+		{"plain", "abc", "abc"},
+		{"with delimiter", "a{{b", `{{"a{{b"}}`},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			have := tplText(tc.txt)
+
+			// --- Then ---
+			assert.Equal(t, tc.want, have)
+		})
+	}
+}
+
 func Test_formatValue_tabular(t *testing.T) {
 	tt := []struct {
 		testN string

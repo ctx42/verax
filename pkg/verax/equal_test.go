@@ -104,6 +104,15 @@ func Test_EqualField(t *testing.T) {
 	assert.Equal(t, want, have)
 }
 
+func Test_EqualField_template_delimiters(t *testing.T) {
+	// --- When ---
+	have := EqualField(42, "a{{b")
+
+	// --- Then ---
+	assert.NoError(t, have.sticky)
+	assert.Equal(t, "must be equal to 'a{{b'", have.msg)
+}
+
 func Test_NotEqualField(t *testing.T) {
 	// --- When ---
 	have := NotEqualField(42, "field")
@@ -121,6 +130,15 @@ func Test_NotEqualField(t *testing.T) {
 		flags:     flgCustomMsg,
 	}
 	assert.Equal(t, want, have)
+}
+
+func Test_NotEqualField_template_delimiters(t *testing.T) {
+	// --- When ---
+	have := NotEqualField(42, "a{{b")
+
+	// --- Then ---
+	assert.NoError(t, have.sticky)
+	assert.Equal(t, "must not be equal to 'a{{b'", have.msg)
 }
 
 func Test_equal_valid_tabular(t *testing.T) {

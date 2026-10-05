@@ -75,7 +75,7 @@ func NotEqual(want any) EqualRule {
 // EqualField constructs rule conditioning a validated value is equal to "want".
 // When it isn't, the error message will say the value must be equal to "field".
 func EqualField(want any, field string) EqualRule {
-	msg := fmt.Sprintf("must be equal to '%s'", field)
+	msg := fmt.Sprintf("must be equal to '%s'", tplText(field))
 	return Equal(want).Message(msg)
 }
 
@@ -83,7 +83,7 @@ func EqualField(want any, field string) EqualRule {
 // "want". When it is the error message will say the value must not be equal to
 // "field".
 func NotEqualField(want any, field string) EqualRule {
-	msg := fmt.Sprintf("must not be equal to '%s'", field)
+	msg := fmt.Sprintf("must not be equal to '%s'", tplText(field))
 	return NotEqual(want).Message(msg)
 }
 
