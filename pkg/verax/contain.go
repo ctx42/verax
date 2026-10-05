@@ -44,6 +44,9 @@ func (r ContainRule) Validate(have any) error {
 	vo := reflect.ValueOf(have)
 
 	switch vo.Kind() {
+	case reflect.Invalid:
+		// An untyped nil contains nothing.
+
 	case reflect.Map:
 		for _, k := range vo.MapKeys() {
 			val := getInterface(vo.MapIndex(k))

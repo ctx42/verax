@@ -84,12 +84,23 @@ func Test_EachRule_Validate(t *testing.T) {
 		xrrtest.AssertEqual(t, "1: error (ECTst)", err)
 	})
 
+	t.Run("nil", func(t *testing.T) {
+		// --- Given ---
+		r := Each(Required)
+
+		// --- When ---
+		err := r.Validate(nil)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
 	t.Run("error - not iterable value", func(t *testing.T) {
 		// --- Given ---
 		r := Each(TstRule{})
 
 		// --- When ---
-		err := r.Validate(nil)
+		err := r.Validate(42)
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)

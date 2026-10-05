@@ -41,7 +41,7 @@ type EachRule struct {
 }
 
 func (r EachRule) Validate(have any) error {
-	if !r.condition {
+	if !r.condition || have == nil {
 		return nil
 	}
 	var ers *FieldErrors

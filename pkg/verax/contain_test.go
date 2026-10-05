@@ -168,6 +168,13 @@ func Test_ContainRule_Validate_invalid_tabular(t *testing.T) {
 			ECNotEqual,
 		},
 		{
+			"nil",
+			Equal(5),
+			nil,
+			"must contain at least one '5' value",
+			ECNotEqual,
+		},
+		{
 			"array does not contain",
 			Equal(4),
 			[...]int{1, 2, 3},
