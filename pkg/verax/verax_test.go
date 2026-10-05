@@ -238,6 +238,19 @@ func Test_Check(t *testing.T) {
 		xrrtest.AssertCode(t, ECInvType, err)
 	})
 
+	t.Run("error - invalid type with percent in message", func(t *testing.T) {
+		// --- Given ---
+		fn := func(have int) bool { return true }
+
+		// --- When ---
+		have := Check(fn, "100%", "ECTst")
+
+		// --- Then ---
+		err := have(true)
+		want := "100%: expected int, got bool (ECInvType)"
+		xrrtest.AssertEqual(t, want, err)
+	})
+
 	t.Run("error returned when the function returns false", func(t *testing.T) {
 		// --- Given ---
 		fn := func(have int) bool { return false }

@@ -202,7 +202,8 @@ func Check[T any](fn IsFunc[T], msg, code string) RuleFunc {
 		vt, ok := have.(T)
 		if !ok {
 			return NewInternalErrorf(
-				msg+": expected %T, got %T",
+				"%s: expected %T, got %T",
+				msg,
 				vt,
 				have,
 				xrr.WithCode(ECInvType),
