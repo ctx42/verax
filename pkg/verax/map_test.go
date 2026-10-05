@@ -91,7 +91,7 @@ func Test_MapRule_IsDefined(t *testing.T) {
 	})
 }
 
-func Test_MapRule_validate_valid(t *testing.T) {
+func Test_MapRule_Validate_valid(t *testing.T) {
 	t.Run("skip validation when the condition is false", func(t *testing.T) {
 		// --- Given ---
 		rs := Map(Key("abc", Max(42))).When(false)
@@ -307,7 +307,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 }
 
 func Test_MapRule_Validate_invalid(t *testing.T) {
-	t.Run("not map", func(t *testing.T) {
+	t.Run("error - not map", func(t *testing.T) {
 		// --- When ---
 		err := Map().Validate(123)
 
@@ -331,7 +331,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		xrrtest.AssertEqual(t, want, err)
 	})
 
-	t.Run("not matching key type", func(t *testing.T) {
+	t.Run("error - key type mismatch", func(t *testing.T) {
 		// --- Given ---
 		kr := Key(123)
 
@@ -357,7 +357,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
-	t.Run("missing required key", func(t *testing.T) {
+	t.Run("error - missing required key", func(t *testing.T) {
 		// --- Given ---
 		kr := Key("X")
 

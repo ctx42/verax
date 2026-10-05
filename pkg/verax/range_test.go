@@ -243,7 +243,7 @@ func Test_RangeRule_With(t *testing.T) {
 		assert.ErrorEqual(t, wMsg, have.sticky)
 	})
 
-	t.Run("changes nothing when a sticky error is set", func(t *testing.T) {
+	t.Run("sticky error set", func(t *testing.T) {
 		// --- Given ---
 		fn := func(want, have any) (int, error) { return 0, nil }
 		r := RangeRule{sticky: errors.New("test error")}
@@ -326,7 +326,7 @@ func Test_RangeRule_Validate(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("custom fn error is handled unchanged", func(t *testing.T) {
+	t.Run("custom fn error unchanged", func(t *testing.T) {
 		// --- Given ---
 		var w, h any
 		fn := func(want, have any) (int, error) {
@@ -1388,7 +1388,7 @@ func Test_compareUInt(t *testing.T) {
 	})
 }
 
-func Test_compareUint_tabular(t *testing.T) {
+func Test_compareUInt_tabular(t *testing.T) {
 	tt := []struct {
 		testN string
 

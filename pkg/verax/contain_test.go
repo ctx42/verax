@@ -112,8 +112,8 @@ func Test_ContainRule_Validate_valid_tabular(t *testing.T) {
 		{"array of int", Equal(2), [...]int{1, 2, 3}},
 		{"array of string", Equal("c"), [...]string{"a", "b", "c"}},
 
-		{"map string:int", Equal(2), map[string]int{"A": 1, "B": 2, "C": 3}},
-		{"map int:string", Equal("C"), map[int]string{1: "A", 2: "B", 3: "C"}},
+		{"map string int", Equal(2), map[string]int{"A": 1, "B": 2, "C": 3}},
+		{"map int string", Equal("C"), map[int]string{1: "A", 2: "B", 3: "C"}},
 	}
 
 	for _, tc := range tt {

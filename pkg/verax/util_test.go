@@ -191,7 +191,7 @@ func Test_LengthOfValue_error_tabular(t *testing.T) {
 	}
 }
 
-func Test_IsEmpty_tabular_ZENValues(t *testing.T) {
+func Test_IsEmpty_ZENValues_tabular(t *testing.T) {
 	for _, tc := range testcases.ZENValues() {
 		if tc.Desc == "false boolean" {
 			continue // In verax we treat false as not empty.
@@ -290,7 +290,7 @@ func Test_IsEmpty_tabular(t *testing.T) {
 
 		// interface, ptr
 		{"pointer to empty string is empty", &str0, true},
-		{"pointer to empty string is empty", &str3, true},
+		{"pointer to empty string literal", &str3, true},
 		{"pointer to not empty string is not empty", &str1, false},
 		{"nil pointer to string is empty", str2, true},
 
@@ -302,7 +302,7 @@ func Test_IsEmpty_tabular(t *testing.T) {
 		{"time instance is not empty", tim0, false},
 		{"pointer to time instance is not empty", &tim0, false},
 		{"zero value time is empty", tim1, true},
-		{"pointer to zero value time is empty\"", &tim1, true},
+		{"pointer to zero value time is empty", &tim1, true},
 
 		// driver.Valuer
 		{"valuer invalid", sql.NullInt64{Int64: 0, Valid: false}, true},
@@ -347,7 +347,7 @@ func Test_isEmptyValue_Valuer_error(t *testing.T) {
 	})
 }
 
-func Test_IsNil_tabular_ZENValues(t *testing.T) {
+func Test_IsNil_ZENValues_tabular(t *testing.T) {
 	for _, tc := range testcases.ZENValues() {
 		t.Run("Nil "+tc.Desc, func(t *testing.T) {
 			// --- When ---
@@ -381,39 +381,39 @@ func Test_Indirect_tabular(t *testing.T) {
 		{"nil pointer to struct", ptr1, nil},
 		{"nil", nil, nil},
 		{"int", 100, 100},
-		{"invalid sql.NullInt64", sql.NullInt64{Int64: 0, Valid: false}, nil},
+		{"invalid NullInt64", sql.NullInt64{Int64: 0, Valid: false}, nil},
 		{
-			"invalid sql.NullInt64 with value",
+			"invalid NullInt64 with value",
 			sql.NullInt64{Int64: 1, Valid: false},
 			nil,
 		},
 		{
-			"invalid pointer to sql.NullInt64",
+			"invalid pointer to NullInt64",
 			&sql.NullInt64{Int64: 0, Valid: false},
 			nil,
 		},
 		{
-			"invalid pointer to sql.NullInt64 with value",
+			"invalid pointer to NullInt64 with value",
 			&sql.NullInt64{Int64: 1, Valid: false},
 			nil,
 		},
 		{
-			"valid sql.NullInt64 with zero value",
+			"valid NullInt64 with zero value",
 			sql.NullInt64{Int64: 0, Valid: true},
 			int64(0),
 		},
 		{
-			"valid sql.NullInt64",
+			"valid NullInt64",
 			sql.NullInt64{Int64: 1, Valid: true},
 			int64(1),
 		},
 		{
-			"valid pointer to sql.NullInt64 with zero value",
+			"valid pointer to NullInt64 with zero value",
 			&sql.NullInt64{Int64: 0, Valid: true},
 			int64(0),
 		},
 		{
-			"valid pointer to sql.NullInt64",
+			"valid pointer to NullInt64",
 			&sql.NullInt64{Int64: 1, Valid: true},
 			int64(1),
 		},

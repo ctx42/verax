@@ -32,7 +32,7 @@ func Test_NoopRule_Validate(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func Test_Noop_Spec(t *testing.T) {
+func Test_NoopRule_Spec(t *testing.T) {
 	t.Run("Noop", func(t *testing.T) {
 		// --- Given ---
 		r := NoopRule{}

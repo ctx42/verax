@@ -59,7 +59,7 @@ func Test_convertTo_tabular(t *testing.T) {
 }
 
 func Test_AsRuleBuilder(t *testing.T) {
-	t.Run("returns nil when T does not implement Rule", func(t *testing.T) {
+	t.Run("T not a Rule", func(t *testing.T) {
 		// --- When ---
 		have := AsRuleBuilder(func(_ *spec.Spec) (int, error) { return 0, nil })
 
@@ -67,7 +67,7 @@ func Test_AsRuleBuilder(t *testing.T) {
 		assert.Nil(t, have)
 	})
 
-	t.Run("wraps the typed constructor", func(t *testing.T) {
+	t.Run("typed constructor", func(t *testing.T) {
 		// --- Given ---
 		fn := func(_ *spec.Spec) (NoopRule, error) { return Noop, nil }
 
@@ -95,7 +95,7 @@ func Test_AsRuleBuilder(t *testing.T) {
 		assert.Equal(t, Rule(Noop), have)
 	})
 
-	t.Run("propagates constructor error", func(t *testing.T) {
+	t.Run("error - constructor", func(t *testing.T) {
 		// --- Given ---
 		wErr := NewInternalError("spec error", ECInternal)
 		fn := func(_ *spec.Spec) (NoopRule, error) { return NoopRule{}, wErr }
@@ -125,7 +125,7 @@ func Test_mustTpl(t *testing.T) {
 		assert.Equal(t, " abc ", w.String())
 	})
 
-	t.Run("panics", func(t *testing.T) {
+	t.Run("error - panics", func(t *testing.T) {
 		// --- When ---
 		msg := assert.PanicMsg(t, func() { mustTpl("tpl-name", " {{.value} ") })
 
@@ -297,7 +297,7 @@ func Test_getArg(t *testing.T) {
 }
 
 func Test_errConvert(t *testing.T) {
-	t.Run("returns an internal error with ECInvType code", func(t *testing.T) {
+	t.Run("internal error", func(t *testing.T) {
 		// --- When ---
 		err := errConvert("my-rule", 42, int64(0))
 
@@ -308,7 +308,7 @@ func Test_errConvert(t *testing.T) {
 		xrrtest.AssertCode(t, ECInvType, err)
 	})
 
-	t.Run("message contains from and to types", func(t *testing.T) {
+	t.Run("from and to types", func(t *testing.T) {
 		// --- When ---
 		err := errConvert("my-rule", "hello", 0.0)
 
@@ -317,7 +317,7 @@ func Test_errConvert(t *testing.T) {
 		assert.ErrorEqual(t, wMsg, err)
 	})
 
-	t.Run("message contains rule name", func(t *testing.T) {
+	t.Run("rule name", func(t *testing.T) {
 		// --- When ---
 		err := errConvert(RangeRuleName, true, int64(0))
 

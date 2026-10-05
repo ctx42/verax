@@ -437,7 +437,7 @@ func Test_ValidateStruct(t *testing.T) {
 		xrrtest.AssertEqual(t, want, err)
 	})
 
-	t.Run("non-struct pointer", func(t *testing.T) {
+	t.Run("error - non-struct pointer", func(t *testing.T) {
 		// --- Given ---
 		mf := newTStruct()
 
@@ -449,7 +449,7 @@ func Test_ValidateStruct(t *testing.T) {
 		assert.ErrorIs(t, ErrNotStructPtr, err)
 	})
 
-	t.Run("field not found", func(t *testing.T) {
+	t.Run("error - field not found", func(t *testing.T) {
 		// --- Given ---
 		mf := newTStruct()
 		rs := []FieldRule{
@@ -465,7 +465,7 @@ func Test_ValidateStruct(t *testing.T) {
 		xrrtest.AssertCode(t, ECInternal, err)
 	})
 
-	t.Run("field not pointer", func(t *testing.T) {
+	t.Run("error - field not pointer", func(t *testing.T) {
 		// --- Given ---
 		mf := newTStruct()
 		rs := []FieldRule{

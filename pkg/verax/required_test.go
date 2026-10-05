@@ -125,7 +125,7 @@ func Test_RequiredRule_Validate_valid_tabular(t *testing.T) {
 
 		{"NotEmpty empty struct nil pointer", NotEmpty, pStructEmptyNil},
 		{"NotEmpty int", NotEmpty, 123},
-		{"NotEmpty any(123)", NotEmpty, iInterface},
+		{"NotEmpty any 123", NotEmpty, iInterface},
 
 		// NotNil.
 		{"NotNil empty string", NotNil, ""},
@@ -178,7 +178,7 @@ func Test_RequiredRule_Validate_invalid_tabular(t *testing.T) {
 		{"NotEmpty pointer to zero value int", NotEmpty, pIntZero},
 		{"NotEmpty zero value time", NotEmpty, iTimeZero},
 		{"NotEmpty pointer to zero value time", NotEmpty, pTimeZero},
-		{"NotEmpty any(0)", NotEmpty, iInterfaceZero},
+		{"NotEmpty any 0", NotEmpty, iInterfaceZero},
 		{"NotEmpty pointer to empty struct", NotEmpty, pStructEmpty},
 		{"NotEmpty struct with empty fields", NotEmpty, modelPtr{}},
 

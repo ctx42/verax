@@ -208,7 +208,7 @@ func Test_Set_Spec_SetRuleFromSpec_round_trip(t *testing.T) {
 }
 
 func Test_Check(t *testing.T) {
-	t.Run("the adapted function is called", func(t *testing.T) {
+	t.Run("calls function", func(t *testing.T) {
 		// --- Given ---
 		var with int
 		fn := func(have int) bool { with = have; return true }
@@ -269,7 +269,7 @@ func Test_Check(t *testing.T) {
 		xrrtest.AssertEqual(t, want, err)
 	})
 
-	t.Run("error returned when the function returns false", func(t *testing.T) {
+	t.Run("error - function returns false", func(t *testing.T) {
 		// --- Given ---
 		fn := func(have int) bool { return false }
 
@@ -609,7 +609,7 @@ func Test_ValidateNamed(t *testing.T) {
 	})
 }
 
-func Test_Named_Set_Get_GetOrNoop(t *testing.T) {
+func Test_Named_Get(t *testing.T) {
 	t.Run("get set", func(t *testing.T) {
 		// --- Given ---
 		r1 := In(1)
