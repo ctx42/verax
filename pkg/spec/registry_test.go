@@ -534,15 +534,15 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 		// --- Then ---
 		assert.NoError(t, err)
 		want := `{
-				"name":"my-spec",
-				"args": {
-					"int": {"type": "int", "value": 1},
-					"uint": {"type": "uint", "value": 2},
-					"float": 3,
-					"bool": true,
-					"time": {"type": "time.Time", "value": "2000-01-02T03:04:05Z"}
-				}
-			}`
+			"name":"my-spec",
+			"args": {
+				"int": {"type": "int", "value": 1},
+				"uint": {"type": "uint", "value": 2},
+				"float": 3,
+				"bool": true,
+				"time": {"type": "time.Time", "value": "2000-01-02T03:04:05Z"}
+			}
+		}`
 		assert.JSON(t, want, string(have))
 	})
 
