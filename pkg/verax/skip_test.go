@@ -120,6 +120,20 @@ func Test_SkipRuleFromSpec(t *testing.T) {
 		assert.Zero(t, have)
 	})
 
+	t.Run("error - value not bool", func(t *testing.T) {
+		// --- Given ---
+		spc := spec.NewSpec(SkipRuleName).SetArg(spec.ArgValue, 1)
+
+		// --- When ---
+		have, err := SkipRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := `skip-rule: spec argument "value" must be bool, got int`
+		assert.ErrorEqual(t, wMsg, err)
+		assert.False(t, bool(have))
+	})
+
 	t.Run("Skip", func(t *testing.T) {
 		// --- Given ---
 		spc := spec.NewSpec(SkipRuleName)
@@ -134,14 +148,29 @@ func Test_SkipRuleFromSpec(t *testing.T) {
 }
 
 func Test_SkipRule_Spec_SkipRuleFromSpec_round_trip(t *testing.T) {
-	// --- Given ---
-	want := Skip
-	spc := must.Value(want.Spec())
+	t.Run("Skip", func(t *testing.T) {
+		// --- Given ---
+		want := Skip
+		spc := must.Value(want.Spec())
 
-	// --- When ---
-	have, err := SkipRuleFromSpec(spc)
+		// --- When ---
+		have, err := SkipRuleFromSpec(spc)
 
-	// --- Then ---
-	assert.NoError(t, err)
-	assert.Equal(t, want, have)
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
+	})
+
+	t.Run("Skip when false", func(t *testing.T) {
+		// --- Given ---
+		want := Skip.When(false)
+		spc := must.Value(want.Spec())
+
+		// --- When ---
+		have, err := SkipRuleFromSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, want, have)
+	})
 }

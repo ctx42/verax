@@ -28,8 +28,12 @@ type SkipRule bool
 func (_ SkipRule) Validate(_ any) error         { return nil }
 func (_ SkipRule) When(condition bool) SkipRule { return SkipRule(condition) }
 
-func (_ SkipRule) Spec() (*spec.Spec, error) {
-	return spec.NewSpec(SkipRuleName), nil
+func (s SkipRule) Spec() (*spec.Spec, error) {
+	spc := spec.NewSpec(SkipRuleName)
+	if !s {
+		spc.SetArg(spec.ArgValue, false)
+	}
+	return spc, nil
 }
 
 // SkipRuleFromSpec creates a new instance of [SkipRule] from the [spec.Spec].
@@ -41,6 +45,13 @@ func SkipRuleFromSpec(spc *spec.Spec) (SkipRule, error) {
 			spc.Name,
 			xrr.WithCode(spec.ECInvSpec),
 		)
+	}
+	if spc.ArgExist(spec.ArgValue) {
+		val, err := getArg[bool](spc.Args, spec.ArgValue, SkipRuleName)
+		if err != nil {
+			return false, err
+		}
+		return SkipRule(val), nil
 	}
 	return Skip, nil
 }
