@@ -303,9 +303,8 @@ func ValidateNamed(name string, have any, rules ...Rule) error {
 func validateMap(rv reflect.Value) error {
 	var ers *FieldErrors
 	for _, key := range rv.MapKeys() {
-		if mv := rv.MapIndex(key).Interface(); mv != nil {
-			//nolint:forcetypeassert
-			if err := mv.(Validator).Validate(); err != nil {
+		if vi, ok := getInterface(rv.MapIndex(key)).(Validator); ok {
+			if err := vi.Validate(); err != nil {
 				if ers == nil {
 					ers = &FieldErrors{}
 				}
@@ -323,9 +322,8 @@ func validateMap(rv reflect.Value) error {
 func validateSlice(rv reflect.Value) error {
 	var ers *FieldErrors
 	for i := range rv.Len() {
-		if ev := rv.Index(i).Interface(); ev != nil {
-			//nolint:forcetypeassert
-			if err := ev.(Validator).Validate(); err != nil {
+		if vi, ok := getInterface(rv.Index(i)).(Validator); ok {
+			if err := vi.Validate(); err != nil {
 				if ers == nil {
 					ers = &FieldErrors{}
 				}

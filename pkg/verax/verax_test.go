@@ -433,6 +433,17 @@ func Test_Validate(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("nil pointer in slice", func(t *testing.T) {
+		// --- Given ---
+		s := []*ModelPtr{nil, {"abc"}}
+
+		// --- When ---
+		err := Validate(s)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
 	t.Run("invalid many in map", func(t *testing.T) {
 		// --- Given ---
 		m := map[int]*ModelPtr{0: {"xyz"}, 4: {"xyz"}}
@@ -450,6 +461,17 @@ func Test_Validate(t *testing.T) {
 	t.Run("valid all in map", func(t *testing.T) {
 		// --- Given ---
 		m := map[int]*ModelPtr{0: {"abc"}, 4: {"abc"}}
+
+		// --- When ---
+		err := Validate(m)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("nil pointer in map", func(t *testing.T) {
+		// --- Given ---
+		m := map[int]*ModelPtr{0: nil, 4: {"abc"}}
 
 		// --- When ---
 		err := Validate(m)
