@@ -4,6 +4,7 @@
 package verax
 
 import (
+	"cmp"
 	"errors"
 	"testing"
 	"time"
@@ -198,7 +199,7 @@ func Test_RangeRule_With(t *testing.T) {
 	t.Run("custom fn overrides ECInvType sticky", func(t *testing.T) {
 		// --- Given ---
 		fn := func(want, have any) (int, error) { return 0, nil }
-		r := Min(func() {})
+		r := Min(struct{}{})
 
 		// --- When ---
 		have := r.With(fn)
@@ -206,6 +207,22 @@ func Test_RangeRule_With(t *testing.T) {
 		// --- Then ---
 		assert.Same(t, fn, have.fn)
 		assert.Equal(t, flgCustomFn, have.flags)
+		assert.NoError(t, have.sticky)
+		assert.Equal(t, "must be greater or equal to {}", have.msg)
+	})
+
+	t.Run("error - not renderable value", func(t *testing.T) {
+		// --- Given ---
+		fn := func(want, have any) (int, error) { return 0, nil }
+		r := Min(func() {})
+
+		// --- When ---
+		have := r.With(fn)
+
+		// --- Then ---
+		assert.Nil(t, have.fn)
+		wMsg := "range-rule(min): template render error"
+		assert.ErrorEqual(t, wMsg, have.sticky)
 	})
 
 	t.Run("changes nothing when a sticky error is set", func(t *testing.T) {
@@ -350,6 +367,23 @@ func Test_RangeRule_Validate(t *testing.T) {
 		assert.SameType(t, &Error{}, err)
 		assert.ErrorIs(t, ErrTst, err)
 		xrrtest.AssertCode(t, "ECTst", err)
+	})
+
+	t.Run("custom fn for unsupported type", func(t *testing.T) {
+		// --- Given ---
+		type pt struct{ X int }
+		fn := func(want, have any) (int, error) {
+			return cmp.Compare(want.(pt).X, have.(pt).X), nil
+		}
+		r := Min(pt{5}).With(fn)
+
+		// --- When ---
+		err := r.Validate(pt{4})
+
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		wMsg := "must be greater or equal to {5} (ECInvRange)"
+		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
 	t.Run("error - not supported type", func(t *testing.T) {

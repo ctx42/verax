@@ -161,10 +161,21 @@ func (r RangeRule) Exclusive() RangeRule {
 //	cmpMyType := func(a, b any) int { ... }
 //	rule := Min(myTypeValue).With(cmpMyType)
 func (r RangeRule) With(fn CompareFunc) RangeRule {
-	// Allow overriding when sticky is ECInvType: the custom function may
-	// support a type that the built-in comparison does not.
-	if r.sticky != nil && xrr.GetCode(r.sticky) != ECInvType {
-		return r
+	if r.sticky != nil {
+		// Allow overriding when sticky is ECInvType: the custom function may
+		// support a type that the built-in comparison does not.
+		if xrr.GetCode(r.sticky) != ECInvType {
+			return r
+		}
+		tpl := tplGreaterOrEqual
+		if r.mode == "max" {
+			tpl = tplLessOrEqual
+		}
+		prefix := fmt.Sprintf("%s(%s)", RangeRuleName, r.mode)
+		r.msg, r.sticky = renderTpl(tpl, r.threshold, prefix)
+		if r.sticky != nil {
+			return r
+		}
 	}
 	r.fn = fn
 	r.flags |= flgCustomFn
