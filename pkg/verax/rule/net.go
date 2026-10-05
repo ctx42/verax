@@ -15,8 +15,8 @@ import (
 // Regexp rules.
 const (
 	// dnsNameRx matches DNS names; labels may contain underscores.
-	dnsNameRx string = `^([a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62}){1}` +
-		`(\.[a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62})*[\._]?$`
+	dnsNameRx string = `^[a-zA-Z0-9_][a-zA-Z0-9_-]{0,62}` +
+		`(\.[a-zA-Z0-9_][a-zA-Z0-9_-]{0,62})*\.?$`
 
 	// domainRx represents the regex source: https://stackoverflow.com/a/7933253
 	// Slightly modified: Removed 255 max length validation since Go regex does

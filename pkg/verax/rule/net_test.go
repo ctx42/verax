@@ -323,6 +323,8 @@ func Test_IsDNSName_tabular(t *testing.T) {
 		{"max length", strings.Repeat("a.", 126) + "a", true},
 		{"max length trailing dot", strings.Repeat("a.", 127), true},
 		{"too long", strings.Repeat("a.", 127) + "a", false},
+		{"max label length", strings.Repeat("a", 63), true},
+		{"label too long by underscore", strings.Repeat("a", 63) + "_", false},
 		{
 			"label too long",
 			"www.jubfvq1v3p38i51622y0dvmdk1mymowjyeu26gbtw9andgyn" +
