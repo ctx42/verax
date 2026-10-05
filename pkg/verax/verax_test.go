@@ -572,13 +572,13 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("ValidateWith multiple rules", func(t *testing.T) {
 		// --- Given ---
-		m := &ModelVW{"too_long"}
+		m := &ModelVW{"abc"}
 
 		// --- When ---
-		err := Validate(m, Equal("wrong_value"))
+		err := Validate(m, Equal("abc"), Equal("xyz"))
 
 		// --- Then ---
-		assert.ErrorIs(t, ErrTst, err)
+		xrrtest.AssertEqual(t, "must be equal to 'xyz' (ECNotEqual)", err)
 	})
 }
 

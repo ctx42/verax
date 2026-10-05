@@ -52,14 +52,24 @@ func Test_SkipRule_Validate_tabular(t *testing.T) {
 }
 
 func Test_SkipRule_When(t *testing.T) {
-	// --- Given ---
-	r := Skip
+	t.Run("true", func(t *testing.T) {
+		// --- Given ---
+		r := SkipRule(false)
 
-	// --- When ---
-	have := r.When(true)
+		// --- When ---
+		have := r.When(true)
 
-	// --- Then ---
-	assert.True(t, bool(have))
+		// --- Then ---
+		assert.True(t, bool(have))
+	})
+
+	t.Run("false", func(t *testing.T) {
+		// --- When ---
+		have := Skip.When(false)
+
+		// --- Then ---
+		assert.False(t, bool(have))
+	})
 }
 
 func Test_SkipRule_Spec(t *testing.T) {
