@@ -296,6 +296,7 @@ func (eql EqualRule) spec(name string) (*spec.Spec, error) {
 func EqualRuleFromSpec(spc *spec.Spec) (EqualRule, error) {
 	return equalRuleFromSpec(spc, EqualRuleName)
 }
+//nolint:cyclop
 func equalRuleFromSpec(spc *spec.Spec, name string) (EqualRule, error) {
 	if spc.Name != name {
 		return EqualRule{}, NewInternalErrorf(

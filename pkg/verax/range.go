@@ -325,6 +325,8 @@ func (rng RangeRule) Spec() (*spec.Spec, error) {
 }
 
 // RangeRuleFromSpec creates a new instance of [RangeRule] from the [spec.Spec].
+//
+//nolint:cyclop
 func RangeRuleFromSpec(spc *spec.Spec) (RangeRule, error) {
 	if spc.Name != RangeRuleName {
 		return RangeRule{}, NewInternalErrorf(
@@ -419,79 +421,71 @@ func rangeOutcome(mode string, result int) bool {
 
 // compareInt matches [CompareFunc] signature and compares two signed integers.
 func compareInt(want, have any) (int, error) {
-	var w, h int64
-	switch v := want.(type) {
-	case int:
-		w = int64(v)
-	case int8:
-		w = int64(v)
-	case int16:
-		w = int64(v)
-	case int32:
-		w = int64(v)
-	case int64:
-		w = v
-	case time.Duration:
-		w = int64(v)
-	default:
+	w, ok := toInt64(want)
+	if !ok {
 		return 0, errConvert(RangeRuleName, want, int64(0))
 	}
-	switch v := have.(type) {
-	case int:
-		h = int64(v)
-	case int8:
-		h = int64(v)
-	case int16:
-		h = int64(v)
-	case int32:
-		h = int64(v)
-	case int64:
-		h = v
-	case time.Duration:
-		h = int64(v)
-	default:
+	h, ok := toInt64(have)
+	if !ok {
 		return 0, errConvert(RangeRuleName, have, int64(0))
 	}
 	return cmp.Compare(w, h), nil
 }
 
+// toInt64 converts a signed integer or [time.Duration] to int64. Returns
+// false if the value is of any other type.
+func toInt64(val any) (int64, bool) {
+	switch v := val.(type) {
+	case int:
+		return int64(v), true
+	case int8:
+		return int64(v), true
+	case int16:
+		return int64(v), true
+	case int32:
+		return int64(v), true
+	case int64:
+		return v, true
+	case time.Duration:
+		return int64(v), true
+	default:
+		return 0, false
+	}
+}
+
 // compareUInt matches [CompareFunc] signature and compares two unsigned
 // integers.
 func compareUInt(want, have any) (int, error) {
-	var w, h uint64
-	switch v := want.(type) {
-	case uint:
-		w = uint64(v)
-	case uint8:
-		w = uint64(v)
-	case uint16:
-		w = uint64(v)
-	case uint32:
-		w = uint64(v)
-	case uint64:
-		w = v
-	case uintptr:
-		w = uint64(v)
-	default:
+	w, ok := toUint64(want)
+	if !ok {
 		return 0, errConvert(RangeRuleName, want, uint64(0))
 	}
-	switch v := have.(type) {
-	case uint:
-		h = uint64(v)
-	case uint8:
-		h = uint64(v)
-	case uint16:
-		h = uint64(v)
-	case uint32:
-		h = uint64(v)
-	case uint64:
-		h = v
-	case uintptr:
-		h = uint64(v)
-	default:
+	h, ok := toUint64(have)
+	if !ok {
 		return 0, errConvert(RangeRuleName, have, uint64(0))
 	}
 	return cmp.Compare(w, h), nil
+}
+
+// toUint64 converts an unsigned integer or uintptr to uint64. Returns false
+// if the value is of any other type.
+func toUint64(val any) (uint64, bool) {
+	switch v := val.(type) {
+	case uint:
+		return uint64(v), true
+	case uint8:
+		return uint64(v), true
+	case uint16:
+		return uint64(v), true
+	case uint32:
+		return uint64(v), true
+	case uint64:
+		return v, true
+	case uintptr:
+		return uint64(v), true
+	default:
+		return 0, false
+	}
 }
 
 // compareFloat matches [CompareFunc] signature and compares two float numbers.

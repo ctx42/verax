@@ -323,7 +323,7 @@ func Test_IsDNSName_tabular(t *testing.T) {
 		{"numeric single label", "123", false},
 		{"numeric first label", "1.example", true},
 		{"with port", "localhost.localdomain.intern:65535", false},
-		{"cjk characters", "漢字汉字", false},
+		{"cjk characters", "漢字汉字", false}, //nolint:gosmopolitan
 		{"max length", strings.Repeat("a.", 126) + "a", true},
 		{"max length trailing dot", strings.Repeat("a.", 127), true},
 		{"too long", strings.Repeat("a.", 127) + "a", false},
@@ -425,7 +425,7 @@ func Test_IsDomain_tabular(t *testing.T) {
 		{"bracketed ipv6", "[::1]", false},
 		{"all numeric labels", "50.50.50.50", false},
 		{"with port", "localhost.localdomain.intern:65535", false},
-		{"cjk characters", "漢字汉字", false},
+		{"cjk characters", "漢字汉字", false}, //nolint:gosmopolitan
 		{"punycode TLD", "example.xn--p1ai", true},
 		{"punycode TLD uppercase", "example.XN--P1AI", true},
 		{"punycode TLD with hyphen", "example.xn--bcher-kva", true},

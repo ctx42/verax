@@ -198,6 +198,8 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 
 // encodeSpec encodes the given [Spec] to JSON. The path holds the specs being
 // encoded above spc and is used to detect cycles.
+//
+//nolint:cyclop
 func (reg *Registry[T]) encodeSpec(
 	spc *Spec,
 	path map[*Spec]struct{},
@@ -296,6 +298,8 @@ func withCause(sentinel, cause error) error {
 // A JSON null argument is decoded as a nil value, except for the reserved
 // [ArgSpecs], [ArgTypes], [ArgSrc], and [ArgValues] arguments, which are
 // skipped.
+//
+//nolint:cyclop
 func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
 	if spc == nil {
 		return NewErrorf("JSON to spec: nil spec: %w", ErrInvSpec)

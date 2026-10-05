@@ -88,11 +88,12 @@ func IsEmpty(v any) bool {
 	}
 	return isEmptyValue(v)
 }
+//nolint:cyclop
 func isEmptyValue(v any) bool {
 	// Fast path: handle common scalar types without reflection.
 	switch v := v.(type) {
 	case string:
-		return len(v) == 0
+		return v == ""
 	case bool:
 		return false
 	case int:

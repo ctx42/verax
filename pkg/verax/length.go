@@ -227,6 +227,8 @@ func (lng LengthRule) Spec() (*spec.Spec, error) {
 
 // LengthRuleFromSpec creates a new instance of [LengthRule] from the
 // [spec.Spec].
+//
+//nolint:cyclop
 func LengthRuleFromSpec(spc *spec.Spec) (LengthRule, error) {
 	if spc.Name != LengthRuleName {
 		return LengthRule{}, NewInternalErrorf(
