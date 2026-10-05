@@ -264,6 +264,14 @@ func Test_EachRule_Validate_invalid_tabular(t *testing.T) {
 			[]*int{pIntNil, nil},
 			"0: cannot be blank (ECRequired); 1: cannot be blank (ECRequired)",
 		},
+		{
+			"map with float keys",
+			[]Rule{Required},
+			map[float64]string{1.5: "", 2.5: ""},
+			"" +
+				"1.5: cannot be blank (ECRequired); " +
+				"2.5: cannot be blank (ECRequired)",
+		},
 	}
 
 	for _, tc := range tt {

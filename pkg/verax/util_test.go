@@ -451,17 +451,16 @@ func Test_mapErrKey_tabular(t *testing.T) {
 		{"string", reflect.ValueOf("abc"), "abc"},
 		{"nil pointer to string", reflect.ValueOf(pStringNil), ""},
 		{"pointer to string", reflect.ValueOf(pString), "test string"},
-		{"struct 1", reflect.ValueOf(TStruct{}), "<verax.TStruct Value>"},
+		{"float", reflect.ValueOf(1.5), "1.5"},
+		{"bool", reflect.ValueOf(true), "true"},
 		{
-			"struct 2",
-			reflect.ValueOf(ModelVal{"abc"}),
-			"<verax.ModelVal Value>",
+			"interface holding int",
+			reflect.ValueOf(map[any]int{1: 1}).MapKeys()[0],
+			"1",
 		},
-		{
-			"pointer to struct",
-			reflect.ValueOf(&ModelPtr{"abc"}),
-			"<verax.ModelPtr Value>",
-		},
+		{"struct", reflect.ValueOf(TwoStr{FStr: "abc"}), "{abc <nil>}"},
+		{"struct with Stringer", reflect.ValueOf(ModelVal{"abc"}), "abc"},
+		{"pointer to struct", reflect.ValueOf(&ModelPtr{"abc"}), "{abc}"},
 	}
 
 	for _, tc := range tt {

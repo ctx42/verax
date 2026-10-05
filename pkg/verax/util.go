@@ -5,6 +5,7 @@ package verax
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"reflect"
 	"strconv"
 
@@ -215,7 +216,10 @@ func mapErrKey(value reflect.Value) string {
 		if value.IsNil() {
 			return ""
 		}
-		return value.Elem().String()
+		return mapErrKey(value.Elem())
+
+	case reflect.String:
+		return value.String()
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
 		reflect.Int64:
@@ -228,6 +232,6 @@ func mapErrKey(value reflect.Value) string {
 		return strconv.FormatUint(value.Uint(), 10)
 
 	default:
-		return value.String()
+		return fmt.Sprint(value.Interface())
 	}
 }
