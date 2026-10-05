@@ -21,7 +21,7 @@ const (
 	// domainRx represents the regex source: https://stackoverflow.com/a/7933253
 	// Slightly modified: Removed 255 max length validation since Go regex does
 	// not support lookarounds. More info: https://stackoverflow.com/a/38935027
-	domainRx = `^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-z0-9])?\.)+` +
+	domainRx = `^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+` +
 		`(?:[a-zA-Z]{1,63}|xn--[a-z0-9]{1,59})$`
 )
 

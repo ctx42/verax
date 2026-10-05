@@ -423,6 +423,8 @@ func Test_IsDomain_tabular(t *testing.T) {
 		{"with port", "localhost.localdomain.intern:65535", false},
 		{"cjk characters", "漢字汉字", false},
 		{"punycode TLD", "example.xn--p1ai", true},
+		{"uppercase", "EXAMPLE.COM", true},
+		{"uppercase label", "WWW.example.com", true},
 		{
 			"too long",
 			"www.jubfvq1v3p38i51622y0dvmdk1mymowjyeu26gbtw9andgyn" +
