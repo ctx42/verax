@@ -126,9 +126,10 @@ var CheckDNSName = verax.Check(IsDNSName, msgDNSName, ECDNSName)
 // DNSName validates if a string is a valid DNS name.
 var DNSName = verax.By(CheckDNSName)
 
-// IsDomain checks if a string represents a valid domain name.
+// IsDomain checks if a string represents a valid domain name of at most 253
+// characters.
 func IsDomain(str string) bool {
-	if str == "" || len(str) > 255 {
+	if str == "" || len(str) > 253 {
 		return false
 	}
 	return domainRxc.MatchString(str)

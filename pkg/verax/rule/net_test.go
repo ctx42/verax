@@ -425,8 +425,10 @@ func Test_IsDomain_tabular(t *testing.T) {
 		{"punycode TLD", "example.xn--p1ai", true},
 		{"uppercase", "EXAMPLE.COM", true},
 		{"uppercase label", "WWW.example.com", true},
+		{"max length", strings.Repeat("a.", 125) + "com", true},
+		{"too long", strings.Repeat("a.", 126) + "ab", false},
 		{
-			"too long",
+			"label too long",
 			"www.jubfvq1v3p38i51622y0dvmdk1mymowjyeu26gbtw9andgyn" +
 				"j1gg8z3msb1kl5z6906k846pj3sulm4kiyk82ln5teqj9nsh" +
 				"t59opr0cs5ssltx78lfyvml19lfq1wp4usbl0o36cmiykch1" +
