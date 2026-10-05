@@ -4,6 +4,7 @@
 package rule
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
@@ -319,8 +320,11 @@ func Test_IsDNSName_tabular(t *testing.T) {
 		{"numeric first label", "1.example", true},
 		{"with port", "localhost.localdomain.intern:65535", false},
 		{"cjk characters", "漢字汉字", false},
+		{"max length", strings.Repeat("a.", 126) + "a", true},
+		{"max length trailing dot", strings.Repeat("a.", 127), true},
+		{"too long", strings.Repeat("a.", 127) + "a", false},
 		{
-			"too long",
+			"label too long",
 			"www.jubfvq1v3p38i51622y0dvmdk1mymowjyeu26gbtw9andgyn" +
 				"j1gg8z3msb1kl5z6906k846pj3sulm4kiyk82ln5teqj9nsh" +
 				"t59opr0cs5ssltx78lfyvml19lfq1wp4usbl0o36cmiykch1" +
