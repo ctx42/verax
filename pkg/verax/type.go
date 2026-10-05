@@ -38,7 +38,7 @@ func (r TypeRule) Validate(have any) error {
 	if !r.condition {
 		return nil
 	}
-	if isNil := IsNil(have); isNil {
+	if have == nil {
 		return nil
 	}
 	if r.typ != reflect.TypeOf(have) {

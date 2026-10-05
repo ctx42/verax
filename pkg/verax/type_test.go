@@ -124,6 +124,18 @@ func Test_TypeRule_Validate(t *testing.T) {
 		xrrtest.AssertCode(t, "ECTst", err)
 	})
 
+	t.Run("error - typed nil of another type", func(t *testing.T) {
+		// --- Given ---
+		r := TypeOf("abc")
+
+		// --- When ---
+		err := r.Validate((*int)(nil))
+
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		xrrtest.AssertEqual(t, "not expected value type (ECInvType)", err)
+	})
+
 	t.Run("error - no the same types", func(t *testing.T) {
 		// --- Given ---
 		r := TypeOf(4.2)
