@@ -390,7 +390,6 @@ func Test_LengthRule_Message(t *testing.T) {
 		assert.Equal(t, tpl, have.tpl)
 		assert.Equal(t, msg, have.msg)
 		assert.Zero(t, have.flags)
-
 		assert.SameType(t, &InternalError{}, have.sticky)
 		wMsg := "" +
 			`length-rule(length): custom template parse error: template: ` +
@@ -415,7 +414,6 @@ func Test_LengthRule_Message(t *testing.T) {
 		assert.Equal(t, msgLengthOutOfRange, have.tpl)
 		assert.Equal(t, "the length must be between 1 and 2", have.msg)
 		assert.Zero(t, have.flags)
-
 		assert.SameType(t, &InternalError{}, have.sticky)
 		wMsg := "" +
 			`length-rule(length): custom template render error: template: ` +

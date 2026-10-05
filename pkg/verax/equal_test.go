@@ -550,7 +550,6 @@ func Test_EqualRule_With(t *testing.T) {
 		assert.Equal(t, "unknown", have.mode)
 		assert.Nil(t, have.fn)
 		assert.Zero(t, have.flags)
-
 		assert.SameType(t, &InternalError{}, have.sticky)
 		wMsg := `equal-rule: invalid rule mode: "unknown"`
 		assert.ErrorEqual(t, wMsg, have.sticky)
@@ -654,7 +653,6 @@ func Test_EqualRule_Message(t *testing.T) {
 		assert.Equal(t, msgEqual, have.tpl)
 		assert.Equal(t, "must be equal to '42'", have.msg)
 		assert.Zero(t, have.flags)
-
 		assert.SameType(t, &InternalError{}, have.sticky)
 		wMsg := "" +
 			`equal-rule(equal): custom template render error: template: ` +

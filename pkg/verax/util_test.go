@@ -465,7 +465,11 @@ func Test_mapErrKey_tabular(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
-			assert.Equal(t, tc.want, mapErrKey(tc.val))
+			// --- When ---
+			have := mapErrKey(tc.val)
+
+			// --- Then ---
+			assert.Equal(t, tc.want, have)
 		})
 	}
 }

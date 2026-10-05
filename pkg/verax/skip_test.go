@@ -14,39 +14,37 @@ import (
 )
 
 func Test_Skip(t *testing.T) {
-	// --- Given ---
-	r := Skip
+	// --- When ---
+	have := Skip
 
 	// --- Then ---
-	//goland:noinspection ALL
-	assert.True(t, bool(r))
+	assert.True(t, bool(have))
 }
 
 func Test_SkipRule_Validate_tabular(t *testing.T) {
 	tt := []struct {
 		testN string
 
+		rule SkipRule
 		have any
 	}{
-		{"nil", nil},
-		{"int", 100},
-		{"string", "str"},
-		{"float", 1.1},
+		{"true nil", SkipRule(true), nil},
+		{"true int", SkipRule(true), 100},
+		{"true string", SkipRule(true), "str"},
+		{"true float", SkipRule(true), 1.1},
+		{"false nil", SkipRule(false), nil},
+		{"false int", SkipRule(false), 100},
+		{"false string", SkipRule(false), "str"},
+		{"false float", SkipRule(false), 1.1},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
-			// --- Given ---
-			rT := SkipRule(true)
-			rF := SkipRule(false)
-
 			// --- When ---
-			errT := rT.Validate(tc.have)
-			errF := rF.Validate(tc.have)
+			err := tc.rule.Validate(tc.have)
 
 			// --- Then ---
-			assert.NoError(t, errT)
-			assert.NoError(t, errF)
+			assert.NoError(t, err)
 		})
 	}
 }

@@ -12,7 +12,7 @@ import (
 
 func Test_When(t *testing.T) {
 	t.Run("condition is true", func(t *testing.T) {
-		// --- Given ---
+		// --- When ---
 		have := When(true)
 
 		// --- Then ---
@@ -28,7 +28,7 @@ func Test_When(t *testing.T) {
 	})
 
 	t.Run("condition false", func(t *testing.T) {
-		// --- Given ---
+		// --- When ---
 		have := When(false)
 
 		// --- Then ---

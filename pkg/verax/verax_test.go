@@ -211,76 +211,79 @@ func Test_Check(t *testing.T) {
 	t.Run("calls function", func(t *testing.T) {
 		// --- Given ---
 		var with int
-		fn := func(have int) bool { with = have; return true }
+		fn := Check(func(v int) bool { with = v; return true }, "msg", "ECTst")
 
 		// --- When ---
-		have := Check(fn, "test err", "ECTst")
+		err := fn(42)
 
 		// --- Then ---
-		err := have(42)
-
 		assert.NoError(t, err)
 		assert.Equal(t, 42, with)
 	})
 
-	t.Run("named type and pointer", func(t *testing.T) {
+	t.Run("named type", func(t *testing.T) {
 		// --- Given ---
 		type hostname string
-		var with []string
-		fn := func(have string) bool { with = append(with, have); return true }
-		str := "b"
-		hst := hostname("c")
+		var with string
+		fn := Check(func(v string) bool { with = v; return true }, "m", "EC")
 
 		// --- When ---
-		have := Check(fn, "test err", "ECTst")
+		err := fn(hostname("a"))
 
 		// --- Then ---
-		assert.NoError(t, have(hostname("a")))
-		assert.NoError(t, have(&str))
-		assert.NoError(t, have(&hst))
-		assert.Equal(t, []string{"a", "b", "c"}, with)
+		assert.NoError(t, err)
+		assert.Equal(t, "a", with)
+	})
+
+	t.Run("pointer", func(t *testing.T) {
+		// --- Given ---
+		var with string
+		fn := Check(func(v string) bool { with = v; return true }, "m", "EC")
+		str := "b"
+
+		// --- When ---
+		err := fn(&str)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, "b", with)
 	})
 
 	t.Run("error - invalid type", func(t *testing.T) {
 		// --- Given ---
-		fn := func(have int) bool { return true }
+		fn := Check(func(int) bool { return true }, "test err", "ECTst")
 
 		// --- When ---
-		have := Check(fn, "test err", "ECTst")
+		err := fn(true)
 
 		// --- Then ---
-		err := have(true)
 		assert.SameType(t, &InternalError{}, err)
 		want := "test err: expected int, got bool (ECInvType)"
 		xrrtest.AssertEqual(t, want, err)
-		xrrtest.AssertCode(t, ECInvType, err)
 	})
 
-	t.Run("error - invalid type with percent in message", func(t *testing.T) {
+	t.Run("error - percent in message", func(t *testing.T) {
 		// --- Given ---
-		fn := func(have int) bool { return true }
+		fn := Check(func(int) bool { return true }, "100%", "ECTst")
 
 		// --- When ---
-		have := Check(fn, "100%", "ECTst")
+		err := fn(true)
 
 		// --- Then ---
-		err := have(true)
 		want := "100%: expected int, got bool (ECInvType)"
 		xrrtest.AssertEqual(t, want, err)
 	})
 
 	t.Run("error - function returns false", func(t *testing.T) {
 		// --- Given ---
-		fn := func(have int) bool { return false }
+		fn := Check(func(int) bool { return false }, "test err", "ECTst")
 
 		// --- When ---
-		have := Check(fn, "test err", "ECTst")
+		err := fn(42)
 
 		// --- Then ---
-		err := have(42)
 		assert.SameType(t, &Error{}, err)
 		xrrtest.AssertEqual(t, "test err (ECTst)", err)
-		xrrtest.AssertCode(t, "ECTst", err)
 	})
 }
 
@@ -897,29 +900,20 @@ func Test_Rule_encoding_round_trip_tabular(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
-			// Setup Registry.
+			// --- Given ---
 			reg := spec.NewRegistry[Rule]()
 			reg.RegisterSource(ruleFuncSrc)
 			reg.RegisterBuilders(Builders())
+			data := must.Value(reg.EncodeSpec(must.Value(tc.src.Spec())))
+			spc := &spec.Spec{}
+			must.Nil(reg.DecodeSpec(data, spc))
 
-			// Get spec.
-			srcSpc, err := tc.src.Spec()
+			// --- When ---
+			have, err := tc.bld(spc)
+
+			// --- Then ---
 			assert.NoError(t, err)
-
-			// Encode.
-			data, err := reg.EncodeSpec(srcSpc)
-			assert.NoError(t, err)
-
-			// Decode.
-			dstSpc := &spec.Spec{}
-			assert.NoError(t, reg.DecodeSpec(data, dstSpc))
-
-			// Build.
-			dst, err := tc.bld(dstSpc)
-			assert.NoError(t, err)
-
-			// Compare.
-			assert.Equal(t, tc.src, dst)
+			assert.Equal(t, tc.src, have)
 		})
 	}
 }

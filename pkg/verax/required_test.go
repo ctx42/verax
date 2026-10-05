@@ -14,7 +14,7 @@ import (
 )
 
 func Test_Required(t *testing.T) {
-	// --- Given ---
+	// --- When ---
 	have := Required
 
 	// --- Then ---
@@ -29,7 +29,7 @@ func Test_Required(t *testing.T) {
 }
 
 func Test_NotEmpty(t *testing.T) {
-	// --- Given ---
+	// --- When ---
 	have := NotEmpty
 
 	// --- Then ---
@@ -44,7 +44,7 @@ func Test_NotEmpty(t *testing.T) {
 }
 
 func Test_NotNil(t *testing.T) {
-	// --- Given ---
+	// --- When ---
 	have := NotNil
 
 	// --- Then ---

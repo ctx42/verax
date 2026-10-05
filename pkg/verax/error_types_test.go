@@ -339,22 +339,16 @@ func Test_NewFieldErrors(t *testing.T) {
 
 func Test_IsVeraxError(t *testing.T) {
 	t.Run("true for Error", func(t *testing.T) {
-		// --- Given ---
-		err := NewError("msg", "ECTst")
-
 		// --- When ---
-		have := IsVeraxError(err)
+		have := IsVeraxError(NewError("msg", "ECTst"))
 
 		// --- Then ---
 		assert.True(t, have)
 	})
 
 	t.Run("true for InternalError", func(t *testing.T) {
-		// --- Given ---
-		err := NewInternalError("msg", "ECTst")
-
 		// --- When ---
-		have := IsVeraxError(err)
+		have := IsVeraxError(NewInternalError("msg", "ECTst"))
 
 		// --- Then ---
 		assert.True(t, have)
@@ -372,11 +366,8 @@ func Test_IsVeraxError(t *testing.T) {
 	})
 
 	t.Run("false for errors not from this domain", func(t *testing.T) {
-		// --- Given ---
-		err := errors.New("test message")
-
 		// --- When ---
-		have := IsVeraxError(err)
+		have := IsVeraxError(errors.New("test message"))
 
 		// --- Then ---
 		assert.False(t, have)
@@ -393,11 +384,8 @@ func Test_IsVeraxError(t *testing.T) {
 
 func Test_IsValidationError(t *testing.T) {
 	t.Run("true for Error", func(t *testing.T) {
-		// --- Given ---
-		err := NewError("msg", "ECTst")
-
 		// --- When ---
-		have := IsValidationError(err)
+		have := IsValidationError(NewError("msg", "ECTst"))
 
 		// --- Then ---
 		assert.True(t, have)
@@ -415,22 +403,16 @@ func Test_IsValidationError(t *testing.T) {
 	})
 
 	t.Run("false for InternalError", func(t *testing.T) {
-		// --- Given ---
-		err := NewInternalError("msg", "ECTst")
-
 		// --- When ---
-		have := IsValidationError(err)
+		have := IsValidationError(NewInternalError("msg", "ECTst"))
 
 		// --- Then ---
 		assert.False(t, have)
 	})
 
 	t.Run("false for errors not from this domain", func(t *testing.T) {
-		// --- Given ---
-		err := errors.New("test message")
-
 		// --- When ---
-		have := IsValidationError(err)
+		have := IsValidationError(errors.New("test message"))
 
 		// --- Then ---
 		assert.False(t, have)
@@ -463,11 +445,8 @@ func Test_IsInternalError(t *testing.T) {
 	})
 
 	t.Run("false for errors not from this domain", func(t *testing.T) {
-		// --- Given ---
-		err := errors.New("test message")
-
 		// --- When ---
-		have := IsInternalError(err)
+		have := IsInternalError(errors.New("test message"))
 
 		// --- Then ---
 		assert.False(t, have)

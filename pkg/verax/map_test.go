@@ -48,17 +48,26 @@ func Test_MapRule_AllowUnknown(t *testing.T) {
 }
 
 func Test_MapRule_IsOptional(t *testing.T) {
-	t.Run("existing keys", func(t *testing.T) {
+	t.Run("optional key", func(t *testing.T) {
 		// --- Given ---
-		mks := []MapKey{
-			Key("A", Min(42)).Optional(),
-			Key("C", Max(42)),
-		}
-		r := Map(mks...)
+		r := Map(Key("A", Min(42)).Optional(), Key("C", Max(42)))
+
+		// --- When ---
+		have := r.IsOptional("A")
 
 		// --- Then ---
-		assert.True(t, r.IsOptional("A"))
-		assert.False(t, r.IsOptional("C"))
+		assert.True(t, have)
+	})
+
+	t.Run("required key", func(t *testing.T) {
+		// --- Given ---
+		r := Map(Key("A", Min(42)).Optional(), Key("C", Max(42)))
+
+		// --- When ---
+		have := r.IsOptional("C")
+
+		// --- Then ---
+		assert.False(t, have)
 	})
 
 	t.Run("not existing key", func(t *testing.T) {
@@ -78,16 +87,22 @@ func Test_MapRule_IsDefined(t *testing.T) {
 		// --- Given ---
 		r := Map(Key(1, Min(42)))
 
+		// --- When ---
+		have := r.IsDefined(1)
+
 		// --- Then ---
-		assert.True(t, r.IsDefined(1))
+		assert.True(t, have)
 	})
 
 	t.Run("not defined", func(t *testing.T) {
 		// --- Given ---
 		r := Map(Key(1, Min(42)))
 
+		// --- When ---
+		have := r.IsDefined(3)
+
 		// --- Then ---
-		assert.False(t, r.IsDefined(3))
+		assert.False(t, have)
 	})
 }
 

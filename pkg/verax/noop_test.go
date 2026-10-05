@@ -17,8 +17,11 @@ func Test_Noop(t *testing.T) {
 	// --- Given ---
 	r := Noop.When(true).Code("ECTst").Message("test err")
 
+	// --- When ---
+	err := r.Validate("abc")
+
 	// --- Then ---
-	assert.NoError(t, r.Validate("abc"))
+	assert.NoError(t, err)
 }
 
 func Test_NoopRule_Validate(t *testing.T) {

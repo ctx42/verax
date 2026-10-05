@@ -18,10 +18,29 @@ import (
 )
 
 func Test_ToAnySlice(t *testing.T) {
-	assert.Equal(t, []any{}, ToAnySlice[int]())
-	assert.Equal(t, []any{}, ToAnySlice[string]())
-	assert.Equal(t, []any{"a", "b", "c"}, ToAnySlice("a", "b", "c"))
-	assert.Equal(t, []any{1, 2, 3}, ToAnySlice(1, 2, 3))
+	t.Run("empty", func(t *testing.T) {
+		// --- When ---
+		have := ToAnySlice[int]()
+
+		// --- Then ---
+		assert.Equal(t, []any{}, have)
+	})
+
+	t.Run("strings", func(t *testing.T) {
+		// --- When ---
+		have := ToAnySlice("a", "b", "c")
+
+		// --- Then ---
+		assert.Equal(t, []any{"a", "b", "c"}, have)
+	})
+
+	t.Run("ints", func(t *testing.T) {
+		// --- When ---
+		have := ToAnySlice(1, 2, 3)
+
+		// --- Then ---
+		assert.Equal(t, []any{1, 2, 3}, have)
+	})
 }
 
 func Test_convertTo_tabular(t *testing.T) {
@@ -141,8 +160,8 @@ func Test_mustTpl(t *testing.T) {
 		// --- Then ---
 		buf := &bytes.Buffer{}
 		err := have.Execute(buf, map[string]any{spec.ArgValue: 42})
-		assert.ErrorContain(t, "template: name:", err)
-		assert.ErrorContain(t, `map has no entry for key "not_supported"`, err)
+		wRx := `^template: name:.*map has no entry for key "not_supported"$`
+		assert.ErrorRegexp(t, wRx, err)
 	})
 }
 

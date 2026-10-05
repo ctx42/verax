@@ -15,7 +15,7 @@ import (
 )
 
 func Test_Nil(t *testing.T) {
-	// --- Given ---
+	// --- When ---
 	have := Nil
 
 	// --- Then ---
@@ -30,7 +30,7 @@ func Test_Nil(t *testing.T) {
 }
 
 func Test_Empty(t *testing.T) {
-	// --- Given ---
+	// --- When ---
 	have := Empty
 
 	// --- Then ---

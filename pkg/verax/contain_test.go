@@ -199,7 +199,8 @@ func Test_ContainRule_Validate_invalid_tabular(t *testing.T) {
 			"empty map",
 			Equal("D"),
 			map[string]int{},
-			"must contain at least one 'D' value", ECNotEqual,
+			"must contain at least one 'D' value",
+			ECNotEqual,
 		},
 		{
 			"nil map",
