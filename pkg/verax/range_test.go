@@ -6,6 +6,7 @@ package verax
 import (
 	"cmp"
 	"errors"
+	"math"
 	"testing"
 	"time"
 
@@ -384,6 +385,19 @@ func Test_RangeRule_Validate(t *testing.T) {
 		assert.SameType(t, &Error{}, err)
 		assert.ErrorIs(t, ErrTst, err)
 		xrrtest.AssertCode(t, "ECCustom", err)
+	})
+
+	t.Run("error - NaN", func(t *testing.T) {
+		// --- Given ---
+		r := Max(10.0)
+
+		// --- When ---
+		err := r.Validate(math.NaN())
+
+		// --- Then ---
+		assert.SameType(t, &Error{}, err)
+		wMsg := "must be less or equal to 10 (ECInvRange)"
+		xrrtest.AssertEqual(t, wMsg, err)
 	})
 
 	t.Run("custom fn for unsupported type", func(t *testing.T) {
@@ -1430,6 +1444,16 @@ func Test_compareFloat(t *testing.T) {
 		xrrtest.AssertCode(t, ECInvType, err)
 		assert.Equal(t, 0, have)
 	})
+}
+
+func Test_compareFloat_NaN(t *testing.T) {
+	// --- When ---
+	have, err := compareFloat(1.0, math.NaN())
+
+	// --- Then ---
+	assert.SameType(t, &Error{}, err)
+	xrrtest.AssertEqual(t, "not a number (ECInvRange)", err)
+	assert.Equal(t, 0, have)
 }
 
 func Test_compareFloat_tabular(t *testing.T) {

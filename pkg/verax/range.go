@@ -8,6 +8,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"math"
 	"text/template"
 	"time"
 
@@ -506,6 +507,9 @@ func compareFloat(want, have any) (int, error) {
 		h = v
 	default:
 		return 0, errConvert(RangeRuleName, have, 0.0)
+	}
+	if math.IsNaN(w) || math.IsNaN(h) {
+		return 0, NewError("not a number", ECInvRange)
 	}
 	return cmp.Compare(w, h), nil
 }
