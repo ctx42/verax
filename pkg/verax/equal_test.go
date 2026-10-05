@@ -41,7 +41,10 @@ func Test_Equal(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, have.sticky)
-		wMsg := "equal-rule(equal): template render error"
+		wMsg := "" +
+			`equal-rule(equal): template render error: template: ` +
+			`equal-rule:1:20: executing "equal-rule" at <{{.value}}>: can't ` +
+			`print {{.value}} of type func()`
 		assert.ErrorEqual(t, wMsg, have.sticky)
 		xrrtest.AssertCode(t, ECInternal, have.sticky)
 	})
@@ -73,7 +76,10 @@ func Test_NotEqual(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, have.sticky)
-		wMsg := "equal-rule(not-equal): template render error"
+		wMsg := "" +
+			`equal-rule(not-equal): template render error: template: ` +
+			`equal-rule:1:24: executing "equal-rule" at <{{.value}}>: can't ` +
+			`print {{.value}} of type func()`
 		assert.ErrorEqual(t, wMsg, have.sticky)
 		xrrtest.AssertCode(t, ECInternal, have.sticky)
 	})
@@ -597,9 +603,12 @@ func Test_EqualRule_Message(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, have.sticky)
-		wMsg := "equal-rule(mode): custom template parse error"
+		wMsg := "" +
+			`equal-rule(mode): custom template parse error: template: ` +
+			`equal-rule:1: illegal number syntax: "."`
 		assert.ErrorEqual(t, wMsg, have.sticky)
 		xrrtest.AssertCode(t, ECInternal, have.sticky)
+		assert.NotNil(t, errors.Unwrap(have.sticky))
 		assert.Zero(t, have.flags)
 	})
 
@@ -616,9 +625,13 @@ func Test_EqualRule_Message(t *testing.T) {
 		assert.Zero(t, have.flags)
 
 		assert.SameType(t, &InternalError{}, have.sticky)
-		wMsg := "equal-rule(equal): custom template render error"
+		wMsg := "" +
+			`equal-rule(equal): custom template render error: template: ` +
+			`equal-rule:1:13: executing "equal-rule" at <.custom>: map has ` +
+			`no entry for key "custom"`
 		assert.ErrorEqual(t, wMsg, have.sticky)
 		xrrtest.AssertCode(t, ECInternal, have.sticky)
+		assert.NotNil(t, errors.Unwrap(have.sticky))
 		assert.Zero(t, have.flags)
 	})
 }

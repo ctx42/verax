@@ -4,6 +4,7 @@
 package verax
 
 import (
+	"errors"
 	"regexp"
 	"testing"
 
@@ -363,8 +364,12 @@ func Test_MatchRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		assert.ErrorEqual(t, "match-rule: invalid regexp: `[`", err)
+		wMsg := "" +
+			"match-rule: invalid regexp: `[`: error parsing regexp: missing " +
+			"closing ]: `[`"
+		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.NotNil(t, errors.Unwrap(err))
 		assert.Zero(t, have)
 	})
 

@@ -5,6 +5,7 @@ package verax
 
 import (
 	"database/sql"
+	"errors"
 	"testing"
 	"text/template"
 
@@ -391,9 +392,12 @@ func Test_LengthRule_Message(t *testing.T) {
 		assert.Zero(t, have.flags)
 
 		assert.SameType(t, &InternalError{}, have.sticky)
-		wMsg := "length-rule(length): custom template parse error"
+		wMsg := "" +
+			`length-rule(length): custom template parse error: template: ` +
+			`length-rule:1: illegal number syntax: "."`
 		assert.ErrorEqual(t, wMsg, have.sticky)
 		xrrtest.AssertCode(t, ECInternal, have.sticky)
+		assert.NotNil(t, errors.Unwrap(have.sticky))
 	})
 
 	t.Run("error - with not supported custom placeholder", func(t *testing.T) {
@@ -413,9 +417,13 @@ func Test_LengthRule_Message(t *testing.T) {
 		assert.Zero(t, have.flags)
 
 		assert.SameType(t, &InternalError{}, have.sticky)
-		wMsg := "length-rule(length): custom template render error"
+		wMsg := "" +
+			`length-rule(length): custom template render error: template: ` +
+			`length-rule:1:2: executing "length-rule" at <.custom>: map has ` +
+			`no entry for key "custom"`
 		assert.ErrorEqual(t, wMsg, have.sticky)
 		xrrtest.AssertCode(t, ECInternal, have.sticky)
+		assert.NotNil(t, errors.Unwrap(have.sticky))
 	})
 }
 
@@ -885,9 +893,13 @@ func Test_buildLengthRuleMsg(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := "length-rule(mode): custom template render error"
+		wMsg := "" +
+			`length-rule(mode): custom template render error: template: test ` +
+			`tpl:1:6: executing "test tpl" at <.other>: map has no entry for ` +
+			`key "other"`
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, ECInternal, err)
+		assert.NotNil(t, errors.Unwrap(err))
 		assert.Empty(t, hTpl)
 		assert.Empty(t, hMsg)
 	})

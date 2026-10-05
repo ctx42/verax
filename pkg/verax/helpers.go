@@ -95,8 +95,12 @@ func renderTpl(tpl *template.Template, val any, prefix string) (string, error) {
 	buf := &bytes.Buffer{}
 	data := map[string]any{spec.ArgValue: formatValue(val)}
 	if err := tpl.Execute(buf, data); err != nil {
-		format := "%s: template render error"
-		return "", NewInternalErrorf(format, prefix, xrr.WithCode(ECInternal))
+		return "", NewInternalErrorf(
+			"%s: template render error",
+			prefix,
+			xrr.WithCode(ECInternal),
+			xrr.WithCause(err),
+		)
 	}
 	return buf.String(), nil
 }

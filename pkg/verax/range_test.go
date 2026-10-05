@@ -221,7 +221,10 @@ func Test_RangeRule_With(t *testing.T) {
 
 		// --- Then ---
 		assert.Nil(t, have.fn)
-		wMsg := "range-rule(min): template render error"
+		wMsg := "" +
+			`range-rule(min): template render error: template: ` +
+			`range-rule:1:30: executing "range-rule" at <{{.value}}>: can't ` +
+			`print {{.value}} of type func()`
 		assert.ErrorEqual(t, wMsg, have.sticky)
 	})
 
@@ -565,9 +568,12 @@ func Test_RangeRule_Message(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, have.sticky)
-		wMsg := "range-rule(max): custom template parse error"
+		wMsg := "" +
+			`range-rule(max): custom template parse error: template: ` +
+			`range-rule:1: illegal number syntax: "."`
 		assert.ErrorEqual(t, wMsg, have.sticky)
 		xrrtest.AssertCode(t, ECInternal, have.sticky)
+		assert.NotNil(t, errors.Unwrap(have.sticky))
 		assert.Equal(t, "must be less or equal to {{.value}}", have.tpl)
 		assert.Equal(t, "must be less or equal to 42", have.msg)
 		assert.Zero(t, have.flags)
@@ -582,9 +588,13 @@ func Test_RangeRule_Message(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, have.sticky)
-		wMsg := "range-rule(max): custom template render error"
+		wMsg := "" +
+			`range-rule(max): custom template render error: template: ` +
+			`range-rule:1:2: executing "range-rule" at <.custom>: map has no ` +
+			`entry for key "custom"`
 		assert.ErrorEqual(t, wMsg, have.sticky)
 		xrrtest.AssertCode(t, ECInternal, have.sticky)
+		assert.NotNil(t, errors.Unwrap(have.sticky))
 		assert.Equal(t, "must be less or equal to {{.value}}", have.tpl)
 		assert.Equal(t, "must be less or equal to 42", have.msg)
 		assert.Zero(t, have.flags)

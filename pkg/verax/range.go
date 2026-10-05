@@ -231,28 +231,29 @@ func (r RangeRule) Message(tpl string) RangeRule {
 	if r.sticky != nil || tpl == "" {
 		return r
 	}
-	var parsed *template.Template
-	parsed, r.sticky = template.New(RangeRuleName).
+	parsed, err := template.New(RangeRuleName).
 		Option("missingkey=error").
 		Parse(tpl)
-	if r.sticky != nil {
+	if err != nil {
 		r.sticky = NewInternalErrorf(
 			"%s(%s): custom template parse error",
 			RangeRuleName,
 			r.mode,
 			xrr.WithCode(ECInternal),
+			xrr.WithCause(err),
 		)
 		return r
 	}
 
 	buf := &bytes.Buffer{}
-	r.sticky = parsed.Execute(buf, map[string]any{spec.ArgValue: r.threshold})
-	if r.sticky != nil {
+	data := map[string]any{spec.ArgValue: r.threshold}
+	if err = parsed.Execute(buf, data); err != nil {
 		r.sticky = NewInternalErrorf(
 			"%s(%s): custom template render error",
 			RangeRuleName,
 			r.mode,
 			xrr.WithCode(ECInternal),
+			xrr.WithCause(err),
 		)
 		return r
 	}

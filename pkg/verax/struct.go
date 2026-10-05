@@ -100,7 +100,7 @@ func ValidateStruct(v any, fields ...FieldRule) error {
 		if err := Validate(v, fr.rules...); err != nil {
 			if xrr.GetCode(err) == ECInternal {
 				return NewInternalErrorf(
-					"%s: %s",
+					"%s: %w",
 					getErrorFieldName(fr.tag, &sf),
 					err,
 					xrr.WithCode(ECInternal),

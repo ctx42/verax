@@ -4,6 +4,7 @@
 package verax
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
@@ -657,6 +658,7 @@ func Test_MapRuleFromSpec(t *testing.T) {
 			`invalid spec name: "bad-key-spec"`
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, spec.ECInvSpec, err)
+		assert.NotNil(t, errors.Unwrap(err))
 		assert.Zero(t, have)
 	})
 

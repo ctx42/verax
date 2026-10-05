@@ -147,29 +147,29 @@ func (r LengthRule) Message(tpl string) LengthRule {
 	if r.sticky != nil || tpl == "" {
 		return r
 	}
-	var parsed *template.Template
-	parsed, r.sticky = template.New(LengthRuleName).
+	parsed, err := template.New(LengthRuleName).
 		Option("missingkey=error").
 		Parse(tpl)
-	if r.sticky != nil {
+	if err != nil {
 		r.sticky = NewInternalErrorf(
 			"%s(%s): custom template parse error",
 			LengthRuleName,
 			r.mode,
 			xrr.WithCode(ECInternal),
+			xrr.WithCause(err),
 		)
 		return r
 	}
 
 	buf := &bytes.Buffer{}
 	data := map[string]any{ArgMin: r.min, ArgMax: r.max}
-	r.sticky = parsed.Execute(buf, data)
-	if r.sticky != nil {
+	if err = parsed.Execute(buf, data); err != nil {
 		r.sticky = NewInternalErrorf(
 			"%s(%s): custom template render error",
 			LengthRuleName,
 			r.mode,
 			xrr.WithCode(ECInternal),
+			xrr.WithCause(err),
 		)
 		return r
 	}
@@ -346,6 +346,7 @@ func buildLengthRuleMsg(
 			LengthRuleName,
 			mode,
 			xrr.WithCode(ECInternal),
+			xrr.WithCause(err),
 		)
 	}
 	return buf.String(), tpl, nil

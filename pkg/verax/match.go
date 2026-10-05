@@ -140,6 +140,7 @@ func MatchRuleFromSpec(spc *spec.Spec) (MatchRule, error) {
 			MatchRuleName,
 			rxs,
 			xrr.WithCode(spec.ECInvSpec),
+			xrr.WithCause(err),
 		)
 	}
 	rule := Match(rx)

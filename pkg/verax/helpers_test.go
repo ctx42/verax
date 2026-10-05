@@ -5,6 +5,7 @@ package verax
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"testing"
 	"text/template"
@@ -192,8 +193,12 @@ func Test_renderTpl(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		assert.ErrorEqual(t, "prefix: template render error", err)
+		wMsg := "" +
+			`prefix: template render error: template: name:1:6: executing ` +
+			`"name" at <{{.value}}>: can't print {{.value}} of type func()`
+		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, ECInternal, err)
+		assert.NotNil(t, errors.Unwrap(err))
 		assert.Empty(t, have)
 	})
 }

@@ -562,10 +562,9 @@ func Test_ValidateStruct(t *testing.T) {
 	t.Run("error - rule returns ECInternal", func(t *testing.T) {
 		// --- Given ---
 		mf := NewTStruct()
+		e := NewInternalError("bad rule", ECInternal)
 		rs := []FieldRule{
-			Field(&mf.FStr, By(func(v any) error {
-				return NewInternalError("bad rule", ECInternal)
-			})),
+			Field(&mf.FStr, By(func(v any) error { return e })),
 		}
 
 		// --- When ---
@@ -573,8 +572,9 @@ func Test_ValidateStruct(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
+		assert.ErrorEqual(t, "f_json: bad rule", err)
+		assert.ErrorIs(t, e, err)
 		xrrtest.AssertCode(t, ECInternal, err)
-		assert.ErrorContain(t, "f_json", err)
 	})
 
 	t.Run("anonymous field non-Fielder error", func(t *testing.T) {

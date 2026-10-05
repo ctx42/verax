@@ -68,7 +68,9 @@ func Test_ContainRule_Validate(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := "equal-rule(equal): custom template parse error"
+		wMsg := "" +
+			`equal-rule(equal): custom template parse error: template: ` +
+			`equal-rule:1: illegal number syntax: "."`
 		assert.ErrorEqual(t, wMsg, err)
 	})
 
@@ -306,7 +308,11 @@ func Test_ContainRule_Spec(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		assert.ErrorEqual(t, "equal-rule(equal): template render error", err)
+		wMsg := "" +
+			`equal-rule(equal): template render error: template: ` +
+			`equal-rule:1:20: executing "equal-rule" at <{{.value}}>: can't ` +
+			`print {{.value}} of type func()`
+		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, ECInternal, err)
 		assert.Nil(t, have)
 	})

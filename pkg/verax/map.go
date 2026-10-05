@@ -238,7 +238,7 @@ func MapRuleFromSpec(spc *spec.Spec) (MapRule, error) {
 			key, err := MapKeyFromSpec(keySpc)
 			if err != nil {
 				return MapRule{}, NewInternalErrorf(
-					"%s: key-spec[%d]: %s",
+					"%s: key-spec[%d]: %w",
 					MapRuleName,
 					idx,
 					err,
