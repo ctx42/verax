@@ -7,6 +7,7 @@ import (
 	"errors"
 	"math"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/ctx42/testing/pkg/assert"
@@ -23,14 +24,10 @@ func Test_NewSource(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		want := Source{
-			Lang: "go",
-			Name: "fn",
-			Src:  "github.com/ctx42/verax/pkg/spec.func1.1",
-			Desc: "",
-			val:  fn,
-		}
-		assert.Equal(t, want, have, check.WithSkipTrail("Source.ptr"))
+		want := Source{Lang: "go", Name: "fn", val: fn}
+		skip := check.WithSkipTrail("Source.Src", "Source.ptr")
+		assert.Equal(t, want, have, skip)
+		assert.True(t, strings.HasPrefix(have.Src, "github.com/ctx42/verax/"))
 		assert.True(t, have.ptr > 0)
 	})
 

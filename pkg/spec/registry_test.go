@@ -5,6 +5,7 @@ package spec
 
 import (
 	"encoding/json"
+	"sync"
 	"testing"
 	"time"
 
@@ -73,6 +74,7 @@ func Test_Registry_RegisterSource(t *testing.T) {
 
 		// --- Then ---
 		assert.Equal(t, srcOld, have)
+		assert.Equal(t, []Source{srcNew}, reg.sources)
 	})
 }
 
@@ -92,8 +94,8 @@ func Test_Registry_SourceByName(t *testing.T) {
 		// --- Given ---
 		fn0 := func() {}
 		fn1 := func() {}
-		src0 := must.Value(NewSource("fn", fn0))
-		src1 := must.Value(NewSource("fn", fn1))
+		src0 := must.Value(NewSource("fn0", fn0))
+		src1 := must.Value(NewSource("fn1", fn1))
 
 		reg := NewRegistry[TstType]()
 		reg.RegisterSource(src0)
@@ -135,8 +137,8 @@ func Test_Registry_SourceByValue(t *testing.T) {
 		// --- Given ---
 		fn0 := func() {}
 		fn1 := func() {}
-		src0 := must.Value(NewSource("fn", fn0))
-		src1 := must.Value(NewSource("fn", fn1))
+		src0 := must.Value(NewSource("fn0", fn0))
+		src1 := must.Value(NewSource("fn1", fn1))
 
 		reg := NewRegistry[TstType]()
 		reg.RegisterSource(src0)
@@ -605,6 +607,36 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 			"args": {"specs": [], "types": [], "values": []}
 		}`
 		assert.JSON(t, want, string(have))
+	})
+
+	t.Run("does not mutate input", func(t *testing.T) {
+		// --- Given ---
+		src := must.Value(NewSource("my-fn", TstFn0))
+		spc := NewSpec("my-spec").
+			SetArg("int", 1).
+			SetArg(ArgSpecs, []*Spec{NewSpec("sub").SetArg("int", 2)}).
+			SetArg(ArgSrc, TstFn0).
+			SetArg(ArgValues, []any{3})
+		reg := NewRegistry[TstType]()
+		reg.RegisterSource(src)
+
+		// --- When ---
+		_, err := reg.EncodeSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		want := &Spec{
+			Name: "my-spec",
+			Args: map[string]any{
+				"int": 1,
+				ArgSpecs: []*Spec{
+					{Name: "sub", Args: map[string]any{"int": 2}},
+				},
+				ArgSrc:    TstFn0,
+				ArgValues: []any{3},
+			},
+		}
+		assert.Equal(t, want, spc)
 	})
 
 	t.Run("no args spec", func(t *testing.T) {
@@ -1100,9 +1132,7 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 				]
 			}
 		}`
-		src := must.Value(NewSource("src0", TstFn0))
 		reg := NewRegistry[TstType]()
-		reg.RegisterSource(src)
 		have := &Spec{}
 
 		// --- When ---
@@ -1251,6 +1281,30 @@ func Test_Registry_DecodeAndBuild(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, TstType{"built"}, have)
 	})
+}
+
+func Test_Registry_concurrent_use(t *testing.T) {
+	// --- Given ---
+	reg := NewRegistry[TstType]()
+	bld := func(*Spec) (TstType, error) { return TstType{"built"}, nil }
+	data := []byte(`{"name": "my-spec", "args": {"src_go": {"name": "fn"}}}`)
+
+	// --- When ---
+	var wg sync.WaitGroup
+	for range 8 {
+		wg.Go(func() {
+			reg.RegisterBuilder("my-spec", bld)
+			reg.RegisterSource(must.Value(NewSource("fn", TstFn0)))
+			_, _ = reg.EncodeSpec(NewSpec("my-spec").SetArg(ArgSrc, TstFn0))
+			_, _ = reg.DecodeAndBuild(data)
+		})
+	}
+	wg.Wait()
+
+	// --- Then ---
+	have, err := reg.DecodeAndBuild([]byte(`{"name": "my-spec"}`))
+	assert.NoError(t, err)
+	assert.Equal(t, TstType{"built"}, have)
 }
 
 func Test_Registry_encodeSpecs(t *testing.T) {
