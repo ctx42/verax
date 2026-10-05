@@ -21,7 +21,7 @@ const (
 	ECInvSource = "ECInvSource"
 
 	// ECNoGoSource is the error code used when a [Spec] lacks the required
-	// [Source] definition for Go language.
+	// [Source] definition for the Go language.
 	ECNoGoSource = "ECNoGoSource"
 
 	// ECInvSpecArg is the error code used when a [Spec] argument is invalid.
@@ -32,7 +32,7 @@ const (
 	ECInvSpecArgType = "ECInvSpecArgType"
 
 	// ECNotSpecable is the error code used when a type doesn't implement
-	// [Specable] interface.
+	// the [Specable] interface.
 	ECNotSpecable = "ECNotSpecable"
 )
 
@@ -129,7 +129,7 @@ type Spec struct {
 func NewSpec(name string) *Spec { return &Spec{Name: name} }
 
 // SetArg sets a [Spec] argument; when an argument with the same name exists,
-// it will be overwritten.
+// it will be overwritten. It panics when called on a nil [Spec].
 func (spc *Spec) SetArg(name string, val any) *Spec {
 	if spc.Args == nil {
 		spc.Args = make(map[string]any)
@@ -138,7 +138,8 @@ func (spc *Spec) SetArg(name string, val any) *Spec {
 	return spc
 }
 
-// ArgExist checks if the argument with the given name exists in the spec.
+// ArgExist checks if the argument with the given name exists in the spec. It
+// panics when called on a nil [Spec].
 func (spc *Spec) ArgExist(name string) bool {
 	_, exist := spc.Args[name]
 	return exist

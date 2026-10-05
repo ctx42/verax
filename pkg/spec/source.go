@@ -11,8 +11,8 @@ import (
 
 // Source represents values like functions which cannot be serialized.
 //
-// Is used to associate a unique name for non-serializable values so we can
-// find them later when they are unserialized.
+// It associates a unique name with a non-serializable value, so the value can
+// be found again when the source is decoded.
 type Source struct {
 	Lang string  `json:"lang"`           // Source language: go, js, etc.
 	Name string  `json:"name"`           // Unique name of the source.
@@ -46,13 +46,15 @@ func NewSource(name string, val any) (Source, error) {
 	return src, nil
 }
 
-// SetLang sets the source language.
+// SetLang returns a copy of the source with the language set; the receiver is
+// not modified.
 func (src Source) SetLang(lang string) Source {
 	src.Lang = lang
 	return src
 }
 
-// SetDesc sets the source description.
+// SetDesc returns a copy of the source with the description set; the receiver
+// is not modified.
 func (src Source) SetDesc(desc string) Source {
 	src.Desc = desc
 	return src
