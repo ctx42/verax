@@ -587,6 +587,26 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 		assert.JSON(t, want, string(have))
 	})
 
+	t.Run("empty list arguments", func(t *testing.T) {
+		// --- Given ---
+		spc := NewSpec("my-spec").
+			SetArg(ArgSpecs, []*Spec{}).
+			SetArg(ArgTypes, []TstSpec{}).
+			SetArg(ArgValues, []any{})
+		reg := NewRegistry[TstSpec]()
+
+		// --- When ---
+		have, err := reg.EncodeSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		want := `{
+			"name": "my-spec",
+			"args": {"specs": [], "types": [], "values": []}
+		}`
+		assert.JSON(t, want, string(have))
+	})
+
 	t.Run("no args spec", func(t *testing.T) {
 		// --- Given ---
 		spc := NewSpec("my-spec")
@@ -729,7 +749,7 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
-	t.Run("JSON null arguments are ignored", func(t *testing.T) {
+	t.Run("JSON null arguments are kept", func(t *testing.T) {
 		// --- Given ---
 		data := `{
 			"name": "my-spec",
@@ -743,8 +763,79 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		want := &Spec{Name: "my-spec", Args: nil}
+		want := &Spec{Name: "my-spec", Args: map[string]any{"other": nil}}
 		assert.Equal(t, want, have)
+	})
+
+	t.Run("JSON null reserved arguments are ignored", func(t *testing.T) {
+		// --- Given ---
+		data := `{
+			"name": "my-spec",
+			"args": {
+				"specs": null,
+				"types": null,
+				"src_go": null,
+				"values": null
+			}
+		}`
+		reg := NewRegistry[TstType]()
+		have := &Spec{}
+
+		// --- When ---
+		err := reg.DecodeSpec([]byte(data), have)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, &Spec{Name: "my-spec"}, have)
+	})
+
+	t.Run("round trip", func(t *testing.T) {
+		// --- Given ---
+		reg := NewRegistry[TstSpec]()
+		reg.RegisterSource(must.Value(NewSource("my-fn", TstFn0)))
+		reg.RegisterBuilder("name0", func(spc *Spec) (TstSpec, error) {
+			return TstSpec{name: spc.Name}, nil
+		})
+
+		spc := NewSpec("my-spec").
+			SetArg("int", 1).
+			SetArg("uint", uint(2)).
+			SetArg("float", 3.5).
+			SetArg("bool", true).
+			SetArg("string", "str").
+			SetArg("time", time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC)).
+			SetArg("nil", nil).
+			SetArg(ArgSpecs, []*Spec{NewSpec("sub")}).
+			SetArg(ArgTypes, []TstSpec{{name: "name0"}}).
+			SetArg(ArgSrc, TstFn0).
+			SetArg(ArgValues, []any{1, 2.6, nil, "str"})
+		data := must.Value(reg.EncodeSpec(spc))
+		have := &Spec{}
+
+		// --- When ---
+		err := reg.DecodeSpec(data, have)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, spc, have)
+	})
+
+	t.Run("round trip empty lists", func(t *testing.T) {
+		// --- Given ---
+		reg := NewRegistry[TstSpec]()
+		spc := NewSpec("my-spec").
+			SetArg(ArgSpecs, []*Spec{}).
+			SetArg(ArgTypes, []TstSpec{}).
+			SetArg(ArgValues, []any{})
+		data := must.Value(reg.EncodeSpec(spc))
+		have := &Spec{}
+
+		// --- When ---
+		err := reg.DecodeSpec(data, have)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, spc, have)
 	})
 
 	t.Run("error - empty name", func(t *testing.T) {

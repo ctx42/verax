@@ -246,6 +246,16 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 	return data, nil
 }
 
+// isReserved reports whether name is a reserved [Spec] argument name the
+// [Registry] encodes and decodes especially.
+func isReserved(name string) bool {
+	switch name {
+	case ArgSpecs, ArgTypes, ArgSrc, ArgValues:
+		return true
+	}
+	return false
+}
+
 // withCause returns an error matching both the sentinel and its cause with
 // [errors.Is], reading "sentinel: cause".
 func withCause(sentinel, cause error) error {
@@ -258,6 +268,10 @@ var jsNull = json.RawMessage(`null`)
 // DecodeSpec decodes JSON representation of [Spec]. It resets spc before
 // decoding, so no name or argument from a reused spc survives. Returns
 // [ErrInvSpec] if spc is nil or the decoded name is empty.
+//
+// A JSON null argument is decoded as a nil value, except for the reserved
+// [ArgSpecs], [ArgTypes], [ArgSrc], and [ArgValues] arguments, which are
+// skipped.
 func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
 	if spc == nil {
 		return NewErrorf("JSON to spec: nil spec: %w", ErrInvSpec)
@@ -277,7 +291,7 @@ func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
 	}
 
 	for name, value := range tmp.Args {
-		if bytes.Equal(value, jsNull) {
+		if isReserved(name) && bytes.Equal(value, jsNull) {
 			continue
 		}
 
@@ -352,7 +366,7 @@ func (reg *Registry[T]) encodeSpecs(value any) (any, error) {
 		return nil, ErrInvArgType
 	}
 
-	var subs []json.RawMessage
+	subs := make([]json.RawMessage, 0, len(sps))
 	for idx, spc := range sps {
 		data, err := reg.EncodeSpec(spc)
 		if err != nil {
@@ -371,7 +385,7 @@ func (reg *Registry[T]) decodeSpecs(data []byte) ([]*Spec, error) {
 		return nil, NewErrorf("%w", withCause(ErrInvArg, err))
 	}
 
-	var sps []*Spec
+	sps := make([]*Spec, 0, len(subs))
 	for idx, sub := range subs {
 		s := &Spec{}
 		if err := reg.DecodeSpec(sub, s); err != nil {
@@ -390,7 +404,7 @@ func (reg *Registry[T]) encodeTypes(data any) (any, error) {
 		return nil, ErrInvArgType
 	}
 
-	var subs []json.RawMessage
+	subs := make([]json.RawMessage, 0, len(tps))
 	for idx, typ := range tps {
 		spt, ok := any(typ).(Specable)
 		if !ok {
@@ -419,7 +433,7 @@ func (reg *Registry[T]) decodeTypes(data []byte, spc *Spec) error {
 		format := "JSON to spec: spec %s, argument %s: %w"
 		return NewErrorf(format, spc.Name, ArgTypes, err)
 	}
-	var tps []T
+	tps := make([]T, 0, len(sps))
 	for idx, s := range sps {
 		bld := reg.BuilderFor(s.Name)
 		if bld == nil {
@@ -499,7 +513,7 @@ func (reg *Registry[T]) encodeValues(value any) (any, error) {
 	if !ok {
 		return nil, ErrInvArgType
 	}
-	var values []any
+	values := make([]any, 0, len(vs))
 	for idx, v := range vs {
 		jv, err := jsontype.NewValue(v, jsontype.WithRegistry(reg.jsonTypes()))
 		if err != nil {
@@ -519,7 +533,7 @@ func (reg *Registry[T]) decodeValues(data []byte, spc *Spec) error {
 		format := "JSON to spec: spec %s, argument %s: %w"
 		return NewErrorf(format, spc.Name, ArgValues, cause)
 	}
-	var vs []any
+	vs := make([]any, 0, len(rv))
 	for idx, v := range rv {
 		val := jsontype.Value{}
 		err := jsontype.Unmarshal(reg.jsonTypes(), v, &val)
