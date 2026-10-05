@@ -695,8 +695,8 @@ func Test_LengthRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Length(42, 44)
-		assert.Equal(t, wRule, have)
+		want := Length(42, 44)
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("mode rune-length", func(t *testing.T) {
@@ -711,8 +711,8 @@ func Test_LengthRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := RuneLength(42, 44)
-		assert.Equal(t, wRule, have)
+		want := RuneLength(42, 44)
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("custom error message", func(t *testing.T) {
@@ -728,8 +728,8 @@ func Test_LengthRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Length(42, 44).Message("test {{.min}} {{.max}}")
-		assert.Equal(t, wRule, have)
+		want := Length(42, 44).Message("test {{.min}} {{.max}}")
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - custom error message not string", func(t *testing.T) {
@@ -764,8 +764,8 @@ func Test_LengthRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Length(42, 44)
-		assert.Equal(t, wRule, have)
+		want := Length(42, 44)
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("custom error code", func(t *testing.T) {
@@ -781,8 +781,8 @@ func Test_LengthRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Length(42, 44).Code("ECTst")
-		assert.Equal(t, wRule, have)
+		want := Length(42, 44).Code("ECTst")
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("an empty custom error code is ignored", func(t *testing.T) {

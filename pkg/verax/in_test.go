@@ -481,8 +481,8 @@ func Test_InRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := In(42, 44)
-		assert.Equal(t, wRule, have)
+		want := In(42, 44)
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("mode not-in", func(t *testing.T) {
@@ -496,8 +496,8 @@ func Test_InRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := NotIn(42, 44)
-		assert.Equal(t, wRule, have)
+		want := NotIn(42, 44)
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("custom error message", func(t *testing.T) {
@@ -512,8 +512,8 @@ func Test_InRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := In(42).Message("test err")
-		assert.Equal(t, wRule, have)
+		want := In(42).Message("test err")
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - custom error message not string", func(t *testing.T) {
@@ -546,8 +546,8 @@ func Test_InRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := In(42)
-		assert.Equal(t, wRule, have)
+		want := In(42)
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("custom error code", func(t *testing.T) {
@@ -562,8 +562,8 @@ func Test_InRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := In(42).Code("ECTst")
-		assert.Equal(t, wRule, have)
+		want := In(42).Code("ECTst")
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - custom error code not string", func(t *testing.T) {
@@ -596,8 +596,8 @@ func Test_InRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := In(42)
-		assert.Equal(t, wRule, have)
+		want := In(42)
+		assert.Equal(t, want, have)
 	})
 }
 

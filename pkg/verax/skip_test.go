@@ -94,8 +94,7 @@ func Test_SkipRule_Spec(t *testing.T) {
 		// --- Then ---
 		assert.NoError(t, err)
 		data := must.Value(reg.EncodeSpec(spc))
-		want := `{"name": "skip-rule"}`
-		assert.JSON(t, want, data)
+		assert.JSON(t, `{"name": "skip-rule"}`, data)
 	})
 
 	t.Run("Skip - JSON decode", func(t *testing.T) {

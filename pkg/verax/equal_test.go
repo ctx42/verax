@@ -815,8 +815,7 @@ func Test_EqualRule_Spec(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := `equal-rule: invalid rule mode: "unknown"`
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, `equal-rule: invalid rule mode: "unknown"`, err)
 		xrrtest.AssertCode(t, ECInvRuleMode, err)
 		assert.Nil(t, have)
 	})
@@ -935,8 +934,8 @@ func Test_EqualRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Equal(42)
-		assert.Equal(t, wRule, have)
+		want := Equal(42)
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("mode not-equal", func(t *testing.T) {
@@ -950,8 +949,8 @@ func Test_EqualRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := NotEqual(42)
-		assert.Equal(t, wRule, have)
+		want := NotEqual(42)
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - mode equal-by invalid EqualFunc", func(t *testing.T) {
@@ -988,8 +987,8 @@ func Test_EqualRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Equal(42).With(fn)
-		assert.Equal(t, wRule, have)
+		want := Equal(42).With(fn)
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - mode not-equal-by invalid EqualFunc", func(t *testing.T) {
@@ -1026,8 +1025,8 @@ func Test_EqualRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := NotEqual(42).With(fn)
-		assert.Equal(t, wRule, have)
+		want := NotEqual(42).With(fn)
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("custom error message", func(t *testing.T) {
@@ -1042,8 +1041,8 @@ func Test_EqualRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Equal(42).Message("test err")
-		assert.Equal(t, wRule, have)
+		want := Equal(42).Message("test err")
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - custom error message not string", func(t *testing.T) {
@@ -1076,8 +1075,8 @@ func Test_EqualRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Equal(42)
-		assert.Equal(t, wRule, have)
+		want := Equal(42)
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("custom error code", func(t *testing.T) {
@@ -1092,8 +1091,8 @@ func Test_EqualRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Equal(42).Code("ECTst")
-		assert.Equal(t, wRule, have)
+		want := Equal(42).Code("ECTst")
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - error code not string", func(t *testing.T) {
@@ -1126,8 +1125,8 @@ func Test_EqualRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Equal(42)
-		assert.Equal(t, wRule, have)
+		want := Equal(42)
+		assert.Equal(t, want, have)
 	})
 }
 

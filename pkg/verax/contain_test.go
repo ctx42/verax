@@ -392,8 +392,8 @@ func Test_ContainRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Contain(Equal(42))
-		assert.Equal(t, wRule, have)
+		want := Contain(Equal(42))
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - mode argument is required", func(t *testing.T) {

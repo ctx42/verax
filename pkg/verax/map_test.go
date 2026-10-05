@@ -381,8 +381,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
-		wMsg := "X: missing key (ECMapKeyMissing)"
-		xrrtest.AssertEqual(t, wMsg, err)
+		xrrtest.AssertEqual(t, "X: missing key (ECMapKeyMissing)", err)
 	})
 
 	t.Run("run key value validators", func(t *testing.T) {
@@ -653,8 +652,8 @@ func Test_MapRuleFromSpec(t *testing.T) {
 		// --- Then ---
 		assert.NoError(t, err)
 		assert.SameType(t, MapRule{}, have)
-		wRule := Map()
-		assert.Equal(t, have, wRule)
+		want := Map()
+		assert.Equal(t, have, want)
 	})
 
 	t.Run("error - specs argument not spec instances", func(t *testing.T) {
@@ -714,11 +713,11 @@ func Test_MapRuleFromSpec(t *testing.T) {
 		// --- Then ---
 		assert.NoError(t, err)
 		assert.SameType(t, MapRule{}, have)
-		wRule := Map(
+		want := Map(
 			Key(1, Min(1), Max(11)),
 			Key(3, Min(3), Max(33)),
 		)
-		assert.Equal(t, have, wRule)
+		assert.Equal(t, have, want)
 	})
 
 	t.Run("error - the argument allowing unknown not bool", func(t *testing.T) {
@@ -749,8 +748,8 @@ func Test_MapRuleFromSpec(t *testing.T) {
 		// --- Then ---
 		assert.NoError(t, err)
 		assert.SameType(t, MapRule{}, have)
-		wRule := Map().AllowUnknown()
-		assert.Equal(t, have, wRule)
+		want := Map().AllowUnknown()
+		assert.Equal(t, have, want)
 	})
 }
 

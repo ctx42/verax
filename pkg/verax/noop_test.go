@@ -59,8 +59,7 @@ func Test_NoopRule_Spec(t *testing.T) {
 		// --- Then ---
 		assert.NoError(t, err)
 		data := must.Value(reg.EncodeSpec(spc))
-		want := `{"name": "noop-rule"}`
-		assert.JSON(t, want, data)
+		assert.JSON(t, `{"name": "noop-rule"}`, data)
 	})
 
 	t.Run("Noop - JSON decode", func(t *testing.T) {

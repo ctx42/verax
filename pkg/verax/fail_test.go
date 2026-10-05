@@ -265,8 +265,8 @@ func Test_FailRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Fail("test err", "ECTst")
-		assert.Equal(t, wRule, have)
+		want := Fail("test err", "ECTst")
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("with empty error code", func(t *testing.T) {
@@ -278,8 +278,8 @@ func Test_FailRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Fail("test err", xrr.ECGeneric)
-		assert.Equal(t, wRule, have)
+		want := Fail("test err", xrr.ECGeneric)
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - error code not string", func(t *testing.T) {

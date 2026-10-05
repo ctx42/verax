@@ -149,8 +149,7 @@ func Test_mustTpl(t *testing.T) {
 		msg := assert.PanicMsg(t, func() { mustTpl("tpl-name", " {{.value} ") })
 
 		// --- Then ---
-		wMsg := "template: tpl-name:1: bad character U+007D '}'"
-		assert.Equal(t, wMsg, *msg)
+		assert.Equal(t, "template: tpl-name:1: bad character U+007D '}'", *msg)
 	})
 
 	t.Run("missing key set to error", func(t *testing.T) {
@@ -341,7 +340,6 @@ func Test_errConvert(t *testing.T) {
 		err := errConvert(RangeRuleName, true, int64(0))
 
 		// --- Then ---
-		wMsg := "range-rule: cannot convert bool to int64"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, "range-rule: cannot convert bool to int64", err)
 	})
 }

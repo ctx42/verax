@@ -396,8 +396,7 @@ func Test_RangeRule_Validate(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &Error{}, err)
-		wMsg := "must be less or equal to 10 (ECInvRange)"
-		xrrtest.AssertEqual(t, wMsg, err)
+		xrrtest.AssertEqual(t, "must be less or equal to 10 (ECInvRange)", err)
 	})
 
 	t.Run("custom fn for unsupported type", func(t *testing.T) {
@@ -1517,8 +1516,7 @@ func Test_compareTime(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := "range-rule: cannot convert int to time.Time"
-		assert.ErrorEqual(t, wMsg, err)
+		assert.ErrorEqual(t, "range-rule: cannot convert int to time.Time", err)
 		xrrtest.AssertCode(t, ECInvType, err)
 		assert.Equal(t, 0, have)
 	})

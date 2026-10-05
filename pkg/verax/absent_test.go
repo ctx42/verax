@@ -361,8 +361,8 @@ func Test_AbsentRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Nil
-		assert.Equal(t, wRule, have)
+		want := Nil
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("mode empty", func(t *testing.T) {
@@ -374,8 +374,8 @@ func Test_AbsentRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Empty
-		assert.Equal(t, wRule, have)
+		want := Empty
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("custom error message", func(t *testing.T) {
@@ -389,8 +389,8 @@ func Test_AbsentRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Empty.Message("test err")
-		assert.Equal(t, wRule, have)
+		want := Empty.Message("test err")
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("an empty custom error message is ignored", func(t *testing.T) {
@@ -404,8 +404,8 @@ func Test_AbsentRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Empty
-		assert.Equal(t, wRule, have)
+		want := Empty
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - custom error message not string", func(t *testing.T) {
@@ -436,8 +436,8 @@ func Test_AbsentRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Empty.Code("ECTst")
-		assert.Equal(t, wRule, have)
+		want := Empty.Code("ECTst")
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("an empty custom error code is ignored", func(t *testing.T) {
@@ -451,8 +451,8 @@ func Test_AbsentRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Empty
-		assert.Equal(t, wRule, have)
+		want := Empty
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - error code not string", func(t *testing.T) {

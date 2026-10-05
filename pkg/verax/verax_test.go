@@ -270,8 +270,7 @@ func Test_Check(t *testing.T) {
 		err := fn(true)
 
 		// --- Then ---
-		want := "100%: expected int, got bool (ECInvType)"
-		xrrtest.AssertEqual(t, want, err)
+		xrrtest.AssertEqual(t, "100%: expected int, got bool (ECInvType)", err)
 	})
 
 	t.Run("error - function returns false", func(t *testing.T) {
@@ -430,8 +429,7 @@ func Test_Validate(t *testing.T) {
 		err := Validate("123", Equal("abc"), Skip, Fail("test err", "ECTst"))
 
 		// --- Then ---
-		wMsg := "must be equal to 'abc' (ECNotEqual)"
-		xrrtest.AssertEqual(t, wMsg, err)
+		xrrtest.AssertEqual(t, "must be equal to 'abc' (ECNotEqual)", err)
 	})
 
 	t.Run("invalid first fails skip when true second", func(t *testing.T) {
@@ -444,8 +442,7 @@ func Test_Validate(t *testing.T) {
 		)
 
 		// --- Then ---
-		wMsg := "must be equal to 'abc' (ECNotEqual)"
-		xrrtest.AssertEqual(t, wMsg, err)
+		xrrtest.AssertEqual(t, "must be equal to 'abc' (ECNotEqual)", err)
 	})
 
 	t.Run("invalid first fail skip when false second", func(t *testing.T) {
@@ -458,8 +455,7 @@ func Test_Validate(t *testing.T) {
 		)
 
 		// --- Then ---
-		wMsg := "must be equal to 'abc' (ECNotEqual)"
-		xrrtest.AssertEqual(t, wMsg, err)
+		xrrtest.AssertEqual(t, "must be equal to 'abc' (ECNotEqual)", err)
 	})
 
 	t.Run("invalid first ok skip when false second", func(t *testing.T) {
@@ -607,8 +603,7 @@ func Test_ValidateNamed(t *testing.T) {
 		err := ValidateNamed("field", 43, Equal(42))
 
 		// --- Then ---
-		wMsg := "field: must be equal to '42' (ECNotEqual)"
-		xrrtest.AssertEqual(t, wMsg, err)
+		xrrtest.AssertEqual(t, "field: must be equal to '42' (ECNotEqual)", err)
 	})
 }
 

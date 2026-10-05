@@ -382,8 +382,8 @@ func Test_MatchRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Match(regexp.MustCompile(`\d+`))
-		assert.Equal(t, wRule, have)
+		want := Match(regexp.MustCompile(`\d+`))
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("custom error message", func(t *testing.T) {
@@ -397,8 +397,8 @@ func Test_MatchRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Match(regexp.MustCompile(`\d+`)).Message("test err")
-		assert.Equal(t, wRule, have)
+		want := Match(regexp.MustCompile(`\d+`)).Message("test err")
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - custom error message not string", func(t *testing.T) {
@@ -429,8 +429,8 @@ func Test_MatchRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Match(regexp.MustCompile(`\d+`))
-		assert.Equal(t, wRule, have)
+		want := Match(regexp.MustCompile(`\d+`))
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("custom error code", func(t *testing.T) {
@@ -444,8 +444,8 @@ func Test_MatchRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Match(regexp.MustCompile(`\d+`)).Code("ECTst")
-		assert.Equal(t, wRule, have)
+		want := Match(regexp.MustCompile(`\d+`)).Code("ECTst")
+		assert.Equal(t, want, have)
 	})
 
 	t.Run("error - custom error code not string", func(t *testing.T) {
@@ -476,8 +476,8 @@ func Test_MatchRuleFromSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.NoError(t, err)
-		wRule := Match(regexp.MustCompile(`\d+`))
-		assert.Equal(t, wRule, have)
+		want := Match(regexp.MustCompile(`\d+`))
+		assert.Equal(t, want, have)
 	})
 }
 
