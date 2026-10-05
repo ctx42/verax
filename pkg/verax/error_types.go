@@ -39,6 +39,7 @@ var (
 	newErrorf         = xrr.ErrorfFunc[edError]()
 	newInternalError  = xrr.ErrorFunc[edInternal]()
 	newInternalErrorf = xrr.ErrorfFunc[edInternal]()
+	newFieldError     = xrr.FieldsFunc[edError]()
 )
 
 // Error represents an error in the package's error domain.
@@ -137,12 +138,10 @@ func NewInternalErrorf(format string, args ...any) error {
 // FieldErrors represents a field error in the package's error domain.
 type FieldErrors = xrr.GenericFields[edError]
 
-// NewFieldError returns a new field error in the package's error domain.
-func NewFieldError(field string, err error) *FieldErrors {
-	if err == nil {
-		return nil
-	}
-	return xrr.NewFields[edError](map[string]error{field: err})
+// NewFieldError returns a [FieldErrors] holding err under the field name, or
+// nil when err is nil. Use [NewFieldErrors] when the concrete type is needed.
+func NewFieldError(field string, err error) error {
+	return newFieldError(field, err)
 }
 
 // NewFieldErrors creates a new [FieldErrors] from the given map. The map is
