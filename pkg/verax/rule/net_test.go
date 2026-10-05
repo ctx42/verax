@@ -312,6 +312,11 @@ func Test_IsDNSName_tabular(t *testing.T) {
 		{"ipv4 address", "127.0.0.1", false},
 		{"bracketed ipv6", "[::1]", false},
 		{"all numeric labels", "50.50.50.50", false},
+		{"invalid ipv4 address", "256.0.0.0", false},
+		{"numeric last label", "1.2.3", false},
+		{"numeric last label trailing dot", "1.2.3.4.", false},
+		{"numeric single label", "123", false},
+		{"numeric first label", "1.example", true},
 		{"with port", "localhost.localdomain.intern:65535", false},
 		{"cjk characters", "漢字汉字", false},
 		{
@@ -481,6 +486,8 @@ func Test_IsHost_tabular(t *testing.T) {
 		want bool
 	}{
 		{"empty", "", false},
+		{"IPv4", "1.2.3.4", true},
+		{"IPv4 invalid", "256.0.0.0", false},
 		{"local", "localhost", true},
 		{"loopback hostname", "localhost.localdomain", true},
 		{"IPv6", "1ce:c01d:bee2:15:a5:900d:a5:11fe", true},

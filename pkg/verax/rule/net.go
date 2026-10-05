@@ -104,12 +104,18 @@ var CheckPort = verax.Check(IsPort, msgPort, ECPort)
 // Port validates if a string is a valid network port number.
 var Port = verax.By(CheckPort)
 
-// IsDNSName checks if a string represents a valid DNS name.
+// IsDNSName checks if a string represents a valid DNS name. The last label
+// must not be all-numeric, which also rules out IPv4 addresses.
 func IsDNSName(str string) bool {
 	if str == "" || len(strings.ReplaceAll(str, ".", "")) > 255 {
 		return false
 	}
-	return !IsIP(str) && dnsNameRxc.MatchString(str)
+	name := strings.TrimSuffix(str, ".")
+	tld := name[strings.LastIndexByte(name, '.')+1:]
+	if strings.Trim(tld, "0123456789") == "" {
+		return false
+	}
+	return dnsNameRxc.MatchString(str)
 }
 
 // CheckDNSName is a [verax.RuleFunc] that checks that a string is a valid DNS
