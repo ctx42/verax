@@ -1,3 +1,74 @@
+## v0.15.0 (Mon, 05 Oct 2026 20:23:24 UTC)
+- build(deps): update ctx42 dependencies to latest releases.
+- fix(spec)!: return untyped nil from NewFieldError for nil error.
+- style(spec): reindent over-wide JSON fixture in encode test.
+- fix(spec): return ErrInvSpec when decoding into a nil spec.
+- fix(spec): reset the target spec before decoding.
+- fix(spec): reject specs with an empty name.
+- fix(spec): make the zero value Registry usable.
+- fix(spec): encode plain arguments with the registry's jsontype types.
+- fix(spec): name the argument in plain argument encode errors.
+- fix(spec): keep the decode error cause when wrapping sentinels.
+- fix(spec): reject unnamed sources and encoding non-go sources.
+- fix(spec): reject encoding a value matching several sources.
+- fix(spec): keep empty lists and null arguments in JSON round trip.
+- fix(spec): detect cyclic specs during encoding.
+- test(spec): strengthen source lookups and cover registry guarantees.
+- style(spec): tidy registry errors, locals and godoc.
+- style(spec): align tests with the project test style.
+- style(verax): fit lines, normalize nolint, space switch cases.
+- fix(verax): skip nil elements when validating slices and maps.
+- fix(verax): return an error from EnsureString for nil input.
+- fix(verax): check map key assignability in the right direction.
+- fix(verax): format non-integer map keys in Each errors.
+- fix(verax): stop Contain matching empty elements.
+- fix(verax): apply custom message and code in Contain errors.
+- fix(verax): return the sticky error from Contain.
+- fix(verax): let RangeRule.With replace the unsupported type error.
+- fix(verax): keep a false SkipRule through a spec round trip.
+- fix(verax): rebuild Set, Each and Key specs without rules.
+- fix(verax): keep the cause of wrapped errors.
+- test(verax): use a distinct custom code in error override tests.
+- fix(verax): keep a custom RangeRule message in Exclusive.
+- fix(verax): accept any sign magnitude in exclusive range checks.
+- fix(verax): reject NaN in float range comparisons.
+- fix(verax): stop using the Check message as a format string.
+- fix(verax): accept named types and pointers in Check.
+- fix(verax): build rules from constructors returning an interface.
+- fix(verax): accept unnamed functions for named function spec arguments.
+- fix(verax): report invalid Length bounds as an invalid range.
+- fix(verax): check the MapRule condition first and allow nil map pointers.
+- fix(verax): treat an untyped nil as an empty collection.
+- test(verax): make ValidateWith and SkipRule.When tests able to fail.
+- refactor(verax): remove the unused hasGoSource helper.
+- fix(verax): skip nil rules in Validate.
+- fix(verax): check the type of typed nil values in TypeRule.
+- fix(verax): format values in custom messages like default messages.
+- fix(verax): allow template delimiters in EqualField field names.
+- fix(verax)!: return error from NewFieldError.
+- refactor(verax): remove redundant code.
+- refactor(verax): declare message templates as constants.
+- style(verax): name receivers with three-letter abbreviations.
+- test(verax): unexport test fixtures.
+- test(verax): rename tests and subtests to the naming rules.
+- test(verax): structure tests with Given, When and Then.
+- test(verax): name expected values want and inline short literals.
+- docs(verax): fix and complete godoc.
+- style(rule): tidy declarations and godoc.
+- style(rule): tidy tests.
+- fix(rule): reject dns names with an all-numeric last label.
+- fix(rule): limit dns names to 253 characters.
+- fix(rule): stop dns name suffix from extending the last label.
+- fix(rule): accept uppercase letters at the end of domain labels.
+- fix(rule): limit domain names to 253 characters.
+- fix(rule): accept uppercase and hyphenated punycode tlds.
+- fix(rule): reject ipv4-mapped ipv6 addresses in IsIPv4.
+- fix(rule): reject port numbers with a sign or leading zeros.
+- refactor(rule): simplify the base64 check.
+- docs: list the rules the rule package actually provides.
+- style(verax): drop unused fixture and cmp shadow in tests.
+- docs(readme): restructure and inject every example from code.
+
 ## v0.14.0 (Mon, 13 Jul 2026 21:12:12 UTC)
 - chore: update AGENTS.md file.
 - fix(rule): match punycode TLDs in domain validation.
