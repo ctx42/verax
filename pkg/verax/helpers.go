@@ -140,17 +140,24 @@ func getArg[T any](args map[string]any, key, rule string) (T, error) {
 		)
 	}
 
-	if retVal, ok = anyVal.(T); !ok {
-		return retVal, NewInternalErrorf(
-			"%s: spec argument %q must be %T, got %T",
-			rule,
-			key,
-			retVal,
-			anyVal,
-			xrr.WithCode(spec.ECInvSpec),
-		)
+	if retVal, ok = anyVal.(T); ok {
+		return retVal, nil
 	}
-	return retVal, nil
+	// Accept a function of an unnamed type for a named function type.
+	rv, typ := reflect.ValueOf(anyVal), reflect.TypeFor[T]()
+	if rv.Kind() == reflect.Func && rv.Type().ConvertibleTo(typ) {
+		if retVal, ok = rv.Convert(typ).Interface().(T); ok {
+			return retVal, nil
+		}
+	}
+	return retVal, NewInternalErrorf(
+		"%s: spec argument %q must be %T, got %T",
+		rule,
+		key,
+		retVal,
+		anyVal,
+		xrr.WithCode(spec.ECInvSpec),
+	)
 }
 
 // errConvert returns an [InternalError] with [ECInvType] code indicating that

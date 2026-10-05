@@ -557,7 +557,6 @@ func ExampleBuilders_decode() {
 }
 
 // nonEmptyWord is a custom RuleFunc used in ExampleBuilders_by.
-// Declared as verax.RuleFunc so the type assertion in ByRuleFromSpec succeeds.
 var nonEmptyWord verax.RuleFunc = func(v any) error {
 	str, err := verax.EnsureString(v)
 	if err != nil {

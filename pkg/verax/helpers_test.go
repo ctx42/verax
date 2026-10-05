@@ -278,6 +278,21 @@ func Test_getArg(t *testing.T) {
 		assert.Equal(t, uint(42), have)
 	})
 
+	t.Run("unnamed function for a named function type", func(t *testing.T) {
+		// --- Given ---
+		var called bool
+		fn := func(any) error { called = true; return nil }
+		args := map[string]any{"name": fn}
+
+		// --- When ---
+		have, err := getArg[RuleFunc](args, "name", "role_name")
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.NoError(t, have(1))
+		assert.True(t, called)
+	})
+
 	t.Run("error - argument is of a wrong type", func(t *testing.T) {
 		// --- Given ---
 		args := map[string]any{"name": uint(42)}
