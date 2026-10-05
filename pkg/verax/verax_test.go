@@ -341,6 +341,14 @@ func Test_Validate(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("nil rule is skipped", func(t *testing.T) {
+		// --- When ---
+		err := Validate(42, nil, Equal(42))
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
 	t.Run("valid one rule", func(t *testing.T) {
 		// --- When ---
 		err := Validate("abc", Equal("abc"))

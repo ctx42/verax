@@ -242,6 +242,9 @@ var validatableType = reflect.TypeFor[Validator]()
 //nolint:cyclop
 func Validate(v any, rules ...Rule) error {
 	for _, rule := range rules {
+		if rule == nil {
+			continue
+		}
 		if s, ok := rule.(SkipRule); ok && bool(s) {
 			return nil
 		}
