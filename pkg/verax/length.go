@@ -324,7 +324,8 @@ func pickLengthRuleMsg(minimum, maximum int) (string, *template.Template) {
 // minimum nad maximum values. Returns the error message and its corresponding
 // template.
 func buildLengthRuleMsg(
-	minimum, maximum int,
+	minimum int,
+	maximum int,
 	mode string,
 ) (string, string, error) {
 

@@ -45,7 +45,7 @@ func StringOrBytes(value any) (
 		bs = v.Interface().([]byte) //nolint:forcetypeassert
 		isBytes = true
 	}
-	return
+	return isString, str, isBytes, bs
 }
 
 // LengthOfValue returns the length of a value that is a string, slice, map,

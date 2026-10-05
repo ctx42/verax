@@ -96,8 +96,7 @@ func ValidateStruct(v any, fields ...FieldRule) error {
 			)
 		}
 
-		v = fv.Elem().Interface()
-		if err := Validate(v, fr.rules...); err != nil {
+		if err := Validate(fv.Elem().Interface(), fr.rules...); err != nil {
 			if xrr.GetCode(err) == ECInternal {
 				return NewInternalErrorf(
 					"%s: %w",

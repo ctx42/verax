@@ -15,7 +15,6 @@ func When(condition bool, rules ...Rule) WhenRule {
 	return WhenRule{
 		condition: condition,
 		rules:     rules,
-		elseRules: []Rule{},
 	}
 }
 

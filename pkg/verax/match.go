@@ -76,9 +76,7 @@ func (r MatchRule) Validate(have any) error {
 
 	val := Indirect(have)
 	isString, str, isBytes, bs := StringOrBytes(val)
-	if isString && (str == "" || r.want.MatchString(str)) {
-		return nil
-	} else if isBytes && (len(bs) == 0 || r.want.Match(bs)) {
+	if isString && r.want.MatchString(str) || isBytes && r.want.Match(bs) {
 		return nil
 	}
 	return NewError(r.msg, r.code)

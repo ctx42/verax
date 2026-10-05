@@ -255,11 +255,8 @@ func (r EqualRule) spec(name string) (*spec.Spec, error) {
 
 	spc := spec.NewSpec(name)
 	switch r.mode {
-	case "equal", "not-equal":
-		// Nothing to do.
-
-	case "equal-by", "not-equal-by":
-		spc.SetArg(spec.ArgSrc, r.fn)
+	case "equal", "not-equal", "equal-by", "not-equal-by":
+		// Valid mode.
 
 	default:
 		return nil, NewInternalErrorf(

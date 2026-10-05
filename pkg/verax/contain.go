@@ -99,7 +99,6 @@ func (r ContainRule) Spec() (*spec.Spec, error) {
 	if err != nil {
 		return nil, err
 	}
-	spc.Name = ContainRuleName
 	return spc, nil
 }
 
