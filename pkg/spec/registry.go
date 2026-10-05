@@ -151,7 +151,8 @@ func (reg *Registry[T]) Build(spc *Spec) (T, error) {
 	return bld(spc)
 }
 
-// EncodeSpec encodes the given [Spec] to JSON.
+// EncodeSpec encodes the given [Spec] to JSON. Returns [ErrInvSpec] if spc is
+// nil or has an empty name.
 //
 // NOTE: The input spc is never mutated. EncodeSpec works on an internal
 // copy so callers can safely reuse the same *Spec across multiple
@@ -159,6 +160,9 @@ func (reg *Registry[T]) Build(spc *Spec) (T, error) {
 func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 	if spc == nil {
 		return nil, ErrInvSpec
+	}
+	if spc.Name == "" {
+		return nil, NewErrorf("spec to JSON: empty name: %w", ErrInvSpec)
 	}
 	// Work on a copy so the caller's Spec is never mutated.
 	work := &Spec{
@@ -223,7 +227,7 @@ var jsNull = json.RawMessage(`null`)
 
 // DecodeSpec decodes JSON representation of [Spec]. It resets spc before
 // decoding, so no name or argument from a reused spc survives. Returns
-// [ErrInvSpec] if spc is nil.
+// [ErrInvSpec] if spc is nil or the decoded name is empty.
 func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
 	if spc == nil {
 		return NewErrorf("JSON to spec: nil spec: %w", ErrInvSpec)
@@ -237,6 +241,9 @@ func (reg *Registry[T]) DecodeSpec(data []byte, spc *Spec) error {
 	}
 	if err := json.Unmarshal(data, &tmp); err != nil {
 		return NewErrorf("JSON to spec: %w", ErrInvSpec)
+	}
+	if spc.Name == "" {
+		return NewErrorf("JSON to spec: empty name: %w", ErrInvSpec)
 	}
 
 	for name, value := range tmp.Args {

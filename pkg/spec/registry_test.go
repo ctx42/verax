@@ -342,6 +342,19 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 		assert.Nil(t, have)
 	})
 
+	t.Run("error - empty name", func(t *testing.T) {
+		// --- Given ---
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.EncodeSpec(&Spec{})
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrInvSpec, err)
+		assert.ErrorEqual(t, "spec to JSON: empty name: invalid spec", err)
+		assert.Nil(t, have)
+	})
+
 	t.Run("error - specs argument", func(t *testing.T) {
 		// --- Given ---
 		spc := NewSpec("my-spec").SetArg(ArgSpecs, true)
@@ -701,6 +714,36 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 		assert.NoError(t, err)
 		want := &Spec{Name: "my-spec", Args: nil}
 		assert.Equal(t, want, have)
+	})
+
+	t.Run("error - empty name", func(t *testing.T) {
+		// --- Given ---
+		data := `{"args": {"arg": true}}`
+		reg := NewRegistry[TstType]()
+		have := &Spec{}
+
+		// --- When ---
+		err := reg.DecodeSpec([]byte(data), have)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrInvSpec, err)
+		assert.ErrorEqual(t, "JSON to spec: empty name: invalid spec", err)
+	})
+
+	t.Run("error - null nested spec", func(t *testing.T) {
+		// --- Given ---
+		data := `{"name": "my-spec", "args": {"specs": [null]}}`
+		reg := NewRegistry[TstType]()
+		have := &Spec{}
+
+		// --- When ---
+		err := reg.DecodeSpec([]byte(data), have)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrInvSpec, err)
+		wMsg := "JSON to spec: spec my-spec, argument specs: " +
+			"index 0: JSON to spec: empty name: invalid spec"
+		assert.ErrorEqual(t, wMsg, err)
 	})
 
 	t.Run("error - specs argument", func(t *testing.T) {
