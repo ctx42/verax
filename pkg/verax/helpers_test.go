@@ -81,6 +81,20 @@ func Test_AsRuleBuilder(t *testing.T) {
 		assert.Equal(t, Rule(Noop), have)
 	})
 
+	t.Run("constructor returning an interface", func(t *testing.T) {
+		// --- Given ---
+		fn := func(_ *spec.Spec) (Rule, error) { return Noop, nil }
+
+		// --- When ---
+		bld := AsRuleBuilder(fn)
+
+		// --- Then ---
+		assert.NotNil(t, bld)
+		have, err := bld(spec.NewSpec(NoopRuleName))
+		assert.NoError(t, err)
+		assert.Equal(t, Rule(Noop), have)
+	})
+
 	t.Run("propagates constructor error", func(t *testing.T) {
 		// --- Given ---
 		wErr := NewInternalError("spec error", ECInternal)

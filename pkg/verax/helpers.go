@@ -42,8 +42,7 @@ func convertTo[T any](val any) (T, bool) {
 
 // AsRuleBuilder wraps a typed spec constructor and returns a [Builder] for it.
 func AsRuleBuilder[T any](fn func(*spec.Spec) (T, error)) spec.Builder[Rule] {
-	var t T
-	if _, ok := any(t).(Rule); !ok {
+	if !reflect.TypeFor[T]().Implements(reflect.TypeFor[Rule]()) {
 		return nil
 	}
 	return func(spc *spec.Spec) (Rule, error) {
