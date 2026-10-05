@@ -539,7 +539,8 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "spec my-spec to JSON: jsontype: unsupported type: func()"
+		wMsg := "spec to JSON: spec my-spec, argument custom: " +
+			"jsontype: unsupported type: func()"
 		assert.ErrorEqual(t, wMsg, err)
 		assert.Nil(t, have)
 	})
@@ -612,7 +613,8 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
 		wMsg := "spec to JSON: spec my-spec, argument specs: " +
-			"index 0: spec sub to JSON: jsontype: unsupported type: func()"
+			"index 0: spec to JSON: spec sub, argument custom: " +
+			"jsontype: unsupported type: func()"
 		assert.ErrorEqual(t, wMsg, err)
 		assert.Nil(t, have)
 	})
@@ -1136,8 +1138,8 @@ func Test_Registry_encodeSpecs(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "index 1: spec my-spec1 to JSON: jsontype: " +
-			"unsupported type: func()"
+		wMsg := "index 1: spec to JSON: spec my-spec1, argument arg: " +
+			"jsontype: unsupported type: func()"
 		assert.ErrorEqual(t, wMsg, err)
 		assert.Nil(t, have)
 	})
@@ -1282,7 +1284,8 @@ func Test_Registry_encodeTypes(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
-		wMsg := "index 0: spec name to JSON: jsontype: unsupported type: func()"
+		wMsg := "index 0: spec to JSON: spec name, argument arg: " +
+			"jsontype: unsupported type: func()"
 		assert.ErrorEqual(t, wMsg, err)
 		assert.Nil(t, have)
 	})
