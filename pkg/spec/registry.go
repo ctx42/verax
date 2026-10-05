@@ -180,13 +180,35 @@ func (reg *Registry[T]) Build(spc *Spec) (T, error) {
 // NOTE: The input spc is never mutated. EncodeSpec works on an internal
 // copy so callers can safely reuse the same *Spec across multiple
 // Encode / Build / roundtrip operations.
+//
+// A spec nested in itself through [ArgSpecs] returns [ErrInvSpec].
 func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
+	return reg.encodeSpec(spc, nil)
+}
+
+// encodeSpec encodes the given [Spec] to JSON. The path holds the specs being
+// encoded above spc and is used to detect cycles.
+func (reg *Registry[T]) encodeSpec(
+	spc *Spec,
+	path map[*Spec]struct{},
+) ([]byte, error) {
+
 	if spc == nil {
 		return nil, ErrInvSpec
 	}
 	if spc.Name == "" {
 		return nil, NewErrorf("spec to JSON: empty name: %w", ErrInvSpec)
 	}
+	if _, ok := path[spc]; ok {
+		format := "spec to JSON: cyclic spec %s: %w"
+		return nil, NewErrorf(format, spc.Name, ErrInvSpec)
+	}
+	if path == nil {
+		path = make(map[*Spec]struct{})
+	}
+	path[spc] = struct{}{}
+	defer delete(path, spc)
+
 	// Work on a copy so the caller's Spec is never mutated.
 	work := &Spec{
 		Name: spc.Name,
@@ -197,7 +219,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 	for name, value := range work.Args {
 		switch name {
 		case ArgSpecs:
-			specs, err := reg.encodeSpecs(value)
+			specs, err := reg.encodeSpecs(value, path)
 			if err != nil {
 				format := "spec to JSON: spec %s, argument %s: %w"
 				return nil, NewErrorf(format, spc.Name, name, err)
@@ -205,7 +227,7 @@ func (reg *Registry[T]) EncodeSpec(spc *Spec) ([]byte, error) {
 			work.Args[name] = specs
 
 		case ArgTypes:
-			tps, err := reg.encodeTypes(value)
+			tps, err := reg.encodeTypes(value, path)
 			if err != nil {
 				format := "spec to JSON: spec %s, argument %s: %w"
 				return nil, NewErrorf(format, spc.Name, name, err)
@@ -360,7 +382,11 @@ func (reg *Registry[T]) jsonTypes() *jsontype.Registry {
 
 // encodeSpecs expects the provided value to be a slice of [Spec] instances and
 // encodes as into a JSON array as a slice of [json.RawMessage].
-func (reg *Registry[T]) encodeSpecs(value any) (any, error) {
+func (reg *Registry[T]) encodeSpecs(
+	value any,
+	path map[*Spec]struct{},
+) (any, error) {
+
 	sps, ok := value.([]*Spec)
 	if !ok {
 		return nil, ErrInvArgType
@@ -368,7 +394,7 @@ func (reg *Registry[T]) encodeSpecs(value any) (any, error) {
 
 	subs := make([]json.RawMessage, 0, len(sps))
 	for idx, spc := range sps {
-		data, err := reg.EncodeSpec(spc)
+		data, err := reg.encodeSpec(spc, path)
 		if err != nil {
 			return nil, NewErrorf("index %d: %w", idx, err)
 		}
@@ -398,7 +424,11 @@ func (reg *Registry[T]) decodeSpecs(data []byte) ([]*Spec, error) {
 
 // encodeTypes expects the provided value to be a slice of generic T instances
 // and encodes them as a JSON array as a slice of [json.RawMessage].
-func (reg *Registry[T]) encodeTypes(data any) (any, error) {
+func (reg *Registry[T]) encodeTypes(
+	data any,
+	path map[*Spec]struct{},
+) (any, error) {
+
 	tps, ok := data.([]T)
 	if !ok {
 		return nil, ErrInvArgType
@@ -414,7 +444,7 @@ func (reg *Registry[T]) encodeTypes(data any) (any, error) {
 		if err != nil {
 			return nil, NewErrorf("index %d: %w", idx, err)
 		}
-		sub, err := reg.EncodeSpec(spc)
+		sub, err := reg.encodeSpec(spc, path)
 		if err != nil {
 			return nil, NewErrorf("index %d: %w", idx, err)
 		}

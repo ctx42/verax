@@ -639,6 +639,43 @@ func Test_Registry_EncodeSpec(t *testing.T) {
 		assert.Nil(t, have)
 	})
 
+	t.Run("error - cyclic spec", func(t *testing.T) {
+		// --- Given ---
+		spc := NewSpec("my-spec")
+		sub := NewSpec("sub").SetArg(ArgSpecs, []*Spec{spc})
+		spc.SetArg(ArgSpecs, []*Spec{sub})
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.EncodeSpec(spc)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrInvSpec, err)
+		wMsg := "spec to JSON: spec my-spec, argument specs: index 0: " +
+			"spec to JSON: spec sub, argument specs: index 0: " +
+			"spec to JSON: cyclic spec my-spec: invalid spec"
+		assert.ErrorEqual(t, wMsg, err)
+		assert.Nil(t, have)
+	})
+
+	t.Run("shared sub-spec", func(t *testing.T) {
+		// --- Given ---
+		sub := NewSpec("sub")
+		spc := NewSpec("my-spec").SetArg(ArgSpecs, []*Spec{sub, sub})
+		reg := NewRegistry[TstType]()
+
+		// --- When ---
+		have, err := reg.EncodeSpec(spc)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		want := `{
+			"name": "my-spec",
+			"args": {"specs": [{"name": "sub"}, {"name": "sub"}]}
+		}`
+		assert.JSON(t, want, string(have))
+	})
+
 	t.Run("error - types contains non-Specable element", func(t *testing.T) {
 		// --- Given ---
 		spc := NewSpec("my-spec").SetArg(ArgTypes, []TstType{{name: "x"}})
@@ -1222,7 +1259,7 @@ func Test_Registry_encodeSpecs(t *testing.T) {
 		reg := NewRegistry[TstType]()
 
 		// --- When ---
-		have, err := reg.encodeSpecs(true)
+		have, err := reg.encodeSpecs(true, nil)
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArgType, err)
@@ -1239,7 +1276,7 @@ func Test_Registry_encodeSpecs(t *testing.T) {
 		reg := NewRegistry[TstType]()
 
 		// --- When ---
-		have, err := reg.encodeSpecs(sps)
+		have, err := reg.encodeSpecs(sps, nil)
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
@@ -1255,7 +1292,7 @@ func Test_Registry_encodeSpecs(t *testing.T) {
 		reg := NewRegistry[TstType]()
 
 		// --- When ---
-		have, err := reg.encodeSpecs(sps)
+		have, err := reg.encodeSpecs(sps, nil)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -1347,7 +1384,7 @@ func Test_Registry_encodeTypes(t *testing.T) {
 		reg := NewRegistry[TstType]()
 
 		// --- When ---
-		have, err := reg.encodeTypes(data)
+		have, err := reg.encodeTypes(data, nil)
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrInvArgType, err)
@@ -1361,7 +1398,7 @@ func Test_Registry_encodeTypes(t *testing.T) {
 		reg := NewRegistry[TstType]()
 
 		// --- When ---
-		have, err := reg.encodeTypes(data)
+		have, err := reg.encodeTypes(data, nil)
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrNotSpecable, err)
@@ -1375,7 +1412,7 @@ func Test_Registry_encodeTypes(t *testing.T) {
 		reg := NewRegistry[TstSpec]()
 
 		// --- When ---
-		have, err := reg.encodeTypes(data)
+		have, err := reg.encodeTypes(data, nil)
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrTst, err)
@@ -1392,7 +1429,7 @@ func Test_Registry_encodeTypes(t *testing.T) {
 		reg := NewRegistry[TstSpec]()
 
 		// --- When ---
-		have, err := reg.encodeTypes(data)
+		have, err := reg.encodeTypes(data, nil)
 
 		// --- Then ---
 		assert.ErrorIs(t, convert.ErrUnsType, err)
@@ -1411,7 +1448,7 @@ func Test_Registry_encodeTypes(t *testing.T) {
 		reg := NewRegistry[TstSpec]()
 
 		// --- When ---
-		have, err := reg.encodeTypes(data)
+		have, err := reg.encodeTypes(data, nil)
 
 		// --- Then ---
 		assert.NoError(t, err)
