@@ -110,40 +110,6 @@ func Test_AsRuleBuilder(t *testing.T) {
 	})
 }
 
-func Test_hasGoSource(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
-		// --- Given ---
-		srcJs := &spec.Source{Name: "name_js", Lang: "js"}
-		srcGo := &spec.Source{Name: "name_go", Lang: "go"}
-
-		// --- When ---
-		err := hasGoSource("name", srcJs, srcGo)
-
-		// --- Then ---
-		assert.NoError(t, err)
-	})
-
-	t.Run("error - empty list", func(t *testing.T) {
-		// --- When ---
-		err := hasGoSource("name")
-
-		// --- Then ---
-		assert.SameType(t, &InternalError{}, err)
-		xrrtest.AssertCode(t, ECInternal, err)
-		assert.ErrorContain(t, "name: ", err)
-	})
-
-	t.Run("error - no Go source", func(t *testing.T) {
-		// --- When ---
-		err := hasGoSource("name", &spec.Source{Name: "name", Lang: "js"})
-
-		// --- Then ---
-		assert.SameType(t, &InternalError{}, err)
-		xrrtest.AssertCode(t, spec.ECNoGoSource, err)
-		assert.ErrorContain(t, "name: ", err)
-	})
-}
-
 func Test_mustTpl(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		// --- Given ---

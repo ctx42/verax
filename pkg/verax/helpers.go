@@ -55,35 +55,6 @@ func AsRuleBuilder[T any](fn func(*spec.Spec) (T, error)) spec.Builder[Rule] {
 	}
 }
 
-// hasGoSource reports whether any of the provided sources contains Go source
-// code. It returns an error (referencing the rule name) if none of the sources
-// is Go.
-func hasGoSource(name string, srs ...*spec.Source) error {
-	if len(srs) == 0 {
-		return NewInternalErrorf(
-			"%s: incomplete rule",
-			name,
-			xrr.WithCode(ECInternal),
-		)
-	}
-	var hasGo bool
-	for _, src := range srs {
-		if src.Lang == "go" {
-			hasGo = true
-			break
-		}
-	}
-	if hasGo {
-		return nil
-	}
-	return NewInternalErrorf(
-		"%s: %s",
-		name,
-		spec.ErrNoGoSource,
-		xrr.WithCode(spec.ECNoGoSource),
-	)
-}
-
 // mustTpl returns parsed text template with the given name. Panics on error.
 func mustTpl(name, tpl string) *template.Template {
 	return template.Must(template.New(name).
