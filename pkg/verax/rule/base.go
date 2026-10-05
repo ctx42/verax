@@ -11,8 +11,8 @@ import (
 
 // base64Rx matches standard, padded base64.
 const base64Rx = `` +
-	`^(?:[A-Za-z0-9+\/]{4})*` +
-	`(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$`
+	`^(?:[A-Za-z0-9+/]{4})*` +
+	`(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$`
 
 var base64Rxc = regexp.MustCompile(base64Rx)
 
@@ -23,9 +23,6 @@ const msgBase64 = "must be a valid base64"
 
 // IsBase64 checks if a string is valid base64.
 func IsBase64(str string) bool {
-	if str == "" {
-		return false
-	}
 	return base64Rxc.MatchString(str)
 }
 
