@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-// ErrTst is an error instance used in tests.
-var ErrTst = NewError("test msg", "ECTst")
+// errTst is an error instance used in tests.
+var errTst = NewError("test msg", "ECTst")
 
 // Types used in tests.
 type tStructEmpty struct{}
@@ -59,160 +59,160 @@ var (
 	iInterfaceZero = any(0)
 )
 
-// TwoStr is a struct not implementing [Validator] with two string fields.
-type TwoStr struct {
+// twoStr is a struct not implementing [Validator] with two string fields.
+type twoStr struct {
 	FStr    string
 	FStrPtr *string
 }
 
-// NewTwoStr returns new instance of TwoStr.
-func NewTwoStr() *TwoStr {
+// newTwoStr returns new instance of twoStr.
+func newTwoStr() *twoStr {
 	p := "FpStr"
-	return &TwoStr{FStr: "FStr", FStrPtr: &p}
+	return &twoStr{FStr: "FStr", FStrPtr: &p}
 }
 
-func (two *TwoStr) String() string { return two.FStr + " " + *two.FStrPtr }
+func (two *twoStr) String() string { return two.FStr + " " + *two.FStrPtr }
 
-// EmbeddedPtr is a struct with TwoStr pointer embedded not implementing
+// embeddedPtr is a struct with twoStr pointer embedded not implementing
 // Validator interface.
-type EmbeddedPtr struct {
-	*TwoStr
+type embeddedPtr struct {
+	*twoStr
 }
 
-// NewEmbeddedPtr returns a new instance of [EmbeddedPtr].
-func NewEmbeddedPtr() EmbeddedPtr {
-	p := "emp.TwoStr.FpStr"
-	return EmbeddedPtr{
-		TwoStr: &TwoStr{
-			FStr:    "emp.TwoStr.FStr",
+// newEmbeddedPtr returns a new instance of [embeddedPtr].
+func newEmbeddedPtr() embeddedPtr {
+	p := "emp.twoStr.FpStr"
+	return embeddedPtr{
+		twoStr: &twoStr{
+			FStr:    "emp.twoStr.FStr",
 			FStrPtr: &p,
 		},
 	}
 }
 
-// Embedded is a struct with embedded TwoStr struct not implementing
+// embedded is a struct with embedded twoStr struct not implementing
 // [Validator] interface.
-type Embedded struct {
-	TwoStr
+type embedded struct {
+	twoStr
 }
 
-// NewEmbedded returns a new instance of [Embedded].
-func NewEmbedded() Embedded {
-	p := "emb.TwoStr.FpStr"
-	return Embedded{
-		TwoStr: TwoStr{
-			FStr:    "emb.TwoStr.FStr",
+// newEmbedded returns a new instance of [embedded].
+func newEmbedded() embedded {
+	p := "emb.twoStr.FpStr"
+	return embedded{
+		twoStr: twoStr{
+			FStr:    "emb.twoStr.FStr",
 			FStrPtr: &p,
 		},
 	}
 }
 
-// TMap is a map used in tests.
-var TMap = map[string]any{
+// tMap is a map used in tests.
+var tMap = map[string]any{
 	"KStrAbc":        "abc",
 	"KStrXyz":        "xyz",
 	"KStrEmpty":      "",
 	"KpStr":          pString,
 	"KpStrNil":       (*string)(nil),
-	"KpStructNil":    (*ModelPtr)(nil),
+	"KpStructNil":    (*modelPtr)(nil),
 	"KsString":       []string{"abc", "abc"},
 	"KmStringString": map[string]string{"foo": "abc"},
-	"KStructValid":   ModelVal{"abc"},
-	"KStructInvalid": ModelVal{"xyz"},
+	"KStructValid":   modelVal{"abc"},
+	"KStructInvalid": modelVal{"xyz"},
 }
 
-// TMapInt is a map used in tests.
-var TMapInt = map[int]any{
+// tMapInt is a map used in tests.
+var tMapInt = map[int]any{
 	1: "abc",
 	3: "xyz",
 }
 
-// TStruct is a struct with multiple fields used for tests.
-type TStruct struct {
+// tStruct is a struct with multiple fields used for tests.
+type tStruct struct {
 	FStr  string `json:"f_json"`
 	fStr  string
 	FpStr *string  `json:"-"`
 	FsStr []string `custom:"custom" json:"fs_str"`
 	FaStr [4]string
 	FmStr map[int]string
-	SPtr  *TwoStr
-	SVal  TwoStr
-	SNil  *TwoStr
+	SPtr  *twoStr
+	SVal  twoStr
+	SNil  *twoStr
 }
 
-// NewTStruct returns TStruct with default values.
-func NewTStruct() TStruct {
-	FpStr := "TStruct.FpStr"
-	PtrTwoStrFStrPtr := "ptr.TwoStr.FpStr"
-	ValTwoStrFStrPtr := "val.TwoStr.FpStr"
+// newTStruct returns tStruct with default values.
+func newTStruct() tStruct {
+	FpStr := "tStruct.FpStr"
+	PtrTwoStrFStrPtr := "ptr.twoStr.FpStr"
+	ValTwoStrFStrPtr := "val.twoStr.FpStr"
 
-	return TStruct{
+	return tStruct{
 		FStr:  "FStr",
 		FpStr: &FpStr,
 		FsStr: []string{"0", "1", "2"},
 		FaStr: [4]string{"0", "1", "2", "3"},
 		FmStr: map[int]string{1: "v1", 3: "vs"},
 		fStr:  "fStr",
-		SPtr: &TwoStr{
-			FStr:    "ptr.TwoStr.FStr",
+		SPtr: &twoStr{
+			FStr:    "ptr.twoStr.FStr",
 			FStrPtr: &PtrTwoStrFStrPtr,
 		},
-		SVal: TwoStr{
-			FStr:    "ptr.TwoStr.FStr",
+		SVal: twoStr{
+			FStr:    "ptr.twoStr.FStr",
 			FStrPtr: &ValTwoStrFStrPtr,
 		},
 		SNil: nil,
 	}
 }
 
-// Model is a struct with few sub structs as fields, not implementing
+// model is a struct with few sub structs as fields, not implementing
 // [Validator] interface.
-type Model struct {
-	ModelVal           // Embedded struct.
-	SvSM1    ModelVal  // Value struct.
-	SpSM1    *ModelVal // Pointer to struct (value receiver).
-	SpSM2    *ModelPtr // Pointer to struct (pointer receiver).
+type model struct {
+	modelVal           // embedded struct.
+	SvSM1    modelVal  // Value struct.
+	SpSM1    *modelVal // Pointer to struct (value receiver).
+	SpSM2    *modelPtr // Pointer to struct (pointer receiver).
 }
 
-// ModelVal implements [Validator] interface with value receiver.
-type ModelVal struct {
+// modelVal implements [Validator] interface with value receiver.
+type modelVal struct {
 	FStr string
 }
 
-func (mdl ModelVal) Validate() error {
+func (mdl modelVal) Validate() error {
 	return ValidateStruct(&mdl, Field(&mdl.FStr, Required, Equal("abc")))
 }
 
-func (mdl ModelVal) String() string { return mdl.FStr }
+func (mdl modelVal) String() string { return mdl.FStr }
 
-// ModelPtr implements [Validator] interface with a pointer receiver.
-type ModelPtr struct {
+// modelPtr implements [Validator] interface with a pointer receiver.
+type modelPtr struct {
 	FStr string
 }
 
-func (mdl *ModelPtr) Validate() error {
+func (mdl *modelPtr) Validate() error {
 	return ValidateStruct(mdl, Field(&mdl.FStr, Required, Equal("abc")))
 }
 
-func (mdl *ModelPtr) String() string { return mdl.FStr }
+func (mdl *modelPtr) String() string { return mdl.FStr }
 
-// ModelVW implements [WithValidator] interface.
-type ModelVW struct {
+// modelVW implements [WithValidator] interface.
+type modelVW struct {
 	value string
 }
 
-func (mvw *ModelVW) ValidateWith(rule Rule) error {
+func (mvw *modelVW) ValidateWith(rule Rule) error {
 	if mvw.value == "too_long" {
-		return ErrTst
+		return errTst
 	}
 	return rule.Validate(mvw.value)
 }
 
-// TstRule is a test structure implementing [Rule] interface.
-type TstRule struct{ want string }
+// tstRule is a test structure implementing [Rule] interface.
+type tstRule struct{ want string }
 
 // Validate returns error unless v is 42 or "abc".
-func (tst TstRule) Validate(have any) error {
+func (tst tstRule) Validate(have any) error {
 	switch val := have.(type) {
 	case int:
 		if val == 42 {

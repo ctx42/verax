@@ -14,7 +14,7 @@ import (
 func Test_Field(t *testing.T) {
 	t.Run("without rules", func(t *testing.T) {
 		// --- Given ---
-		var s1 TStruct
+		var s1 tStruct
 
 		// --- When ---
 		have := Field(&s1.FStr)
@@ -27,7 +27,7 @@ func Test_Field(t *testing.T) {
 
 	t.Run("with rules", func(t *testing.T) {
 		// --- Given ---
-		var s1 TStruct
+		var s1 tStruct
 
 		// --- When ---
 		have := Field(&s1.FStr, Equal("FStr"))
@@ -42,7 +42,7 @@ func Test_Field(t *testing.T) {
 func Test_Field_Tag(t *testing.T) {
 	t.Run("field tag set", func(t *testing.T) {
 		// --- Given ---
-		var s1 TStruct
+		var s1 tStruct
 		fld := Field(s1.FStr)
 
 		// --- When ---
@@ -57,7 +57,7 @@ func Test_Field_Tag(t *testing.T) {
 func Test_ValidateStruct(t *testing.T) {
 	t.Run("nil struct", func(t *testing.T) {
 		// --- Given ---
-		var s *TStruct
+		var s *tStruct
 
 		// --- When ---
 		err := ValidateStruct(s)
@@ -68,7 +68,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("valid when no rules", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 
 		// --- When ---
 		err := ValidateStruct(&mf)
@@ -79,7 +79,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("valid when no field rules", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		fr := []FieldRule{
 			Field(&mf.FStr),
 			Field(&mf.FpStr),
@@ -94,7 +94,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("valid field", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		fr := []FieldRule{
 			Field(&mf.FStr, Equal("FStr")),
 		}
@@ -108,7 +108,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("valid not exported field", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		fr := []FieldRule{
 			Field(&mf.FStr, Equal("FStr")),
 		}
@@ -122,8 +122,8 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("valid field pointer", func(t *testing.T) {
 		// --- Given ---
-		str := "TStruct.FpStr"
-		mf := NewTStruct()
+		str := "tStruct.FpStr"
+		mf := newTStruct()
 		fr := []FieldRule{
 			Field(&mf.FpStr, Equal(&str)),
 		}
@@ -137,7 +137,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("valid slice field each rule", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		fr := []FieldRule{
 			Field(&mf.FsStr, Each(Length(1, 1))),
 		}
@@ -151,7 +151,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("valid array field each rule", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		rs := []FieldRule{
 			Field(&mf.FaStr, Each(Length(1, 1))),
 		}
@@ -165,7 +165,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("valid map field rule", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		rs := []FieldRule{
 			Field(&mf.FmStr, Each(Length(2, 2))),
 		}
@@ -179,15 +179,15 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("valid sub structs", func(t *testing.T) {
 		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"abc"},
-			SpSM1:    &ModelVal{"abc"},
-			SpSM2:    &ModelPtr{"abc"},
+		s := model{
+			modelVal: modelVal{"abc"},
+			SvSM1:    modelVal{"abc"},
+			SpSM1:    &modelVal{"abc"},
+			SpSM2:    &modelPtr{"abc"},
 		}
 
 		rs := []FieldRule{
-			Field(&s.ModelVal),
+			Field(&s.modelVal),
 			Field(&s.SvSM1),
 			Field(&s.SpSM1),
 			Field(&s.SpSM2),
@@ -202,7 +202,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("invalid field with JSON tag", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 
 		fr := []FieldRule{
 			Field(&mf.FStr, Equal("other")),
@@ -219,7 +219,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("invalid field without JSON tag", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 
 		fr := []FieldRule{
 			Field(&mf.fStr, Equal("other")),
@@ -236,7 +236,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("invalid field with ignored JSON tag", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 
 		fr := []FieldRule{
 			Field(&mf.FpStr, Equal("other")),
@@ -253,11 +253,11 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("invalid field from embedded", func(t *testing.T) {
 		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"abc"},
-			SpSM1:    &ModelVal{"abc"},
-			SpSM2:    &ModelPtr{"abc"},
+		s := model{
+			modelVal: modelVal{"abc"},
+			SvSM1:    modelVal{"abc"},
+			SpSM1:    &modelVal{"abc"},
+			SpSM2:    &modelPtr{"abc"},
 		}
 
 		fr := []FieldRule{
@@ -275,14 +275,14 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("invalid field with value struct", func(t *testing.T) {
 		// --- Given ---
-		s := Model{
-			SvSM1: ModelVal{"abc"},
-			SpSM1: &ModelVal{"abc"},
-			SpSM2: &ModelPtr{"abc"},
+		s := model{
+			SvSM1: modelVal{"abc"},
+			SpSM1: &modelVal{"abc"},
+			SpSM2: &modelPtr{"abc"},
 		}
 
 		fr := []FieldRule{
-			Field(&s.ModelVal),
+			Field(&s.modelVal),
 		}
 
 		// --- When ---
@@ -295,11 +295,11 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("invalid field with fail rule", func(t *testing.T) {
 		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"abc"},
-			SpSM1:    &ModelVal{"abc"},
-			SpSM2:    &ModelPtr{"abc"},
+		s := model{
+			modelVal: modelVal{"abc"},
+			SvSM1:    modelVal{"abc"},
+			SpSM1:    &modelVal{"abc"},
+			SpSM2:    &modelPtr{"abc"},
 		}
 
 		fr := []FieldRule{
@@ -316,7 +316,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("error uses JSON field name", func(t *testing.T) {
 		// --- Given ---
-		s := TStruct{
+		s := tStruct{
 			FStr: "abc",
 		}
 
@@ -334,11 +334,11 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("invalid field from value struct", func(t *testing.T) {
 		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"invalid"},
-			SpSM1:    &ModelVal{"abc"},
-			SpSM2:    &ModelPtr{"abc"},
+		s := model{
+			modelVal: modelVal{"abc"},
+			SvSM1:    modelVal{"invalid"},
+			SpSM1:    &modelVal{"abc"},
+			SpSM2:    &modelPtr{"abc"},
 		}
 
 		fr := []FieldRule{
@@ -356,11 +356,11 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("invalid pointer struct value receiver", func(t *testing.T) {
 		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"abc"},
-			SpSM1:    &ModelVal{"invalid"},
-			SpSM2:    &ModelPtr{"abc"},
+		s := model{
+			modelVal: modelVal{"abc"},
+			SvSM1:    modelVal{"abc"},
+			SpSM1:    &modelVal{"invalid"},
+			SpSM2:    &modelPtr{"abc"},
 		}
 
 		fr := []FieldRule{
@@ -378,11 +378,11 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("invalid pointer struct pointer receiver", func(t *testing.T) {
 		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"abc"},
-			SpSM1:    &ModelVal{"abc"},
-			SpSM2:    &ModelPtr{"invalid"},
+		s := model{
+			modelVal: modelVal{"abc"},
+			SvSM1:    modelVal{"abc"},
+			SpSM1:    &modelVal{"abc"},
+			SpSM2:    &modelPtr{"invalid"},
 		}
 
 		fr := []FieldRule{
@@ -400,7 +400,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("invalid multiple errors in a slice", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		rs := []FieldRule{
 			Field(&mf.FaStr, Each(Length(2, 2))),
 		}
@@ -420,7 +420,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("invalid multiple field errors", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		rs := []FieldRule{
 			Field(&mf.FpStr, Length(2, 2)),
 			Field(&mf.FaStr, Length(2, 2)),
@@ -439,7 +439,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("non-struct pointer", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 
 		// --- When ---
 		err := ValidateStruct(mf)
@@ -451,7 +451,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("field not found", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		rs := []FieldRule{
 			Field(&mf),
 		}
@@ -467,7 +467,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("field not pointer", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		rs := []FieldRule{
 			Field(mf.FStr),
 		}
@@ -483,7 +483,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("field must not be nil", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		mf.FpStr = nil
 
 		rs := []FieldRule{
@@ -500,7 +500,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("field must not be empty", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		mf.FStr = ""
 
 		rs := []FieldRule{
@@ -561,7 +561,7 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("error - rule returns ECInternal", func(t *testing.T) {
 		// --- Given ---
-		mf := NewTStruct()
+		mf := newTStruct()
 		e := NewInternalError("bad rule", ECInternal)
 		rs := []FieldRule{
 			Field(&mf.FStr, By(func(v any) error { return e })),
@@ -579,14 +579,14 @@ func Test_ValidateStruct(t *testing.T) {
 
 	t.Run("anonymous field non-Fielder error", func(t *testing.T) {
 		// --- Given ---
-		s := Model{
-			ModelVal: ModelVal{"abc"},
-			SvSM1:    ModelVal{"abc"},
-			SpSM1:    &ModelVal{"abc"},
-			SpSM2:    &ModelPtr{"abc"},
+		s := model{
+			modelVal: modelVal{"abc"},
+			SvSM1:    modelVal{"abc"},
+			SpSM1:    &modelVal{"abc"},
+			SpSM2:    &modelPtr{"abc"},
 		}
 		rs := []FieldRule{
-			Field(&s.ModelVal, Fail("anon err", "ECTst")),
+			Field(&s.modelVal, Fail("anon err", "ECTst")),
 		}
 
 		// --- When ---
@@ -594,14 +594,14 @@ func Test_ValidateStruct(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
-		xrrtest.AssertEqual(t, "ModelVal: anon err (ECTst)", err)
+		xrrtest.AssertEqual(t, "modelVal: anon err (ECTst)", err)
 	})
 }
 
 func Test_findStructField_found_tabular(t *testing.T) {
-	em := NewEmbedded()
-	ep := NewEmbeddedPtr()
-	mf := NewTStruct()
+	em := newEmbedded()
+	ep := newEmbeddedPtr()
+	mf := newTStruct()
 
 	tt := []struct {
 		testN string
@@ -639,7 +639,7 @@ func Test_findStructField_found_tabular(t *testing.T) {
 }
 
 func Test_findStructField_not_found_tabular(t *testing.T) {
-	var mf TStruct
+	var mf tStruct
 
 	tt := []struct {
 		testN string
@@ -668,7 +668,7 @@ func Test_findStructField_not_found_tabular(t *testing.T) {
 }
 
 func Test_getErrorFieldName_tabular(t *testing.T) {
-	var s1 TStruct
+	var s1 tStruct
 
 	tt := []struct {
 		testN string
@@ -793,7 +793,7 @@ func Test_getErrorFieldName_json_tabular(t *testing.T) {
 func BenchmarkValidateStruct(b *testing.B) {
 	b.ReportAllocs()
 	b.StopTimer()
-	mf := NewTStruct()
+	mf := newTStruct()
 	b.StartTimer()
 
 	var err error

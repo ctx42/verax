@@ -15,8 +15,8 @@ import (
 
 func Test_Each(t *testing.T) {
 	// --- Given ---
-	r0 := TstRule{"r0"}
-	r1 := TstRule{"r1"}
+	r0 := tstRule{"r0"}
+	r1 := tstRule{"r1"}
 
 	// --- When ---
 	have := Each(r0, r1)
@@ -43,14 +43,14 @@ func Test_EachRule_Validate(t *testing.T) {
 
 	t.Run("error - slice of struct pointers", func(t *testing.T) {
 		// --- Given ---
-		var s []*TStruct
-		ts0 := NewTStruct()
-		ts1 := NewTStruct()
+		var s []*tStruct
+		ts0 := newTStruct()
+		ts1 := newTStruct()
 		s = append(s, &ts0, &ts1)
 		s[1].FStr = "wrong"
 
 		fn := func(v any) error {
-			if v.(*TStruct).FStr != "FStr" {
+			if v.(*tStruct).FStr != "FStr" {
 				return NewError("error", "ECTst")
 			}
 			return nil
@@ -66,11 +66,11 @@ func Test_EachRule_Validate(t *testing.T) {
 
 	t.Run("error - slice of struct values", func(t *testing.T) {
 		// --- Given ---
-		s := []TStruct{NewTStruct(), NewTStruct()}
+		s := []tStruct{newTStruct(), newTStruct()}
 		s[1].FStr = "wrong"
 
 		fn := func(v any) error {
-			if v.(TStruct).FStr != "FStr" {
+			if v.(tStruct).FStr != "FStr" {
 				return NewError("error", "ECTst")
 			}
 			return nil
@@ -97,7 +97,7 @@ func Test_EachRule_Validate(t *testing.T) {
 
 	t.Run("error - not iterable value", func(t *testing.T) {
 		// --- Given ---
-		r := Each(TstRule{})
+		r := Each(tstRule{})
 
 		// --- When ---
 		err := r.Validate(42)
@@ -131,7 +131,7 @@ func Test_EachRule_Validate_valid_tabular(t *testing.T) {
 		{
 			"slice with validators",
 			[]Rule{Required},
-			[]ModelVal{{"abc"}, {"abc"}},
+			[]modelVal{{"abc"}, {"abc"}},
 		},
 		{
 			"map empty",
@@ -146,7 +146,7 @@ func Test_EachRule_Validate_valid_tabular(t *testing.T) {
 		{
 			"map with validator keys",
 			[]Rule{Required},
-			map[string]ModelVal{"key0": {"abc"}, "key1": {"abc"}},
+			map[string]modelVal{"key0": {"abc"}, "key1": {"abc"}},
 		},
 		{
 			"array empty",
@@ -161,7 +161,7 @@ func Test_EachRule_Validate_valid_tabular(t *testing.T) {
 		{
 			"array with validators",
 			[]Rule{Required},
-			[...]ModelVal{{"abc"}, {"abc"}},
+			[...]modelVal{{"abc"}, {"abc"}},
 		},
 		{
 			"channel instances",
@@ -212,7 +212,7 @@ func Test_EachRule_Validate_invalid_tabular(t *testing.T) {
 		{
 			"slice with validators",
 			[]Rule{Required},
-			[]ModelVal{{"abc"}, {"def"}},
+			[]modelVal{{"abc"}, {"def"}},
 			"1.FStr: must be equal to 'abc' (ECNotEqual)",
 		},
 		{
@@ -230,7 +230,7 @@ func Test_EachRule_Validate_invalid_tabular(t *testing.T) {
 		{
 			"map with validator keys",
 			[]Rule{Required},
-			map[string]ModelVal{"key0": {"abc"}, "key1": {"def"}},
+			map[string]modelVal{"key0": {"abc"}, "key1": {"def"}},
 			"key1.FStr: must be equal to 'abc' (ECNotEqual)",
 		},
 		{
@@ -242,7 +242,7 @@ func Test_EachRule_Validate_invalid_tabular(t *testing.T) {
 		{
 			"array with validators",
 			[]Rule{Required},
-			[...]ModelVal{{"abc"}, {"def"}},
+			[...]modelVal{{"abc"}, {"def"}},
 			"1.FStr: must be equal to 'abc' (ECNotEqual)",
 		},
 		{

@@ -15,7 +15,7 @@ import (
 
 func Test_By(t *testing.T) {
 	// --- Given ---
-	fn := func(v any) error { return ErrTst }
+	fn := func(v any) error { return errTst }
 
 	// --- When ---
 	have := By(fn)
@@ -34,7 +34,7 @@ func Test_By(t *testing.T) {
 func Test_ByRule_Validate(t *testing.T) {
 	t.Run("skip validation when the condition is false", func(t *testing.T) {
 		// --- Given ---
-		fn := func(any) error { return ErrTst }
+		fn := func(any) error { return errTst }
 		r := By(fn).When(false)
 
 		// --- When ---
@@ -82,14 +82,14 @@ func Test_ByRule_Validate(t *testing.T) {
 
 	t.Run("error - validation", func(t *testing.T) {
 		// --- Given ---
-		fn := func(any) error { return ErrTst }
+		fn := func(any) error { return errTst }
 		r := By(fn)
 
 		// --- When ---
 		err := r.Validate("abc")
 
 		// --- Then ---
-		assert.Same(t, ErrTst, err)
+		assert.Same(t, errTst, err)
 	})
 
 	t.Run("custom error message", func(t *testing.T) {

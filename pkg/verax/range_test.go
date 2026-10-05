@@ -185,7 +185,7 @@ func Test_RangeRule_Exclusive(t *testing.T) {
 	t.Run("when the sticky error is not nil", func(t *testing.T) {
 		// --- Given ---
 		r := Max(42)
-		r.sticky = ErrTst
+		r.sticky = errTst
 
 		// --- When ---
 		have := r.Exclusive()
@@ -260,13 +260,13 @@ func Test_RangeRule_With(t *testing.T) {
 func Test_RangeRule_Validate(t *testing.T) {
 	t.Run("error - sticky", func(t *testing.T) {
 		// --- Given ---
-		r := RangeRule{sticky: ErrTst}
+		r := RangeRule{sticky: errTst}
 
 		// --- When ---
 		err := r.Validate(42)
 
 		// --- Then ---
-		assert.Same(t, ErrTst, err)
+		assert.Same(t, errTst, err)
 	})
 
 	t.Run("skip validation when the condition is false", func(t *testing.T) {
@@ -332,7 +332,7 @@ func Test_RangeRule_Validate(t *testing.T) {
 		fn := func(want, have any) (int, error) {
 			w = want
 			h = have
-			return -1, ErrTst
+			return -1, errTst
 		}
 		r := Max(42).With(fn)
 
@@ -340,14 +340,14 @@ func Test_RangeRule_Validate(t *testing.T) {
 		err := r.Validate(44)
 
 		// --- Then ---
-		assert.Same(t, ErrTst, err)
+		assert.Same(t, errTst, err)
 		assert.Equal(t, 42, w)
 		assert.Equal(t, 44, h)
 	})
 
 	t.Run("error - custom fn error with msg and code", func(t *testing.T) {
 		// --- Given ---
-		fn := func(_, _ any) (int, error) { return 0, ErrTst }
+		fn := func(_, _ any) (int, error) { return 0, errTst }
 		r := Min(44).With(fn).Message("custom {{.value}}").Code("ECCustom")
 
 		// --- When ---
@@ -361,7 +361,7 @@ func Test_RangeRule_Validate(t *testing.T) {
 
 	t.Run("error - custom fn error with a custom message", func(t *testing.T) {
 		// --- Given ---
-		fn := func(_, _ any) (int, error) { return 0, ErrTst }
+		fn := func(_, _ any) (int, error) { return 0, errTst }
 		r := Min(42).With(fn).Message("custom msg")
 
 		// --- When ---
@@ -375,7 +375,7 @@ func Test_RangeRule_Validate(t *testing.T) {
 
 	t.Run("error - custom fn error with custom code", func(t *testing.T) {
 		// --- Given ---
-		fn := func(_, _ any) (int, error) { return 0, ErrTst }
+		fn := func(_, _ any) (int, error) { return 0, errTst }
 		r := Min(42).With(fn).Code("ECCustom")
 
 		// --- When ---
@@ -383,7 +383,7 @@ func Test_RangeRule_Validate(t *testing.T) {
 
 		// --- Then ---
 		assert.SameType(t, &Error{}, err)
-		assert.ErrorIs(t, ErrTst, err)
+		assert.ErrorIs(t, errTst, err)
 		xrrtest.AssertCode(t, "ECCustom", err)
 	})
 
@@ -466,7 +466,7 @@ func Test_RangeRule_Validate_valid_tabular(t *testing.T) {
 }
 
 func Test_RangeRule_Validate_invalid_tabular(t *testing.T) {
-	cmp := func(_, _ any) (int, error) { return 0, ErrTst }
+	cmp := func(_, _ any) (int, error) { return 0, errTst }
 
 	tt := []struct {
 		testN string
@@ -575,7 +575,7 @@ func Test_RangeRule_Message(t *testing.T) {
 	t.Run("when the sticky error is not nil", func(t *testing.T) {
 		// --- Given ---
 		r := Max(42)
-		r.sticky = ErrTst
+		r.sticky = errTst
 
 		// --- When ---
 		have := r.Message("{{.value}}")
@@ -671,13 +671,13 @@ func Test_RangeRule_Code(t *testing.T) {
 func Test_RangeRule_Spec(t *testing.T) {
 	t.Run("error - sticky", func(t *testing.T) {
 		// --- Given ---
-		r := RangeRule{sticky: ErrTst}
+		r := RangeRule{sticky: errTst}
 
 		// --- When ---
 		have, err := r.Spec()
 
 		// --- Then ---
-		assert.Same(t, ErrTst, err)
+		assert.Same(t, errTst, err)
 		assert.Nil(t, have)
 	})
 

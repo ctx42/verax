@@ -383,7 +383,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("valid struct with validator", func(t *testing.T) {
 		// --- Given ---
-		s := &ModelPtr{"abc"}
+		s := &modelPtr{"abc"}
 
 		// --- When ---
 		err := Validate(s)
@@ -394,7 +394,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("invalid struct with validator", func(t *testing.T) {
 		// --- Given ---
-		s := &ModelPtr{"xyz"}
+		s := &modelPtr{"xyz"}
 
 		// --- When ---
 		err := Validate(s)
@@ -474,7 +474,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("invalid many in slice", func(t *testing.T) {
 		// --- Given ---
-		s := []*ModelPtr{{"xyz"}, {"xyz"}}
+		s := []*modelPtr{{"xyz"}, {"xyz"}}
 
 		// --- When ---
 		err := Validate(s)
@@ -488,7 +488,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("valid all in slice", func(t *testing.T) {
 		// --- Given ---
-		s := []*ModelPtr{{"abc"}, {"abc"}}
+		s := []*modelPtr{{"abc"}, {"abc"}}
 
 		// --- When ---
 		err := Validate(s)
@@ -499,7 +499,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("nil pointer in slice", func(t *testing.T) {
 		// --- Given ---
-		s := []*ModelPtr{nil, {"abc"}}
+		s := []*modelPtr{nil, {"abc"}}
 
 		// --- When ---
 		err := Validate(s)
@@ -510,7 +510,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("invalid many in map", func(t *testing.T) {
 		// --- Given ---
-		m := map[int]*ModelPtr{0: {"xyz"}, 4: {"xyz"}}
+		m := map[int]*modelPtr{0: {"xyz"}, 4: {"xyz"}}
 
 		// --- When ---
 		err := Validate(m)
@@ -524,7 +524,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("valid all in map", func(t *testing.T) {
 		// --- Given ---
-		m := map[int]*ModelPtr{0: {"abc"}, 4: {"abc"}}
+		m := map[int]*modelPtr{0: {"abc"}, 4: {"abc"}}
 
 		// --- When ---
 		err := Validate(m)
@@ -535,7 +535,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("nil pointer in map", func(t *testing.T) {
 		// --- Given ---
-		m := map[int]*ModelPtr{0: nil, 4: {"abc"}}
+		m := map[int]*modelPtr{0: nil, 4: {"abc"}}
 
 		// --- When ---
 		err := Validate(m)
@@ -546,7 +546,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("ValidateWith success", func(t *testing.T) {
 		// --- Given ---
-		m := &ModelVW{"111"}
+		m := &modelVW{"111"}
 
 		// --- When ---
 		err := Validate(m, Equal("111"), NotNil)
@@ -557,7 +557,7 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("ValidateWith runs provided rule", func(t *testing.T) {
 		// --- Given ---
-		m := &ModelVW{value: "abc"}
+		m := &modelVW{value: "abc"}
 
 		// --- When ---
 		err := Validate(m, Equal("111"))
@@ -569,18 +569,18 @@ func Test_Validate(t *testing.T) {
 
 	t.Run("ValidateWith additional validation in the type", func(t *testing.T) {
 		// --- Given ---
-		m := &ModelVW{"too_long"}
+		m := &modelVW{"too_long"}
 
 		// --- When ---
 		err := Validate(m, Equal("wrong_value"))
 
 		// --- Then ---
-		assert.ErrorIs(t, ErrTst, err)
+		assert.ErrorIs(t, errTst, err)
 	})
 
 	t.Run("ValidateWith multiple rules", func(t *testing.T) {
 		// --- Given ---
-		m := &ModelVW{"abc"}
+		m := &modelVW{"abc"}
 
 		// --- When ---
 		err := Validate(m, Equal("abc"), Equal("xyz"))

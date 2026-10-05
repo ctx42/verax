@@ -49,13 +49,13 @@ func Test_Match(t *testing.T) {
 func Test_MatchRule_Validate(t *testing.T) {
 	t.Run("error - sticky", func(t *testing.T) {
 		// --- Given ---
-		r := MatchRule{sticky: ErrTst}
+		r := MatchRule{sticky: errTst}
 
 		// --- When ---
 		err := r.Validate(44)
 
 		// --- Then ---
-		assert.Same(t, ErrTst, err)
+		assert.Same(t, errTst, err)
 	})
 
 	t.Run("skip validation when the condition is false", func(t *testing.T) {
@@ -217,13 +217,13 @@ func Test_MatchRule_Code(t *testing.T) {
 func Test_MatchRule_Spec(t *testing.T) {
 	t.Run("error - sticky", func(t *testing.T) {
 		// --- Given ---
-		r := MatchRule{sticky: ErrTst}
+		r := MatchRule{sticky: errTst}
 
 		// --- When ---
 		have, err := r.Spec()
 
 		// --- Then ---
-		assert.Same(t, ErrTst, err)
+		assert.Same(t, errTst, err)
 		assert.Nil(t, have)
 	})
 

@@ -143,7 +143,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr := Key("KpStrNil")
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -154,7 +154,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		mks := make([]MapKey, 0)
 
 		// --- When ---
-		err := Map(mks...).AllowUnknown().Validate(TMap)
+		err := Map(mks...).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -165,7 +165,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr := Key("KStrAbc")
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -176,7 +176,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr := Key("KStrEmpty", Length(1, 5))
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -187,7 +187,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr := Key("KpStrNil", Length(1, 5))
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -199,7 +199,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr1 := Key("KStrXyz", Equal("xyz"))
 
 		// --- When ---
-		err := Map(kr0, kr1).AllowUnknown().Validate(TMap)
+		err := Map(kr0, kr1).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -210,7 +210,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr := Key("KsString", Each(Equal("abc")))
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -221,7 +221,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr := Key("KmStringString", Map(Key("foo", Equal("abc"))))
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -232,7 +232,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr := Key("X").Optional()
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -243,7 +243,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr := Key("KStructInvalid", Skip)
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -254,7 +254,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr := Key("KStructInvalid", Skip.When(true))
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -265,7 +265,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr := Key("KpStrNil", Skip, Required)
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -276,7 +276,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr := Key("KpStructNil", Skip, NotNil)
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -288,7 +288,7 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		kr1 := Key(3, Equal("xyz"))
 
 		// --- When ---
-		err := Map(kr0, kr1).AllowUnknown().Validate(TMapInt)
+		err := Map(kr0, kr1).AllowUnknown().Validate(tMapInt)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -321,7 +321,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		kr1 := Key("KpStr", Equal("abc"))
 
 		// --- When ---
-		err := Map(kr0, kr1).AllowUnknown().Validate(TMap)
+		err := Map(kr0, kr1).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
@@ -336,7 +336,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		kr := Key(123)
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
@@ -349,7 +349,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		kr := Key(nil)
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
@@ -362,7 +362,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		kr := Key("X")
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
@@ -375,7 +375,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		kr := Key("KStructInvalid")
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
@@ -388,7 +388,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		kr := Key("KStructInvalid", Skip.When(false))
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
@@ -401,7 +401,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		kr := Key("KStrEmpty", Required)
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
@@ -413,7 +413,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		kr := Key("KpStrNil", NotNil)
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
@@ -426,7 +426,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		kr1 := Key(3, Equal("abc"))
 
 		// --- When ---
-		err := Map(kr0, kr1).AllowUnknown().Validate(TMapInt)
+		err := Map(kr0, kr1).AllowUnknown().Validate(tMapInt)
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
@@ -441,7 +441,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		kr := Key("KStrAbc", Fail("test err", "ECTst"))
 
 		// --- When ---
-		err := Map(kr).AllowUnknown().Validate(TMap)
+		err := Map(kr).AllowUnknown().Validate(tMap)
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
@@ -453,7 +453,7 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		kr := Key("KStrAbc", Equal("abc"))
 
 		// --- When ---
-		err := Map(kr).Validate(TMap)
+		err := Map(kr).Validate(tMap)
 
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)

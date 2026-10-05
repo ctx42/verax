@@ -97,13 +97,13 @@ func Test_RuneLength(t *testing.T) {
 func Test_LengthRule_Validate(t *testing.T) {
 	t.Run("error - sticky", func(t *testing.T) {
 		// --- Given ---
-		r := LengthRule{sticky: ErrTst}
+		r := LengthRule{sticky: errTst}
 
 		// --- When ---
 		err := r.Validate("abc")
 
 		// --- Then ---
-		assert.Same(t, ErrTst, err)
+		assert.Same(t, errTst, err)
 	})
 
 	t.Run("skip validation when the condition is false", func(t *testing.T) {
@@ -352,7 +352,7 @@ func Test_LengthRule_Message(t *testing.T) {
 	t.Run("when the sticky error is not nil", func(t *testing.T) {
 		// --- Given ---
 		r := Length(1, 2)
-		r.sticky = ErrTst
+		r.sticky = errTst
 
 		// --- When ---
 		have := r.Message("{{.min}} - {{.max}}")
@@ -456,13 +456,13 @@ func Test_LengthRule_Code(t *testing.T) {
 func Test_LengthRule_Spec(t *testing.T) {
 	t.Run("error - sticky", func(t *testing.T) {
 		// --- Given ---
-		r := LengthRule{sticky: ErrTst}
+		r := LengthRule{sticky: errTst}
 
 		// --- When ---
 		have, err := r.Spec()
 
 		// --- Then ---
-		assert.Same(t, ErrTst, err)
+		assert.Same(t, errTst, err)
 		assert.Nil(t, have)
 	})
 

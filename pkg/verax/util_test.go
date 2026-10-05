@@ -458,9 +458,9 @@ func Test_mapErrKey_tabular(t *testing.T) {
 			reflect.ValueOf(map[any]int{1: 1}).MapKeys()[0],
 			"1",
 		},
-		{"struct", reflect.ValueOf(TwoStr{FStr: "abc"}), "{abc <nil>}"},
-		{"struct with Stringer", reflect.ValueOf(ModelVal{"abc"}), "abc"},
-		{"pointer to struct", reflect.ValueOf(&ModelPtr{"abc"}), "{abc}"},
+		{"struct", reflect.ValueOf(twoStr{FStr: "abc"}), "{abc <nil>}"},
+		{"struct with Stringer", reflect.ValueOf(modelVal{"abc"}), "abc"},
+		{"pointer to struct", reflect.ValueOf(&modelPtr{"abc"}), "{abc}"},
 	}
 
 	for _, tc := range tt {

@@ -265,13 +265,13 @@ func Test_notEqual_invalid_tabular(t *testing.T) {
 func Test_EqualRule_Validate(t *testing.T) {
 	t.Run("error - sticky", func(t *testing.T) {
 		// --- Given ---
-		r := EqualRule{sticky: ErrTst}
+		r := EqualRule{sticky: errTst}
 
 		// --- When ---
 		err := r.Validate(44)
 
 		// --- Then ---
-		assert.Same(t, ErrTst, err)
+		assert.Same(t, errTst, err)
 	})
 
 	t.Run("skip validation when the condition is false", func(t *testing.T) {
@@ -360,14 +360,14 @@ func Test_EqualRule_Validate(t *testing.T) {
 
 	t.Run("error - error from EqualFunc", func(t *testing.T) {
 		// --- Given ---
-		fn := func(x, y any) error { return ErrTst }
+		fn := func(x, y any) error { return errTst }
 		r := Equal(42).With(fn)
 
 		// --- When ---
 		err := r.Validate(44)
 
 		// --- Then ---
-		assert.Same(t, ErrTst, err)
+		assert.Same(t, errTst, err)
 	})
 
 	t.Run("error - custom error message with EqualFunc", func(t *testing.T) {
@@ -457,13 +457,13 @@ func Test_EqualRule_With(t *testing.T) {
 	t.Run("changes nothing when a sticky error is set", func(t *testing.T) {
 		// --- Given ---
 		fn := func(any, any) error { return nil }
-		r := EqualRule{sticky: ErrTst}
+		r := EqualRule{sticky: errTst}
 
 		// --- When ---
 		have := r.With(fn)
 
 		// --- Then ---
-		assert.Same(t, ErrTst, have.sticky)
+		assert.Same(t, errTst, have.sticky)
 		assert.Zero(t, have.flags)
 	})
 
@@ -588,7 +588,7 @@ func Test_EqualRule_Message(t *testing.T) {
 	t.Run("when the sticky error is not nil", func(t *testing.T) {
 		// --- Given ---
 		r := Equal(42)
-		r.sticky = ErrTst
+		r.sticky = errTst
 
 		// --- When ---
 		have := r.Message("custom tpl {{.value}}")
@@ -696,13 +696,13 @@ func Test_EqualRule_Code(t *testing.T) {
 func Test_EqualRule_Spec(t *testing.T) {
 	t.Run("error - sticky", func(t *testing.T) {
 		// --- Given ---
-		r := EqualRule{sticky: ErrTst}
+		r := EqualRule{sticky: errTst}
 
 		// --- When ---
 		have, err := r.Spec()
 
 		// --- Then ---
-		assert.Same(t, ErrTst, err)
+		assert.Same(t, errTst, err)
 		assert.Nil(t, have)
 	})
 

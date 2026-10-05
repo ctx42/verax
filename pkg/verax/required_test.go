@@ -180,7 +180,7 @@ func Test_RequiredRule_Validate_invalid_tabular(t *testing.T) {
 		{"NotEmpty pointer to zero value time", NotEmpty, pTimeZero},
 		{"NotEmpty any(0)", NotEmpty, iInterfaceZero},
 		{"NotEmpty pointer to empty struct", NotEmpty, pStructEmpty},
-		{"NotEmpty struct with empty fields", NotEmpty, ModelPtr{}},
+		{"NotEmpty struct with empty fields", NotEmpty, modelPtr{}},
 
 		// NotNil
 		{"NotNil nil slice", NotNil, dSlice},
