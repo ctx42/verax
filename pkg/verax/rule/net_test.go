@@ -230,6 +230,8 @@ func Test_IsPort_tabular(t *testing.T) {
 		{"last valid", "65535", true},
 		{"invalid too big", "65536", false},
 		{"invalid value", "abc", false},
+		{"invalid plus sign", "+80", false},
+		{"invalid leading zero", "0080", false},
 	}
 
 	for _, tc := range tt {

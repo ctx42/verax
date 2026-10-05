@@ -91,12 +91,14 @@ var CheckIPv6 = verax.Check(IsIPv6, msgIPv6, ECIPv6)
 // IPv6 validates if a string is a valid IPv6 address.
 var IPv6 = verax.By(CheckIPv6)
 
-// IsPort checks if a string represents a valid network port.
+// IsPort checks if a string represents a valid network port: a decimal
+// number from 1 to 65535 without a sign or leading zeros.
 func IsPort(str string) bool {
-	if i, err := strconv.Atoi(str); err == nil {
-		return i > 0 && i < 65536
+	if str == "" || str[0] < '1' || str[0] > '9' {
+		return false
 	}
-	return false
+	i, err := strconv.Atoi(str)
+	return err == nil && i < 65536
 }
 
 // CheckPort is a [verax.RuleFunc] that checks that a string is a valid network
