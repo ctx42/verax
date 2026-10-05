@@ -276,6 +276,17 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		// --- Then ---
 		assert.NoError(t, err)
 	})
+
+	t.Run("interface keys", func(t *testing.T) {
+		// --- Given ---
+		m := map[any]int{"A": 1, 2: 3}
+
+		// --- When ---
+		err := Map(Key("A", Equal(1)), Key(2, Equal(3))).Validate(m)
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
 }
 
 func Test_MapRule_Validate_invalid(t *testing.T) {
@@ -313,6 +324,19 @@ func Test_MapRule_Validate_invalid(t *testing.T) {
 		// --- Then ---
 		assert.SameType(t, &FieldErrors{}, err)
 		wMsg := "123: the key type does not match the map (ECInternal)"
+		xrrtest.AssertEqual(t, wMsg, err)
+	})
+
+	t.Run("nil key", func(t *testing.T) {
+		// --- Given ---
+		kr := Key(nil)
+
+		// --- When ---
+		err := Map(kr).AllowUnknown().Validate(TMap)
+
+		// --- Then ---
+		assert.SameType(t, &FieldErrors{}, err)
+		wMsg := "<nil>: the key type does not match the map (ECInternal)"
 		xrrtest.AssertEqual(t, wMsg, err)
 	})
 

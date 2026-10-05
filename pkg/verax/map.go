@@ -146,7 +146,8 @@ func (r MapRule) Validate(have any) error {
 
 	for _, kr := range r.keys {
 		var err error
-		if kv := reflect.ValueOf(kr.key); !kt.AssignableTo(kv.Type()) {
+		kv := reflect.ValueOf(kr.key)
+		if !kv.IsValid() || !kv.Type().AssignableTo(kt) {
 			err = ErrInvKeyType
 		} else if vv := val.MapIndex(kv); !vv.IsValid() {
 			if !kr.optional {
