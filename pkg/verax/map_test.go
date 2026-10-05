@@ -111,6 +111,22 @@ func Test_MapRule_validate_valid(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("condition false and not a map", func(t *testing.T) {
+		// --- When ---
+		err := Map().When(false).Validate("abc")
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
+	t.Run("nil pointer to map", func(t *testing.T) {
+		// --- When ---
+		err := Map().Validate((*map[string]int)(nil))
+
+		// --- Then ---
+		assert.NoError(t, err)
+	})
+
 	t.Run("pointer to map", func(t *testing.T) {
 		// --- Given ---
 		m := map[string]int{"A": 1}

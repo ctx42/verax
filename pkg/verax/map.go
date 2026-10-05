@@ -118,15 +118,18 @@ func (r MapRule) IsDefined(key any) bool {
 //
 //nolint:cyclop,gocognit
 func (r MapRule) Validate(have any) error {
+	if !r.condition {
+		return nil
+	}
 	val := reflect.ValueOf(have)
 	if val.Kind() == reflect.Pointer {
+		if val.IsNil() && val.Type().Elem().Kind() == reflect.Map {
+			return nil
+		}
 		val = val.Elem()
 	}
 	if val.Kind() != reflect.Map {
 		return ErrNotMapPtr
-	}
-	if !r.condition {
-		return nil
 	}
 	if val.IsNil() {
 		return nil
