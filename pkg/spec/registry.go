@@ -15,10 +15,13 @@ import (
 
 // Registry manages a collection of [Source] and [Builder] instances and
 // provides methods to encode and decode [Spec] instances to generic type T. It
-// is safe for concurrent use.
+// is safe for concurrent use. The zero value is ready to use.
 type Registry[T any] struct {
 	// Preserve Go types during encoding to / decoding from JSON round trip.
 	jtr *jsontype.Registry
+
+	// Lazily sets jtr on a zero value [Registry].
+	jtrOnce sync.Once
 
 	// Sources needed during decoding.
 	sources []Source
@@ -106,6 +109,9 @@ func (reg *Registry[T]) RegisterBuilder(
 	if bld == nil {
 		delete(reg.builders, name)
 	} else {
+		if reg.builders == nil {
+			reg.builders = make(map[string]Builder[T])
+		}
 		reg.builders[name] = bld
 	}
 	return old
@@ -303,6 +309,17 @@ func (reg *Registry[T]) DecodeAndBuild(data []byte) (T, error) {
 	return value, nil
 }
 
+// jsonTypes returns the registry preserving Go types in JSON, creating the
+// default one on first use when the [Registry] is a zero value.
+func (reg *Registry[T]) jsonTypes() *jsontype.Registry {
+	reg.jtrOnce.Do(func() {
+		if reg.jtr == nil {
+			reg.jtr = jsontype.DefaultRegistry()
+		}
+	})
+	return reg.jtr
+}
+
 // encodeSpecs expects the provided value to be a slice of [Spec] instances and
 // encodes as into a JSON array as a slice of [json.RawMessage].
 func (reg *Registry[T]) encodeSpecs(value any) (any, error) {
@@ -451,7 +468,7 @@ func (reg *Registry[T]) encodeValues(value any) (any, error) {
 	}
 	var values []any
 	for idx, v := range vs {
-		jv, err := jsontype.NewValue(v, jsontype.WithRegistry(reg.jtr))
+		jv, err := jsontype.NewValue(v, jsontype.WithRegistry(reg.jsonTypes()))
 		if err != nil {
 			return nil, NewErrorf("index %d: %w", idx, err)
 		}
@@ -471,7 +488,7 @@ func (reg *Registry[T]) decodeValues(data []byte, spc *Spec) error {
 	var vs []any
 	for idx, v := range rv {
 		val := jsontype.Value{}
-		err := jsontype.Unmarshal(reg.jtr, v, &val)
+		err := jsontype.Unmarshal(reg.jsonTypes(), v, &val)
 		if err != nil {
 			return NewErrorf(
 				"JSON to spec: spec %s, argument %s: index %d: %w",
@@ -491,7 +508,7 @@ func (reg *Registry[T]) decodeValues(data []byte, spc *Spec) error {
 // sets it with the given name in the [Spec.Args] map.
 func (reg *Registry[T]) decodeValue(name string, data []byte, spc *Spec) error {
 	val := jsontype.Value{}
-	err := jsontype.Unmarshal(reg.jtr, data, &val)
+	err := jsontype.Unmarshal(reg.jsonTypes(), data, &val)
 	if err != nil {
 		format := "JSON to spec: spec %s, argument %s: %w"
 		return NewErrorf(format, spc.Name, name, ErrInvArg)

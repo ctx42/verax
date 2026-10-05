@@ -179,6 +179,19 @@ func Test_Registry_RegisterBuilder(t *testing.T) {
 		assert.Equal(t, map[string]TstBuilder{"name": fnNew}, reg.builders)
 	})
 
+	t.Run("zero value registry", func(t *testing.T) {
+		// --- Given ---
+		fn := func(*Spec) (TstType, error) { return TstType{}, nil }
+		reg := &Registry[TstType]{}
+
+		// --- When ---
+		have := reg.RegisterBuilder("name", fn)
+
+		// --- Then ---
+		assert.Nil(t, have)
+		assert.Equal(t, map[string]TstBuilder{"name": fn}, reg.builders)
+	})
+
 	t.Run("remove builder", func(t *testing.T) {
 		// --- Given ---
 		fn := func(*Spec) (TstType, error) { return TstType{}, nil }
@@ -950,6 +963,24 @@ func Test_Registry_DecodeSpec(t *testing.T) {
 				ArgValues: []any{42, uint(44)},
 			},
 		}
+		assert.Equal(t, want, have)
+	})
+
+	t.Run("zero value registry", func(t *testing.T) {
+		// --- Given ---
+		data := `{
+			"name": "my-spec",
+			"args": {"int": {"type": "int", "value": 1}}
+		}`
+		reg := &Registry[TstType]{}
+		have := &Spec{}
+
+		// --- When ---
+		err := reg.DecodeSpec([]byte(data), have)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		want := &Spec{Name: "my-spec", Args: map[string]any{"int": 1}}
 		assert.Equal(t, want, have)
 	})
 
