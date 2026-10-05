@@ -331,9 +331,11 @@ func buildLengthRuleMsg(
 	tpl, parsed := pickLengthRuleMsg(minimum, maximum)
 	if tpl == "" || parsed == nil {
 		return "", "", NewInternalErrorf(
-			"%s(%s): custom template parse error",
+			"%s(%s): invalid length range: min %d, max %d",
 			LengthRuleName,
 			mode,
+			minimum,
+			maximum,
 			xrr.WithCode(ECInternal),
 		)
 	}

@@ -869,13 +869,26 @@ func Test_buildLengthRuleMsg(t *testing.T) {
 		assert.Equal(t, "the length must be between 1 and 2", hMsg)
 	})
 
-	t.Run("error - invalid min and max", func(t *testing.T) {
+	t.Run("error - negative min", func(t *testing.T) {
 		// --- When ---
 		hMsg, hTpl, err := buildLengthRuleMsg(-1, 0, "mode")
 
 		// --- Then ---
 		assert.SameType(t, &InternalError{}, err)
-		wMsg := "length-rule(mode): custom template parse error"
+		wMsg := "length-rule(mode): invalid length range: min -1, max 0"
+		assert.ErrorEqual(t, wMsg, err)
+		xrrtest.AssertCode(t, ECInternal, err)
+		assert.Empty(t, hTpl)
+		assert.Empty(t, hMsg)
+	})
+
+	t.Run("error - min greater than max", func(t *testing.T) {
+		// --- When ---
+		hMsg, hTpl, err := buildLengthRuleMsg(10, 5, "mode")
+
+		// --- Then ---
+		assert.SameType(t, &InternalError{}, err)
+		wMsg := "length-rule(mode): invalid length range: min 10, max 5"
 		assert.ErrorEqual(t, wMsg, err)
 		xrrtest.AssertCode(t, ECInternal, err)
 		assert.Empty(t, hTpl)
