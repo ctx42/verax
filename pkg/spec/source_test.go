@@ -68,6 +68,15 @@ func Test_NewSource(t *testing.T) {
 		assert.True(t, have.ptr > 0)
 	})
 
+	t.Run("error - empty name", func(t *testing.T) {
+		// --- When ---
+		have, err := NewSource("", TstFn0)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrInvSource, err)
+		assert.Zero(t, have)
+	})
+
 	t.Run("error - nil", func(t *testing.T) {
 		// --- When ---
 		have, err := NewSource("fn", nil)

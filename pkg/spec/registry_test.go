@@ -1438,6 +1438,21 @@ func Test_Registry_encodeSource(t *testing.T) {
 		assert.Nil(t, have)
 	})
 
+	t.Run("error - not go source", func(t *testing.T) {
+		// --- Given ---
+		src := must.Value(NewSource("my-src", TstFn0)).SetLang("js")
+		reg := NewRegistry[TstType]()
+		reg.RegisterSource(src)
+
+		// --- When ---
+		have, err := reg.encodeSource(TstFn0)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrInvSource, err)
+		assert.ErrorEqual(t, "source my-src: lang js: invalid source", err)
+		assert.Nil(t, have)
+	})
+
 	t.Run("source", func(t *testing.T) {
 		// --- Given ---
 		fn := func() {}

@@ -439,6 +439,10 @@ func (reg *Registry[T]) encodeSource(value any) (any, error) {
 	if src.IsZero() {
 		return nil, ErrUnkSource
 	}
+	if src.Lang != "go" {
+		format := "source %s: lang %s: %w"
+		return nil, NewErrorf(format, src.Name, src.Lang, ErrInvSource)
+	}
 	return src, nil
 }
 

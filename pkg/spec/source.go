@@ -23,9 +23,10 @@ type Source struct {
 }
 
 // NewSource returns a new instance of named [Source] for the value. By default,
-// the source language is set to "go".
+// the source language is set to "go". Returns [ErrInvSource] when the name is
+// empty or the value is not a function.
 func NewSource(name string, val any) (Source, error) {
-	if val == nil {
+	if name == "" || val == nil {
 		return Source{}, ErrInvSource
 	}
 	rv := reflect.ValueOf(val)
