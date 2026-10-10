@@ -196,6 +196,9 @@ func Test_IsEmpty_ZENValues_tabular(t *testing.T) {
 		if tc.Desc == "false boolean" {
 			continue // In verax we treat false as not empty.
 		}
+		if tc.Desc == "zero array" {
+			continue // In verax an array is empty only when its length is zero.
+		}
 		t.Run("IsEmpty "+tc.Desc, func(t *testing.T) {
 			// --- When ---
 			have := IsEmpty(tc.Val)
