@@ -1,3 +1,6 @@
+## v0.15.2 (Sat, 10 Oct 2026 19:27:00 UTC)
+- build(deps): update 5 ctx42 dependencies.
+
 ## v0.15.1 (Mon, 05 Oct 2026 20:40:15 UTC)
 - style(verax): resolve golangci-lint findings.
 
