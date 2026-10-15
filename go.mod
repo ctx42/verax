@@ -7,5 +7,5 @@ require (
 	github.com/ctx42/jsontype v0.9.1
 	github.com/ctx42/mirror v0.6.1
 	github.com/ctx42/testing v0.57.0
-	github.com/ctx42/xrr v0.18.1
+	github.com/ctx42/xrr v0.18.2
 )
